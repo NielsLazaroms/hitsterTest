@@ -79,11 +79,6 @@ export class DeckService {
     write('deck', cards);
   }
 
-  setDeckName(name: string): void {
-    this.deckName.set(name);
-    write('deckName', name);
-  }
-
   /** Pulls a playlist and turns it into draft cards awaiting a year review. */
   async fromPlaylist(playlistUrl: string): Promise<DraftCard[]> {
     const match = /playlist[/:]([A-Za-z0-9]+)/.exec(playlistUrl);

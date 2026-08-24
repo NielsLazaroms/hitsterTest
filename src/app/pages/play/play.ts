@@ -39,7 +39,6 @@ export class Play implements OnDestroy {
   readonly manualCode = signal('');
   readonly revealed = signal(false);
 
-  readonly cameraAvailable = QrScanner.supported;
   readonly inApp = isInAppBrowser();
   readonly card = computed(() => this.player.card());
 

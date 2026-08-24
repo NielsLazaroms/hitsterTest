@@ -64,10 +64,6 @@ export class QrScanner {
   private detector: BarcodeDetectorLike | null = null;
   private readonly canvas = document.createElement('canvas');
 
-  static get supported(): boolean {
-    return Boolean(navigator.mediaDevices?.getUserMedia);
-  }
-
   /**
    * Opens the camera. Kept separate from attaching it so the caller can ask
    * while the user's tap is still the current gesture — browsers are stricter
