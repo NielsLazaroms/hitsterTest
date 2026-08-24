@@ -21,7 +21,7 @@ vi.mock('@netlify/blobs', () => ({
   }),
 }));
 
-const { default: handler } = await import('./deck.mjs');
+const { default: handler } = await import('../netlify/functions/deck.mjs');
 
 const card = { id: 'a3f9', uri: 'spotify:track:x', title: 'Song', artist: 'Band', year: 1999 };
 const post = (body: unknown) =>
