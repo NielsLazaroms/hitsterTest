@@ -19,6 +19,45 @@ type BarcodeDetectorCtor = new (options: { formats: string[] }) => BarcodeDetect
  * getUserMedia only works in a secure context, which means https:// or the
  * loopback address — http://127.0.0.1:5200 is fine, a LAN IP is not.
  */
+/**
+ * Turns a getUserMedia failure into something a player can act on.
+ *
+ * Every cause below lands in the same catch block and looks identical from the
+ * outside, but the fixes are unrelated: one is a browser permission, one means
+ * closing another app, and one cannot be fixed on the current page at all.
+ */
+export function explainCameraError(error: unknown, inApp: boolean): string {
+  if (inApp) {
+    return (
+      'The browser built into a chat app will not open the camera. Tap the ⋯ or share button ' +
+      'and choose "Open in browser", then try again.'
+    );
+  }
+
+  if (!window.isSecureContext) {
+    return 'The camera needs a https:// address. Open the hosted site rather than a local one.';
+  }
+
+  const name = error instanceof DOMException ? error.name : '';
+
+  switch (name) {
+    case 'NotAllowedError':
+    case 'SecurityError':
+      return (
+        'Camera access was refused. Tap the icon at the left of the address bar, allow the ' +
+        'camera for this site, then reload.'
+      );
+    case 'NotFoundError':
+    case 'OverconstrainedError':
+      return 'No camera found on this device. Use "Enter code by hand".';
+    case 'NotReadableError':
+    case 'AbortError':
+      return 'Something else is using the camera. Close other camera apps and try again.';
+    default:
+      return 'The camera could not be started. Use "Enter code by hand".';
+  }
+}
+
 export class QrScanner {
   private stream: MediaStream | null = null;
   private frame = 0;
@@ -29,11 +68,26 @@ export class QrScanner {
     return Boolean(navigator.mediaDevices?.getUserMedia);
   }
 
-  async start(video: HTMLVideoElement, onResult: (value: string) => void): Promise<void> {
+  /**
+   * Opens the camera. Kept separate from attaching it so the caller can ask
+   * while the user's tap is still the current gesture — browsers are stricter
+   * about permission prompts raised later — and so a refusal is known before
+   * the camera screen is shown.
+   */
+  async acquire(): Promise<MediaStream> {
+    if (!navigator.mediaDevices?.getUserMedia) {
+      throw new DOMException('getUserMedia unavailable', 'NotFoundError');
+    }
+
     this.stream = await navigator.mediaDevices.getUserMedia({
       video: { facingMode: { ideal: 'environment' } },
       audio: false,
     });
+    return this.stream;
+  }
+
+  async attach(video: HTMLVideoElement, onResult: (value: string) => void): Promise<void> {
+    if (!this.stream) throw new DOMException('camera not acquired', 'InvalidStateError');
 
     video.srcObject = this.stream;
     await video.play();

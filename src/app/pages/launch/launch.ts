@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { SpotifyAuth } from '../../core/spotify-auth';
+import { read, remove } from '../../core/storage';
 
 /**
  * The entry point every route eventually falls back to.
@@ -55,7 +56,10 @@ export class Launch {
     if (code) {
       try {
         await this.auth.exchangeCode(code);
-        await this.router.navigate(['/play'], { replaceUrl: true });
+
+        const next = read<string>('next', '');
+        remove('next');
+        await this.router.navigateByUrl(next || '/play', { replaceUrl: true });
       } catch (error) {
         this.error.set(error instanceof Error ? error.message : 'Sign-in failed.');
       }

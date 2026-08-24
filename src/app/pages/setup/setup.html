@@ -5,6 +5,14 @@
       <p class="lede">Spotify needs to know this app exists. Two minutes, then never again.</p>
     }
 
+    @if (inApp) {
+      <p class="msg warn">
+        <b>Open this page in Safari or Chrome first.</b> You are in the browser built into a chat
+        app, which blocks the camera and loses the Spotify sign-in halfway through. Tap the
+        <b>⋯</b> or share button in the bar above and choose "Open in browser".
+      </p>
+    }
+
     @if (error()) {
       <p class="msg err">{{ error() }}</p>
     }

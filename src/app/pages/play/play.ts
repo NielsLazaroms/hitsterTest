@@ -12,7 +12,8 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { DeckService } from '../../core/deck';
 import { Player } from '../../core/player';
-import { QrScanner, cardIdFromScan } from '../../core/scanner';
+import { isInAppBrowser } from '../../core/environment';
+import { QrScanner, cardIdFromScan, explainCameraError } from '../../core/scanner';
 
 type Mode = 'idle' | 'scanning' | 'manual' | 'playing';
 
@@ -39,6 +40,7 @@ export class Play implements OnDestroy {
   readonly revealed = signal(false);
 
   readonly cameraAvailable = QrScanner.supported;
+  readonly inApp = isInAppBrowser();
   readonly card = computed(() => this.player.card());
 
   constructor() {
@@ -56,23 +58,52 @@ export class Play implements OnDestroy {
   // ------------------------------------------------------------ scanning --
 
   async startScan(): Promise<void> {
-    this.mode.set('scanning');
-    // Wait a frame so the <video> element exists before the camera attaches.
-    await Promise.resolve();
-
-    const element = this.video()?.nativeElement;
-    if (!element) return;
+    if (this.mode() === 'scanning') return;
 
     try {
-      await this.scanner.start(element, (value) => void this.launch(cardIdFromScan(value)));
-    } catch {
-      this.mode.set('idle');
-      this.hint.set(
-        this.cameraAvailable
-          ? 'Camera blocked. Allow access, or use "Enter code by hand".'
-          : 'No camera here. Use "Enter code by hand".',
-      );
+      // Ask for the camera first: the permission prompt then belongs to the
+      // tap that opened it, and a refusal never leaves a dead camera screen.
+      await this.scanner.acquire();
+    } catch (error) {
+      this.hint.set(explainCameraError(error, this.inApp));
+      return;
     }
+
+    this.mode.set('scanning');
+
+    const element = await this.videoElement();
+    if (!element) {
+      this.scanner.stop();
+      this.mode.set('idle');
+      this.hint.set('The camera view did not open. Try again, or use "Enter code by hand".');
+      return;
+    }
+
+    try {
+      await this.scanner.attach(element, (value) => void this.launch(cardIdFromScan(value)));
+    } catch (error) {
+      this.scanner.stop();
+      this.mode.set('idle');
+      this.hint.set(explainCameraError(error, this.inApp));
+    }
+  }
+
+  /**
+   * The <video> only exists once Angular has rendered the scanning branch, and
+   * that happens on a later task than the signal write. Awaiting a resolved
+   * promise is not enough — it runs before change detection, so the element is
+   * still missing and the scan used to abort without saying anything.
+   */
+  private async videoElement(): Promise<HTMLVideoElement | null> {
+    // setTimeout rather than requestAnimationFrame: frames stop being served
+    // to a hidden or throttled page, and waiting on one that never arrives
+    // hangs the scan with nothing on screen to explain it.
+    for (let attempt = 0; attempt < 60; attempt++) {
+      const element = this.video()?.nativeElement;
+      if (element) return element;
+      await new Promise((resolve) => setTimeout(resolve, 16));
+    }
+    return null;
   }
 
   cancelScan(): void {
