@@ -72,6 +72,53 @@
     </div>
     <input #file type="file" accept="application/json" hidden (change)="importDeck($event)" />
 
+    <label>Share across devices</label>
+    <p class="note">
+      Build a deck on one device, then load it on another — no file to move. Sharing works on the
+      deployed site, not local preview.
+    </p>
+
+    <button
+      class="btn ghost sm"
+      type="button"
+      (click)="shareDeck()"
+      [disabled]="!deck.count() || sharing()"
+    >
+      {{ sharing() ? 'Sharing…' : 'Share this deck' }}
+    </button>
+
+    @if (shareCode()) {
+      <div class="sharecode">
+        <p class="note">On the other device, open Settings and enter:</p>
+        <p class="code">{{ shareCode() }}</p>
+        @if (shareQr()) {
+          <div class="qr" [innerHTML]="shareQr()"></div>
+          <p class="note">…or scan this to open it there directly.</p>
+        }
+      </div>
+    }
+
+    <div class="row gap-sm">
+      <input
+        class="field"
+        type="text"
+        maxlength="4"
+        autocapitalize="off"
+        autocomplete="off"
+        placeholder="Enter a code"
+        [ngModel]="codeInput()"
+        (ngModelChange)="codeInput.set($event)"
+      />
+      <button
+        class="btn ghost sm"
+        type="button"
+        (click)="loadCode()"
+        [disabled]="!codeInput().trim() || loadingCode()"
+      >
+        {{ loadingCode() ? 'Loading…' : 'Load' }}
+      </button>
+    </div>
+
     <button class="btn ghost sm" type="button" (click)="signOut()">Disconnect Spotify</button>
   </div>
 </div>

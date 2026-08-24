@@ -79,6 +79,67 @@ export class DeckService {
     write('deck', cards);
   }
 
+  setDeckName(name: string): void {
+    this.deckName.set(name);
+    write('deckName', name);
+  }
+
+  /**
+   * Uploads the current deck to the sharing backend and returns a short code
+   * another device can load it by. Only works on the deployed site: the
+   * /api/deck function does not exist under `ng serve`.
+   */
+  async share(): Promise<string> {
+    let response: Response;
+    try {
+      response = await fetch('/api/deck', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ name: this.deckName(), cards: this.cards() }),
+      });
+    } catch {
+      throw new Error('Sharing needs the deployed site — it is unavailable in local preview.');
+    }
+
+    const data: unknown = await response.json().catch(() => null);
+    const code = (data as { code?: string; error?: string } | null);
+    if (!response.ok || !code?.code) {
+      throw new Error(code?.error ?? 'Could not share the deck.');
+    }
+    return code.code;
+  }
+
+  /**
+   * Fetches a shared deck by code and replaces the local deck with it. Every
+   * card is re-checked because a stored deck is untrusted input.
+   */
+  async loadShared(code: string): Promise<number> {
+    const clean = code.trim().toLowerCase();
+    if (!/^[a-z0-9]{4}$/.test(clean)) {
+      throw new Error('A code is four characters, e.g. k7qf.');
+    }
+
+    let response: Response;
+    try {
+      response = await fetch(`/api/deck?code=${encodeURIComponent(clean)}`);
+    } catch {
+      throw new Error('Could not reach the deck server.');
+    }
+
+    const data: unknown = await response.json().catch(() => null);
+    if (!response.ok) {
+      throw new Error((data as { error?: string } | null)?.error ?? 'Could not load that code.');
+    }
+
+    const payload = data as { name?: unknown; cards?: unknown } | null;
+    const cards = Array.isArray(payload?.cards) ? payload.cards.filter(isCard) : [];
+    if (!cards.length) throw new Error('That code did not return a usable deck.');
+
+    this.save(cards);
+    if (typeof payload?.name === 'string' && payload.name) this.setDeckName(payload.name);
+    return cards.length;
+  }
+
   /** Pulls a playlist and turns it into draft cards awaiting a year review. */
   async fromPlaylist(playlistUrl: string): Promise<DraftCard[]> {
     const match = /playlist[/:]([A-Za-z0-9]+)/.exec(playlistUrl);

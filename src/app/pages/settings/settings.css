@@ -17,3 +17,27 @@
 .deckcount {
   margin: 0 0 12px;
 }
+
+.sharecode {
+  text-align: center;
+  margin: 12px 0 18px;
+}
+
+.sharecode .code {
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  margin: 4px 0 12px;
+}
+
+.sharecode .qr {
+  display: inline-block;
+  width: 160px;
+  max-width: 60%;
+}
+
+.sharecode .qr :where(svg) {
+  width: 100%;
+  height: auto;
+}
