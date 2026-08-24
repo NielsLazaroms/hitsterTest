@@ -26,6 +26,10 @@
             ],
             "styles": [
               "src/styles.css"
+            ],
+            "index": "src/index.html",
+            "allowedCommonJsDependencies": [
+              "jsqr"
             ]
           },
           "configurations": {
@@ -54,6 +58,10 @@
         },
         "serve": {
           "builder": "@angular/build:dev-server",
+          "options": {
+            "port": 5200,
+            "host": "127.0.0.1"
+          },
           "configurations": {
             "production": {
               "buildTarget": "hitsterTest:build:production"

@@ -1,0 +1,52 @@
+<div class="page">
+  <div class="body">
+    <h1>Set up once</h1>
+    <p class="lede">Spotify needs to know this app exists. Two minutes, then never again.</p>
+
+    @if (error()) {
+      <p class="msg err">{{ error() }}</p>
+    }
+
+    <ol class="steps">
+      <li>
+        <span class="n">1</span>
+        Open <b>developer.spotify.com/dashboard</b> and click <b>Create app</b>. Name it anything.
+      </li>
+      <li><span class="n">2</span> Paste this exact address into <b>Redirect URIs</b>:</li>
+    </ol>
+
+    <div class="copybox">
+      <code>{{ redirectUri }}</code>
+      <button type="button" (click)="copy()">{{ copyLabel() }}</button>
+    </div>
+    <p class="note hint">
+      Character for character, trailing slash included. Spotify rejects the word
+      <b>localhost</b> outright — the loopback address is what works.
+    </p>
+
+    <ol class="steps">
+      <li>
+        <span class="n">3</span>
+        Tick <b>Web API</b>, save, then copy the app's <b>Client ID</b> into the box below.
+      </li>
+    </ol>
+
+    <label for="clientId">Spotify Client ID</label>
+    <input
+      id="clientId"
+      class="field"
+      autocomplete="off"
+      spellcheck="false"
+      placeholder="e.g. 4f9c2a1b8d3e4f5a…"
+      [ngModel]="clientId()"
+      (ngModelChange)="clientId.set($event)"
+    />
+
+    <button class="btn" type="button" (click)="connect()">Connect Spotify</button>
+
+    <p class="note">
+      Everyone who plays needs Spotify Premium, and each person must be added under
+      <b>User Management</b> in that same dashboard. Five people maximum.
+    </p>
+  </div>
+</div>

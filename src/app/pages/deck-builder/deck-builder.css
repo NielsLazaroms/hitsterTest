@@ -1,0 +1,108 @@
+.title {
+  text-align: center;
+}
+
+.intro {
+  margin-bottom: 26px;
+}
+
+.tablewrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+table {
+  width: 100%;
+  font-size: 14px;
+  border-collapse: collapse;
+}
+
+th {
+  padding: 0 8px 8px 0;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--dim);
+  text-align: left;
+  border-bottom: 1px solid var(--line);
+}
+
+td {
+  padding: 9px 8px 9px 0;
+  vertical-align: top;
+  border-bottom: 1px solid var(--panel-2);
+}
+
+.yearcol {
+  width: 78px;
+}
+
+.dropcol {
+  width: 34px;
+}
+
+input[type='number'] {
+  width: 68px;
+  padding: 6px 8px;
+  font-family: ui-monospace, monospace;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 7px;
+}
+
+input.flag {
+  color: var(--warn);
+  border-color: var(--warn);
+}
+
+.tt {
+  font-size: 14px;
+}
+
+.ta {
+  font-size: 12px;
+  color: var(--dim);
+}
+
+.flagnote {
+  margin-top: 3px;
+  font-size: 11px;
+  color: var(--warn);
+}
+
+.drop {
+  padding: 2px 6px;
+  font-size: 18px;
+  line-height: 1;
+  color: var(--dim);
+  border-radius: 6px;
+}
+
+.drop:hover {
+  color: var(--bad);
+}
+
+.save {
+  margin-top: 22px;
+}
+
+/* Raw diagnostic output — meant to be read, and pasted somewhere for help. */
+.report {
+  margin: 0 0 16px;
+  padding: 12px;
+  border-radius: 8px;
+  background: #14161a;
+  color: #d6dae0;
+  font:
+    12px/1.5 ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    Consolas,
+    monospace;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  user-select: text;
+}

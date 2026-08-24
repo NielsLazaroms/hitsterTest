@@ -1,0 +1,19 @@
+.title {
+  text-align: center;
+}
+
+.gap {
+  margin-bottom: 26px;
+}
+
+.gap-sm {
+  margin-bottom: 12px;
+}
+
+.note.gap {
+  margin-top: 10px;
+}
+
+.deckcount {
+  margin: 0 0 12px;
+}

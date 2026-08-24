@@ -1,0 +1,98 @@
+<div class="page">
+  <div class="bar">
+    <h2>Mixtape</h2>
+    <button type="button" routerLink="/settings">Settings</button>
+  </div>
+
+  @switch (mode()) {
+    <!-- ------------------------------------------------------ idle ---- -->
+    @case ('idle') {
+      <div class="body stage">
+        <button class="scanbtn" type="button" (click)="startScan()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M3 8V5a2 2 0 0 1 2-2h3M16 3h3a2 2 0 0 1 2 2v3M21 16v3a2 2 0 0 1-2 2h-3M8 21H5a2 2 0 0 1-2-2v-3" />
+            <path d="M7 12h10" />
+          </svg>
+          <span>Scan a card</span>
+        </button>
+
+        <p class="hint">{{ hint() }}</p>
+
+        <button class="btn ghost sm narrow" type="button" (click)="openManual()">
+          Enter code by hand
+        </button>
+      </div>
+    }
+
+    <!-- --------------------------------------------------- scanning ---- -->
+    @case ('scanning') {
+      <div class="camwrap">
+        <video #video playsinline muted></video>
+        <div class="reticle"><div></div></div>
+        <div class="camfoot">
+          <button class="btn ghost" type="button" (click)="cancelScan()">Cancel</button>
+        </div>
+      </div>
+    }
+
+    <!-- ----------------------------------------------------- manual ---- -->
+    @case ('manual') {
+      <div class="body center">
+        <p class="lede">The code is printed under the square on the front of the card.</p>
+        <input
+          class="field code"
+          autocomplete="off"
+          spellcheck="false"
+          placeholder="a3f9"
+          [ngModel]="manualCode()"
+          (ngModelChange)="manualCode.set($event)"
+          (keydown.enter)="submitManual()"
+        />
+        <button class="btn narrow" type="button" (click)="submitManual()">Play</button>
+        <button class="btn ghost sm narrow back" type="button" (click)="nextCard()">Back</button>
+      </div>
+    }
+
+    <!-- ---------------------------------------------------- playing ---- -->
+    @case ('playing') {
+      <div class="body now">
+        <div class="wave" [class.still]="player.status() !== 'playing'" aria-hidden="true">
+          <i></i><i></i><i></i><i></i><i></i>
+        </div>
+
+        <p class="nowlabel">
+          @switch (player.status()) {
+            @case ('playing') { Playing }
+            @case ('paused') { Paused }
+            @case ('finished') { Time }
+            @default { Loading }
+          }
+        </p>
+
+        <p class="timer">{{ player.clock() }}</p>
+        <p class="cardtag">{{ card()?.id }}</p>
+
+        <div class="controls">
+          <button class="btn ghost" type="button" (click)="player.restart()">Restart</button>
+          <button class="btn ghost" type="button" (click)="togglePause()">
+            {{ player.status() === 'playing' ? 'Pause' : 'Resume' }}
+          </button>
+          <button class="btn wide" type="button" (click)="nextCard()">Next card</button>
+        </div>
+
+        <div class="reveal">
+          @if (revealed()) {
+            <p class="ar">{{ card()?.artist }}</p>
+            <p class="yr">{{ card()?.year }}</p>
+            <p class="ti">{{ card()?.title }}</p>
+          } @else {
+            <button class="revealbtn" type="button" (click)="revealed.set(true)">
+              Reveal the answer
+            </button>
+          }
+        </div>
+      </div>
+    }
+  }
+</div>

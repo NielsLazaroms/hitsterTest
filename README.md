@@ -1,59 +1,107 @@
-# HitsterTest
+# Mixtape
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 22.1.5.
+A song-timeline party game: printed cards with a QR code on the front and the
+answer on the back, and a phone app that plays the track without ever showing
+what it is.
 
-## Development server
+Spotify does the playing. The app never streams audio itself — it drives
+whatever device your Spotify account is already signed in to (Spotify Connect),
+so the music comes out of the speaker while the phone screen shows nothing but
+a clock.
 
-To start a local development server, run:
-
-```bash
-ng serve
-```
-
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
-
-## Code scaffolding
-
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+## Running it
 
 ```bash
-ng generate component component-name
+npm install     # jsqr + qrcode-generator were added to package.json
+npm start       # http://127.0.0.1:5200
 ```
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+The dev server is pinned to `127.0.0.1:5200` in `angular.json`.
 
-```bash
-ng generate --help
+> **Use `127.0.0.1`, never `localhost`.** Spotify rejects the literal string
+> `localhost` in a redirect URI. The app derives its redirect URI from the
+> address you loaded it at, so opening `http://localhost:5200` will produce a
+> redirect URI Spotify refuses.
+
+## One-time Spotify setup
+
+1. Create an app at <https://developer.spotify.com/dashboard>.
+2. Add `http://127.0.0.1:5200/` as a Redirect URI — exactly, trailing slash
+   included.
+3. Tick **Web API**, save, and copy the Client ID into the app's setup screen.
+4. Add every player's Spotify account email under **User Management**.
+
+Development Mode rules, as of 2026: the app owner must hold Spotify Premium,
+at most five users can be allow-listed, and everyone playing needs Premium.
+
+## Using it
+
+- **Settings → Build deck** — paste a playlist you own. The builder flags any
+  track whose album looks like a remaster, compilation or live record, because
+  Spotify reports the release date of *that pressing*, not of the song. Fix the
+  highlighted years by hand; this is the step that decides whether the game
+  works.
+- **Settings → Print cards** — shows a scaled preview of every sheet, front and
+  back, then opens the print dialog. Print double-sided at **100% / actual
+  size** with duplex set to flip on the **long edge**. The back sheets are
+  already mirrored to match.
+- **Play** — scan a card, or type the four-character code printed under the QR.
+
+Each QR encodes `<app address>/?t=<card id>`, so a card also works when scanned
+with the plain phone camera: it opens the app and starts the song. Because the
+id is opaque, nothing about the track leaks.
+
+When you deploy this somewhere permanent, the QR codes must be regenerated —
+they contain whatever address the app was served from when you printed them.
+
+## Layout
+
+```
+src/app/core/         services with no UI
+  spotify-auth.ts     Authorization Code + PKCE, token refresh
+  spotify-api.ts      thin Web API wrapper, friendly error translation
+  player.ts           playback state, clock, clip timer
+  deck.ts             playlist import, year heuristics, localStorage
+  scanner.ts          BarcodeDetector with a jsQR fallback
+  qr.ts               QR SVG generation for the print sheet
+src/app/pages/        one folder per screen
 ```
 
-## Building
+State lives in `localStorage` under the `mixtape.` prefix: tokens, the deck,
+the chosen device and the clip length.
 
-To build the project run:
+## When the deck builder is refused
 
-```bash
-ng build
-```
+Spotify removed `GET /playlists/{id}/tracks` in February 2026 and answers the
+removed path with a bare `403 Forbidden`, which reads exactly like a
+permissions problem and is not one. The builder calls
+`GET /playlists/{id}/items` instead, and reads each entry's `item` — the same
+change renamed that nested object from `track`.
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+Past that, a 403 has three unrelated causes and the message does not say
+which. The builder puts a **"Work out which one it is"** button under the
+error: it asks Spotify a handful of questions one at a time and reads the
+answer off the pattern.
 
-## Running unit tests
+- *Every* call refused, including `/me` — the app is not allowed to call the
+  Web API for this account. Two dashboard settings do this and the probe cannot
+  separate them, so check both: tick **Web API** under "Which API/SDKs are you
+  planning to use?", and add the signed-in account under **User Management**.
+- `/me` fine, playlists refused — the token is missing the playlist scopes.
+  Disconnect and reconnect; a refreshed token keeps the scopes of the original
+  consent, so reconnecting is the only way to widen them.
+- Only the one playlist refused — Spotify-made lists (Top 50, Discover Weekly,
+  Daily Mix, decade and genre playlists) are closed to third-party apps. Copy
+  the tracks into a playlist of your own.
 
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
+Signing in successfully does not prove much on its own — a Development Mode app
+can hand out a token and then refuse every API call.
 
-```bash
-ng test
-```
+## Known limits
 
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+- **Camera needs a secure context.** `http://127.0.0.1:5200` counts as secure,
+  so scanning works on the dev machine. A LAN address like `192.168.x.x` does
+  not — on a phone, either deploy over HTTPS or use the typed-code fallback.
+- **Premium only.** The Web API refuses playback for free accounts.
+- **Spotify must have an active device.** Open Spotify and play anything for a
+  second before the first scan, then pick the speaker in Settings.

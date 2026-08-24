@@ -1,0 +1,77 @@
+<div class="page">
+  <div class="bar">
+    <button type="button" routerLink="/play">Back</button>
+    <h2 class="title">Settings</h2>
+    <span class="spacer"></span>
+  </div>
+
+  <div class="body">
+    @if (message()) {
+      <p class="msg ok">{{ message() }}</p>
+    }
+
+    <label for="device">Speaker / device</label>
+    <select
+      id="device"
+      class="field"
+      [ngModel]="player.deviceId()"
+      (ngModelChange)="onDeviceChange($event)"
+    >
+      @if (loadingDevices()) {
+        <option value="">Loading…</option>
+      } @else if (deviceError()) {
+        <option value="">{{ deviceError() }}</option>
+      } @else if (devices().length === 0) {
+        <option value="">Nothing found — open Spotify and play something</option>
+      } @else {
+        @for (device of devices(); track device.id) {
+          <option [value]="device.id">{{ device.name }} ({{ device.type }})</option>
+        }
+      }
+    </select>
+
+    <button class="btn ghost sm" type="button" (click)="loadDevices()">Refresh device list</button>
+    <p class="note gap">
+      Spotify only lists a device it has spoken to recently. If your speaker is missing, open
+      Spotify, play any song for a second, then refresh.
+    </p>
+
+    <label for="clip">Clip length</label>
+    <select
+      id="clip"
+      class="field"
+      [ngModel]="player.clipLength()"
+      (ngModelChange)="onClipChange($event)"
+    >
+      @for (option of clipOptions; track option.value) {
+        <option [value]="option.value">{{ option.label }}</option>
+      }
+    </select>
+
+    <label>Deck</label>
+    <p class="note deckcount">
+      @if (deck.count()) {
+        {{ deck.count() }} cards in the deck.
+      } @else {
+        No cards yet — build one from a playlist.
+      }
+    </p>
+
+    <div class="row gap-sm">
+      <button class="btn ghost sm" type="button" routerLink="/deck">Build deck</button>
+      <button class="btn ghost sm" type="button" routerLink="/print" [disabled]="!deck.count()">
+        Print cards
+      </button>
+    </div>
+
+    <div class="row gap">
+      <button class="btn ghost sm" type="button" (click)="exportDeck()" [disabled]="!deck.count()">
+        Export
+      </button>
+      <button class="btn ghost sm" type="button" (click)="file.click()">Import</button>
+    </div>
+    <input #file type="file" accept="application/json" hidden (change)="importDeck($event)" />
+
+    <button class="btn ghost sm" type="button" (click)="signOut()">Disconnect Spotify</button>
+  </div>
+</div>

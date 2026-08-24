@@ -1,0 +1,4 @@
+# Client-side routing: every path is served by index.html and resolved by the
+# Angular router. Without this, a QR scanned straight into /play would 404.
+# Cloudflare Pages and Netlify both read this file; it is ignored elsewhere.
+/*  /index.html  200

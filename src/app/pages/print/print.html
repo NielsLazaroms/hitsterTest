@@ -1,0 +1,80 @@
+<div class="page screenonly">
+  <div class="bar">
+    <button type="button" routerLink="/settings">Back</button>
+    <h2 class="title">Print cards</h2>
+    <span class="spacer"></span>
+  </div>
+
+  <div class="body">
+    <p class="note info">
+      {{ deck.count() }} cards on <b>{{ paperCount() }}</b>
+      {{ paperCount() === 1 ? 'sheet of paper' : 'sheets of paper' }}, printed on both sides —
+      {{ sheets().length }} pages in all. Odd pages are the QR fronts, even pages the answers. Every
+      QR points at <code>{{ appUrl }}</code
+      >.
+    </p>
+
+    <p class="msg warn">
+      Two settings decide whether this works. <b>Scale: 100% / actual size</b>, never "fit to page".
+      <b>Two-sided: flip on the long edge</b> — the way a book opens, not end over end. The backs
+      are already mirrored for that. A short-edge flip does not merely turn the answers upside down,
+      it lands each one on the wrong card, and you would only find that out mid-game.
+    </p>
+
+    <button class="btn" type="button" (click)="print()">Open the print dialog</button>
+
+    <details class="help">
+      <summary>My printer cannot print both sides by itself</summary>
+      <p>
+        Print the odd pages first — in the print dialog set Pages to
+        <code>1{{ paperCount() > 1 ? ', 3, 5…' : '' }}</code
+        >, or pick "Odd pages only" if your dialog offers it. Take that stack out, turn it over
+        about the <b>long edge</b> — the way you turn a page in a book, not end over end — and put
+        it back in the tray. Then print the even pages.
+      </p>
+      <p>
+        Which way up the paper goes back in differs per printer. Do one sheet first and hold it up
+        to the light: the four corner marks on the front and back should sit exactly on top of each
+        other. If they do not, turn the paper the other way and try once more.
+      </p>
+    </details>
+  </div>
+</div>
+
+<div class="sheets">
+  @for (sheet of sheets(); track $index) {
+    <p class="caption screenonly">
+      Paper {{ paperNumber($index) }} of {{ paperCount() }},
+      {{ sheet.side === 'front' ? 'front — QR codes' : 'back — answers, mirrored' }}
+      <span class="pageno">page {{ $index + 1 }}</span>
+    </p>
+    <div class="sheet">
+      <span class="reg tl"></span>
+      <span class="reg tr"></span>
+      <span class="reg bl"></span>
+      <span class="reg br"></span>
+
+      <div class="grid">
+        @for (card of sheet.cards; track $index) {
+          @if (card === null) {
+            <div class="card"></div>
+          } @else if (sheet.side === 'front') {
+            <div class="card">
+              <div class="qr" [innerHTML]="card.qr"></div>
+              <div class="foot">
+                <span class="deckname">{{ deckName() }}</span>
+                <span class="pid">{{ card.id }}</span>
+              </div>
+            </div>
+          } @else {
+            <div class="card back">
+              <div class="ar">{{ card.artist }}</div>
+              <div class="yr">{{ card.year }}</div>
+              <div class="ti">{{ card.title }}</div>
+            </div>
+          }
+        }
+      </div>
+    </div>
+  }
+</div>

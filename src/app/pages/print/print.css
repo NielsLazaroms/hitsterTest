@@ -1,0 +1,193 @@
+.title {
+  text-align: center;
+}
+
+/* The preview below is part of the same scroll, so the header must not
+   claim a full viewport of height. */
+.page.screenonly {
+  min-height: auto;
+}
+.info {
+  margin: 0 0 22px;
+}
+.info code {
+  font-family: ui-monospace, monospace;
+  color: var(--accent);
+}
+
+/* On screen the sheets are a shrunken preview so the front/back pairing is
+   visible before any paper is used. In print they go back to exact millimetres. */
+.sheets {
+  padding: 0 18px 60px;
+  zoom: 0.42;
+}
+
+.caption {
+  max-width: 210mm;
+  margin: 26px auto 8px;
+  font-size: 26px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+.sheet {
+  position: relative;
+  width: 210mm;
+  height: 297mm;
+  margin: 0 auto;
+  padding: 18.5mm 7.5mm;
+  color: #111;
+  background: #fff;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 65mm);
+  grid-template-rows: repeat(4, 65mm);
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 65mm;
+  height: 65mm;
+  padding: 6mm;
+  overflow: hidden;
+  border: 0.2mm solid #cfcfcf;
+}
+
+/* The SVG itself is sized from styles.css — it arrives via [innerHTML],
+   so component style scoping never reaches it. */
+.qr {
+  width: 34mm;
+  height: 34mm;
+}
+
+.foot {
+  display: flex;
+  gap: 2.5mm;
+  align-items: baseline;
+  margin-top: 4.5mm;
+}
+
+.deckname {
+  font-size: 5.4pt;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #6d3f7a;
+}
+
+.pid {
+  font-family: ui-monospace, 'Courier New', monospace;
+  font-size: 5.4pt;
+  letter-spacing: 0.1em;
+  color: #9a9a9a;
+}
+
+.back {
+  text-align: center;
+}
+
+.back .ar {
+  font-size: 6.2pt;
+  line-height: 1.4;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: #6d3f7a;
+}
+
+.back .yr {
+  margin: 2.5mm 0;
+  font-family: 'Arial Narrow', Arial, sans-serif;
+  font-size: 30pt;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.back .ti {
+  font-family: Georgia, serif;
+  font-size: 10pt;
+  line-height: 1.3;
+}
+
+/* Hold both sheets to the light: these should sit exactly on top of each other. */
+.reg {
+  position: absolute;
+  width: 4mm;
+  height: 4mm;
+  border-top: 0.2mm solid #b9b9b9;
+  border-left: 0.2mm solid #b9b9b9;
+}
+
+.reg.tl {
+  top: 14.5mm;
+  left: 3.5mm;
+}
+.reg.tr {
+  top: 14.5mm;
+  right: 3.5mm;
+  transform: scaleX(-1);
+}
+.reg.bl {
+  bottom: 14.5mm;
+  left: 3.5mm;
+  transform: scaleY(-1);
+}
+.reg.br {
+  bottom: 14.5mm;
+  right: 3.5mm;
+  transform: scale(-1, -1);
+}
+
+@media print {
+  .screenonly {
+    display: none !important;
+  }
+
+  .sheets {
+    padding: 0;
+    zoom: 1;
+  }
+
+  .sheet {
+    margin: 0;
+    page-break-after: always;
+    break-after: page;
+  }
+
+  .sheet:last-child {
+    page-break-after: auto;
+    break-after: auto;
+  }
+}
+
+/* Kept out of the way until the printer turns out not to duplex on its own. */
+.help {
+  margin-top: 18px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--dim);
+}
+
+.help summary {
+  cursor: pointer;
+  color: var(--accent);
+}
+
+.help p {
+  margin: 10px 0 0;
+}
+
+.help code {
+  font-family: ui-monospace, monospace;
+  color: var(--accent);
+}
+
+.caption .pageno {
+  margin-left: 0.6em;
+  opacity: 0.55;
+}

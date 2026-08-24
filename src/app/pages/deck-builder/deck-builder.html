@@ -1,0 +1,92 @@
+<div class="page">
+  <div class="bar">
+    <button type="button" routerLink="/settings">Back</button>
+    <h2 class="title">Build deck</h2>
+    <span class="spacer"></span>
+  </div>
+
+  <div class="body">
+    @if (error()) {
+      <p class="msg err">{{ error() }}</p>
+      <button class="btn ghost sm" type="button" [disabled]="diagnosing()" (click)="diagnose()">
+        {{ diagnosing() ? 'Checking…' : 'Work out which one it is' }}
+      </button>
+    }
+    @if (report()) {
+      <pre class="report">{{ report() }}</pre>
+    }
+    @if (notice()) {
+      <p class="msg ok">{{ notice() }}</p>
+    }
+
+    <label for="playlist">Your Spotify playlist</label>
+    <input
+      id="playlist"
+      class="field"
+      autocomplete="off"
+      spellcheck="false"
+      placeholder="https://open.spotify.com/playlist/…"
+      [ngModel]="playlistUrl()"
+      (ngModelChange)="playlistUrl.set($event)"
+    />
+
+    <button class="btn" type="button" [disabled]="loading()" (click)="load()">
+      {{ loading() ? 'Loading…' : 'Load tracks' }}
+    </button>
+    <p class="note intro">
+      Use a playlist you own — Spotify only returns full track lists for your own playlists.
+    </p>
+
+    @if (drafts().length) {
+      <p class="msg warn">
+        Check every highlighted year. Spotify reports the date of <em>this pressing</em>, so
+        remasters and compilations come back decades late. Fixing them here is the difference
+        between a working game and an argument at the table.
+      </p>
+
+      <div class="tablewrap">
+        <table>
+          <thead>
+            <tr>
+              <th class="yearcol">Year</th>
+              <th>Track</th>
+              <th class="dropcol"></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (draft of drafts(); track draft.id) {
+              <tr>
+                <td>
+                  <input
+                    type="number"
+                    min="1900"
+                    max="2100"
+                    [class.flag]="draft.suspect"
+                    [value]="draft.year"
+                    (input)="updateYear(draft.id, $any($event.target).value)"
+                  />
+                </td>
+                <td>
+                  <div class="tt">{{ draft.title }}</div>
+                  <div class="ta">{{ draft.artist }}</div>
+                  @if (draft.suspect) {
+                    <div class="flagnote">
+                      from "{{ draft.album }}" — likely not the original release
+                    </div>
+                  }
+                </td>
+                <td>
+                  <button class="drop" type="button" (click)="remove(draft.id)" aria-label="Remove">
+                    ×
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <button class="btn save" type="button" (click)="save()">Save {{ ready() }} cards</button>
+    }
+  </div>
+</div>
