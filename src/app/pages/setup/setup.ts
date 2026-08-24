@@ -13,6 +13,8 @@ export class Setup {
   private readonly auth = inject(SpotifyAuth);
 
   readonly redirectUri = this.auth.redirectUri;
+  /** With an id compiled in there is nothing for the player to fill in. */
+  readonly builtIn = this.auth.hasBuiltInClientId();
   readonly clientId = signal(this.auth.clientId());
   readonly error = signal('');
   readonly copyLabel = signal('Copy');
@@ -28,9 +30,11 @@ export class Setup {
   }
 
   async connect(): Promise<void> {
-    const id = this.clientId().trim();
+    const id = (this.builtIn ? this.auth.clientId() : this.clientId()).trim();
     if (!/^[a-f0-9]{20,}$/i.test(id)) {
-      this.error.set('That does not look like a Client ID — it is a long string of letters and numbers.');
+      this.error.set(
+        'That does not look like a Client ID — it is a long string of letters and numbers.',
+      );
       return;
     }
     this.error.set('');

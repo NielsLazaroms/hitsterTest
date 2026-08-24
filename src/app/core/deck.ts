@@ -1,4 +1,5 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
+import { BUNDLED_DECK_URL } from './config';
 import { SpotifyApi, SpotifyError } from './spotify-api';
 import { read, write } from './storage';
 import type { Card, DraftCard } from './models';
@@ -42,6 +43,31 @@ export class DeckService {
   readonly count = computed(() => this.cards().length);
 
   readonly deckName = signal<string>(read<string>('deckName', 'MIXTAPE'));
+
+  /**
+   * Loads the deck shipped with the app, for a device that has never built one.
+   *
+   * The result is deliberately not written to storage: leaving it in memory
+   * means a later deploy with an updated deck.json reaches players who never
+   * edited their copy, while anyone who imports or builds their own deck
+   * overrides it permanently.
+   */
+  async loadBundled(): Promise<void> {
+    if (this.cards().length > 0) return;
+
+    try {
+      const response = await fetch(BUNDLED_DECK_URL, { cache: 'no-cache' });
+      if (!response.ok) return;
+
+      const parsed: unknown = await response.json();
+      if (!Array.isArray(parsed)) return;
+
+      const cards = parsed.filter(isCard);
+      if (cards.length) this.cards.set(cards);
+    } catch {
+      /* no deck shipped, or it is unreadable — the app starts empty as before */
+    }
+  }
 
   find(id: string): Card | undefined {
     const needle = id.trim().toLowerCase();
@@ -146,6 +172,18 @@ function explainPlaylistError(error: unknown): Error {
     return new Error(`Spotify returned ${error.status}: ${error.message}`);
   }
   return error instanceof Error ? error : new Error('Could not read that playlist.');
+}
+
+/** Guards against a malformed deck.json quietly producing unplayable cards. */
+function isCard(value: unknown): value is Card {
+  const card = value as Partial<Card> | null;
+  return (
+    typeof card?.id === 'string' &&
+    typeof card.uri === 'string' &&
+    typeof card.title === 'string' &&
+    typeof card.artist === 'string' &&
+    typeof card.year === 'number'
+  );
 }
 
 /** Stable 4-character id derived from the track URI (FNV-1a). */

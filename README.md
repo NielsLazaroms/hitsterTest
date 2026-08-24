@@ -34,6 +34,30 @@ The dev server is pinned to `127.0.0.1:5200` in `angular.json`.
 Development Mode rules, as of 2026: the app owner must hold Spotify Premium,
 at most five users can be allow-listed, and everyone playing needs Premium.
 
+## Handing it to someone else
+
+A deployed copy can carry its own configuration so the recipient never sees the
+dashboard at all. Both settings live in `src/app/core/config.ts`. The client id is safe to
+commit: a PKCE client id is a public identifier that travels in every authorize
+URL, which is the whole point of the flow.
+
+The bundled deck is a weaker guarantee. A card's QR holds only an opaque id, so
+scanning one with a plain camera gives nothing away — but `deck.json` maps
+every id to its answer and is served publicly, so a curious player could read
+the whole deck from one URL. That was always true of the copy in the device's
+own storage; shipping the file makes it a step easier. For a party game among
+people you invited, that is a fair trade for removing the import step.
+
+- `BUILT_IN_CLIENT_ID` — set it and the setup screen collapses to a single
+  "Connect Spotify" button. A client id entered by hand still overrides it.
+- `public/deck.json` — a deck exported from Settings, dropped in as an asset.
+  It loads on any device that has not built or imported a deck of its own, and
+  is deliberately not written to storage, so a later deploy can ship a corrected
+  deck to players who never edited theirs.
+
+This changes only the setup friction, not who may play: Development Mode still
+caps the app at five allow-listed Spotify accounts, each needing Premium.
+
 ## Using it
 
 - **Settings → Build deck** — paste a playlist you own. The builder flags any

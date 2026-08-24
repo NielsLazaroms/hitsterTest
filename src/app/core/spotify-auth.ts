@@ -1,4 +1,5 @@
 import { Injectable, signal } from '@angular/core';
+import { BUILT_IN_CLIENT_ID } from './config';
 import { read, remove, write } from './storage';
 
 const AUTHORIZE = 'https://accounts.spotify.com/authorize';
@@ -35,8 +36,17 @@ export class SpotifyAuth {
 
   readonly connected = signal(this.hasRefreshToken());
 
+  /**
+   * A stored id wins over the built-in one, so a deployed copy can still be
+   * pointed at a different Spotify app from the setup screen.
+   */
   clientId(): string {
-    return read<string>('clientId', '');
+    return read<string>('clientId', '') || BUILT_IN_CLIENT_ID;
+  }
+
+  /** True when the app ships with an id and need not ask for one. */
+  hasBuiltInClientId(): boolean {
+    return BUILT_IN_CLIENT_ID.length > 0;
   }
 
   /**
