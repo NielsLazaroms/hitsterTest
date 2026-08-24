@@ -77,6 +77,8 @@ export class DeckBuilder {
       .map(({ id, uri, title, artist, year }) => ({ id, uri, title, artist, year }));
 
     this.deck.save(cards);
-    void this.router.navigate(['/settings']);
+    // Land on Settings and share straight away, so a freshly built deck shows
+    // its code without a second button press.
+    void this.router.navigate(['/settings'], { queryParams: { share: 1 } });
   }
 }
