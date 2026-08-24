@@ -1,0 +1,20 @@
+# Deploy settings, kept in the repo so they cannot drift from what the build
+# actually produces. This file overrides anything set in the Netlify UI.
+
+[build]
+  command = "npm run build"
+
+  # The Angular application builder writes the served files one level deeper
+  # than the project folder. Pointing at dist/hitsterTest instead yields a site
+  # with no index.html at its root.
+  publish = "dist/hitsterTest/browser"
+
+[build.environment]
+  # Angular 22 requires ^22.22.3 || ^24.15.0 || >=26, and the CLI refuses to
+  # run on anything older rather than warning. Netlify's default is not
+  # guaranteed to satisfy that, so pin it.
+  NODE_VERSION = "24"
+
+# The SPA fallback lives in public/_redirects, which the build copies into the
+# publish folder. It is not repeated here: _redirects wins over netlify.toml
+# where the two disagree, so one source is less confusing than two.
