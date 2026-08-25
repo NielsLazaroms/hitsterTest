@@ -83,12 +83,15 @@ export default async (req) => {
       return Response.json({ error: 'That deck is too large to share.' }, { status: 413 });
     }
 
-    // Try a few random codes; onlyIfNew makes the write fail rather than clobber
-    // an existing deck, so two uploads can never collide onto one code.
+    // Try a few random codes. This version of @netlify/blobs has no atomic
+    // conditional write (no onlyIfNew), so probe for a free code with a cheap
+    // metadata read before writing. The code space is large enough that a
+    // collision is rare and the tiny check-then-write race is acceptable here.
     for (let attempt = 0; attempt < 8; attempt++) {
       const code = randomCode();
-      const result = await store.setJSON(code, payload, { onlyIfNew: true });
-      if (result.modified) return Response.json({ code });
+      if (await store.getMetadata(code)) continue;
+      await store.setJSON(code, payload);
+      return Response.json({ code });
     }
     return Response.json({ error: 'Could not allocate a code — try again.' }, { status: 503 });
   }
