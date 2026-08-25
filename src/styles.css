@@ -14,6 +14,14 @@
   --warn: #dfb864;
   --bad: #ee9188;
   --radius: 12px;
+
+  /* The Share cassette: a warm paper inlay card against the plum shell, plus
+     the handwritten face reserved for the deck name written on it. */
+  --tape-label: #e9dfc8;
+  --tape-label-2: #dccfb0;
+  --tape-ink: #2a2237;
+  --tape-band: #6b5847;
+  --font-hand: 'Caveat', ui-rounded, cursive;
 }
 
 * {
@@ -64,7 +72,14 @@ select {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  min-height: 100dvh;
+}
+
+/* Prefer the dynamic viewport height where supported, so the sticky bar and
+   layout account for mobile browser chrome that comes and goes. */
+@supports (min-height: 100dvh) {
+  .page {
+    min-height: 100dvh;
+  }
 }
 
 .bar {
@@ -95,6 +110,28 @@ select {
   color: var(--accent);
   border: 1px solid var(--line);
   border-radius: 8px;
+}
+
+/* Square, icon-only header actions — Share and Settings live here side by side. */
+.bar .iconbtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  color: var(--accent);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+
+.bar .iconbtn:hover {
+  background: var(--panel-2);
+  border-color: var(--accent-solid);
 }
 
 .body {

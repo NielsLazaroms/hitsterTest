@@ -1,17 +1,16 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { DeckService } from '../../core/deck';
+import { Icon } from '../../core/icon';
 import { Player } from '../../core/player';
-import { qrSvg } from '../../core/qr';
 import { SpotifyApi } from '../../core/spotify-api';
 import { SpotifyAuth } from '../../core/spotify-auth';
 import type { Card, SpotifyDevice } from '../../core/models';
 
 @Component({
   selector: 'app-settings',
-  imports: [FormsModule, RouterLink],
+  imports: [FormsModule, RouterLink, Icon],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './settings.html',
   styleUrl: './settings.css',
@@ -21,7 +20,6 @@ export class Settings {
   private readonly auth = inject(SpotifyAuth);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
-  private readonly sanitizer = inject(DomSanitizer);
 
   protected readonly deck = inject(DeckService);
   protected readonly player = inject(Player);
@@ -30,15 +28,6 @@ export class Settings {
   readonly deviceError = signal('');
   readonly loadingDevices = signal(true);
   readonly message = signal('');
-
-  /** The code returned after sharing, and a QR that deep-links to it. */
-  readonly shareCode = signal('');
-  readonly shareQr = signal<SafeHtml | null>(null);
-  readonly sharing = signal(false);
-
-  /** The code someone types in to pull a deck from another device. */
-  readonly codeInput = signal('');
-  readonly loadingCode = signal(false);
 
   readonly clipOptions = [
     { value: 0, label: 'Play until I stop it' },
@@ -50,56 +39,10 @@ export class Settings {
   constructor() {
     void this.loadDevices();
 
-    const params = this.route.snapshot.queryParamMap;
-
-    // A QR scanned from another device lands here as /settings?code=xxxx —
-    // pull that deck straight away so scanning is all it takes.
-    const code = params.get('code');
-    if (code) {
-      this.codeInput.set(code);
-      void this.loadCode();
-      return;
-    }
-
-    // The deck builder sends /settings?share=1 after saving, so a freshly built
-    // deck shows its share code without a second button press.
-    if (params.get('share') && this.deck.count()) {
-      void this.shareDeck();
-    }
-  }
-
-  async shareDeck(): Promise<void> {
-    this.sharing.set(true);
-    this.message.set('');
-    this.shareCode.set('');
-    this.shareQr.set(null);
-    try {
-      const code = await this.deck.share();
-      this.shareCode.set(code);
-      const link = `${location.origin}/settings?code=${code}`;
-      this.shareQr.set(this.sanitizer.bypassSecurityTrustHtml(qrSvg(link)));
-      this.message.set('Deck shared. Enter the code on the other device, or scan the QR.');
-    } catch (error) {
-      this.message.set(error instanceof Error ? error.message : 'Could not share the deck.');
-    } finally {
-      this.sharing.set(false);
-    }
-  }
-
-  async loadCode(): Promise<void> {
-    const code = this.codeInput().trim();
-    if (!code) return;
-    this.loadingCode.set(true);
-    this.message.set('');
-    try {
-      const count = await this.deck.loadShared(code);
-      this.message.set(`Loaded ${count} cards from ${code.toLowerCase()}.`);
-      this.codeInput.set('');
-    } catch (error) {
-      this.message.set(error instanceof Error ? error.message : 'Could not load that code.');
-    } finally {
-      this.loadingCode.set(false);
-    }
+    // Sharing moved to its own page. Older shared QR codes still point at
+    // /settings?code=xxxx, so forward those to /share, which now owns the flow.
+    const code = this.route.snapshot.queryParamMap.get('code');
+    if (code) void this.router.navigate(['/share'], { queryParams: { code } });
   }
 
   async loadDevices(): Promise<void> {
@@ -145,7 +88,10 @@ export class Settings {
 
     try {
       const parsed: unknown = JSON.parse(await file.text());
-      if (!Array.isArray(parsed)) throw new Error('not a deck');
+      if (!Array.isArray(parsed)) {
+        this.message.set('That file is not a deck export.');
+        return;
+      }
       this.deck.save(parsed as Card[]);
       this.message.set(`Imported ${parsed.length} cards.`);
     } catch {

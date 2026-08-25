@@ -1,7 +1,12 @@
 <div class="page">
   <div class="bar">
     <h2>Mixtape</h2>
-    <button type="button" routerLink="/settings">Settings</button>
+    <button class="iconbtn" type="button" routerLink="/share" aria-label="Share deck">
+      <app-icon name="share-2" />
+    </button>
+    <button class="iconbtn" type="button" routerLink="/settings" aria-label="Settings">
+      <app-icon name="settings" />
+    </button>
   </div>
 
   @switch (mode()) {

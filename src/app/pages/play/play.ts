@@ -11,6 +11,7 @@ import {
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { DeckService } from '../../core/deck';
+import { Icon } from '../../core/icon';
 import { Player } from '../../core/player';
 import { isInAppBrowser } from '../../core/environment';
 import { QrScanner, cardIdFromScan, explainCameraError } from '../../core/scanner';
@@ -19,7 +20,7 @@ type Mode = 'idle' | 'scanning' | 'manual' | 'playing';
 
 @Component({
   selector: 'app-play',
-  imports: [FormsModule, RouterLink],
+  imports: [FormsModule, RouterLink, Icon],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './play.html',
   styleUrl: './play.css',

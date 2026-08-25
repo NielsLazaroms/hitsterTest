@@ -1,0 +1,106 @@
+<div class="page">
+  <div class="bar">
+    <button class="iconbtn" type="button" routerLink="/play" aria-label="Back to play">
+      <app-icon name="arrow-left" />
+    </button>
+    <h2>Share</h2>
+    <span class="spacer"></span>
+  </div>
+
+  <div class="body">
+    <p class="lede">
+      Make a copy of this deck for another phone — hand over the code, or let them scan the sticker.
+      No file to move.
+    </p>
+
+    <!-- The deck, drawn as a cassette. The label carries its name and code. -->
+    <div class="cassette" [class.empty]="!deck.count()">
+      <span class="screw tl"></span>
+      <span class="screw tr"></span>
+      <span class="screw bl"></span>
+      <span class="screw br"></span>
+
+      <div class="label">
+        <span class="side">A</span>
+        <p class="tape-title">{{ deck.count() ? deck.deckName() : 'Empty deck' }}</p>
+        <p class="tape-meta">
+          <span>{{ deck.count() }} songs</span>
+          <span class="dot" aria-hidden="true">·</span>
+          <span class="no">no. {{ shareCode() || '————' }}</span>
+        </p>
+      </div>
+
+      <div class="window" aria-hidden="true">
+        <span class="reel"><i class="hub"></i></span>
+        <span class="band"></span>
+        <span class="reel"><i class="hub"></i></span>
+      </div>
+    </div>
+
+    @if (message()) {
+      <p class="msg" [class.ok]="!failed()" [class.err]="failed()">{{ message() }}</p>
+    }
+
+    @if (!shareCode()) {
+      <button
+        class="btn share"
+        type="button"
+        (click)="shareDeck()"
+        [disabled]="!deck.count() || sharing()"
+      >
+        <app-icon name="share-2" />
+        {{ sharing() ? 'Making a copy…' : 'Share this deck' }}
+      </button>
+      @if (!deck.count()) {
+        <p class="note center">Build a deck first, then come back to share it.</p>
+      }
+    } @else {
+      <div class="codebar">
+        <span class="codeval">{{ shareCode() }}</span>
+        <button class="copy" type="button" (click)="copyCode()" [attr.aria-label]="copied() ? 'Copied' : 'Copy code'">
+          <app-icon [name]="copied() ? 'check' : 'copy'" />
+          {{ copied() ? 'Copied' : 'Copy' }}
+        </button>
+      </div>
+
+      @if (shareQr()) {
+        <div class="sticker">
+          <div class="qr" [innerHTML]="shareQr()"></div>
+        </div>
+        <p class="note center">Scan to open this deck on the other phone.</p>
+      }
+
+      <button class="btn ghost sm again" type="button" (click)="shareDeck()">
+        Make another copy
+      </button>
+    }
+
+    <div class="divider"><span>or receive a deck</span></div>
+
+    <label for="code">Enter a code someone sent you</label>
+    <div class="receive">
+      <input
+        id="code"
+        class="field"
+        type="text"
+        maxlength="4"
+        autocapitalize="off"
+        autocomplete="off"
+        spellcheck="false"
+        placeholder="k7qf"
+        [ngModel]="codeInput()"
+        (ngModelChange)="codeInput.set($event)"
+        (keydown.enter)="loadCode()"
+      />
+      <button
+        class="btn sm load"
+        type="button"
+        (click)="loadCode()"
+        [disabled]="!codeInput().trim() || loadingCode()"
+      >
+        <app-icon name="download" />
+        {{ loadingCode() ? 'Loading…' : 'Load' }}
+      </button>
+    </div>
+  </div>
+</div>

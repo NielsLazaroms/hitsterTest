@@ -35,7 +35,10 @@ export class DeckBuilder {
 
     try {
       const drafts = await this.deck.fromPlaylist(this.playlistUrl());
-      if (drafts.length === 0) throw new Error('No playable tracks found in that playlist.');
+      if (drafts.length === 0) {
+        this.error.set('No playable tracks found in that playlist.');
+        return;
+      }
       this.drafts.set(drafts);
       this.notice.set(`${drafts.length} tracks loaded. ${this.suspectCount()} need a second look.`);
     } catch (error) {
@@ -77,8 +80,8 @@ export class DeckBuilder {
       .map(({ id, uri, title, artist, year }) => ({ id, uri, title, artist, year }));
 
     this.deck.save(cards);
-    // Land on Settings and share straight away, so a freshly built deck shows
+    // Land on Share and make a copy straight away, so a freshly built deck shows
     // its code without a second button press.
-    void this.router.navigate(['/settings'], { queryParams: { share: 1 } });
+    void this.router.navigate(['/share'], { queryParams: { fresh: 1 } });
   }
 }
