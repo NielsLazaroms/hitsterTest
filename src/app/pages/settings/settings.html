@@ -14,78 +14,102 @@
       <p class="msg ok">{{ message() }}</p>
     }
 
-    <label for="device">Speaker / device</label>
-    <select
-      id="device"
-      class="field"
-      [ngModel]="player.deviceId()"
-      (ngModelChange)="onDeviceChange($event)"
-    >
-      @if (loadingDevices()) {
-        <option value="">Loading…</option>
-      } @else if (deviceError()) {
-        <option value="">{{ deviceError() }}</option>
-      } @else if (devices().length === 0) {
-        <option value="">Nothing found — open Spotify and play something</option>
-      } @else {
-        @for (device of devices(); track device.id) {
-          <option [value]="device.id">{{ device.name }} ({{ device.type }})</option>
+    <section class="panel">
+      <h3 class="sect">Appearance</h3>
+      <div class="segmented" role="group" aria-label="Appearance">
+        @for (option of themeOptions; track option.value) {
+          <button
+            type="button"
+            [class.on]="theme.pref() === option.value"
+            [attr.aria-pressed]="theme.pref() === option.value"
+            (click)="theme.set(option.value)"
+          >
+            {{ option.label }}
+          </button>
         }
-      }
-    </select>
+      </div>
+      <p class="note">System follows your phone's light or dark setting.</p>
+    </section>
 
-    <button class="btn ghost sm" type="button" (click)="loadDevices()">Refresh device list</button>
-    <p class="note gap">
-      Spotify only lists a device it has spoken to recently. If your speaker is missing, open
-      Spotify, play any song for a second, then refresh.
-    </p>
+    <section class="panel">
+      <h3 class="sect">Sound</h3>
 
-    <label for="clip">Clip length</label>
-    <select
-      id="clip"
-      class="field"
-      [ngModel]="player.clipLength()"
-      (ngModelChange)="onClipChange($event)"
-    >
-      @for (option of clipOptions; track option.value) {
-        <option [value]="option.value">{{ option.label }}</option>
-      }
-    </select>
+      <label for="device">Speaker / device</label>
+      <select
+        id="device"
+        class="field"
+        [ngModel]="player.deviceId()"
+        (ngModelChange)="onDeviceChange($event)"
+      >
+        @if (loadingDevices()) {
+          <option value="">Loading…</option>
+        } @else if (deviceError()) {
+          <option value="">{{ deviceError() }}</option>
+        } @else if (devices().length === 0) {
+          <option value="">Nothing found — open Spotify and play something</option>
+        } @else {
+          @for (device of devices(); track device.id) {
+            <option [value]="device.id">{{ device.name }} ({{ device.type }})</option>
+          }
+        }
+      </select>
 
-    <label>Deck</label>
-    <p class="note deckcount">
-      @if (deck.count()) {
-        {{ deck.count() }} cards in the deck.
-      } @else {
-        No cards yet — build one from a playlist.
-      }
-    </p>
+      <button class="btn ghost sm" type="button" (click)="loadDevices()">Refresh device list</button>
+      <p class="note">
+        Spotify only lists a device it has spoken to recently. If your speaker is missing, open
+        Spotify, play any song for a second, then refresh.
+      </p>
 
-    <div class="row gap-sm">
-      <button class="btn ghost sm" type="button" routerLink="/deck">Build deck</button>
-      <button class="btn ghost sm" type="button" routerLink="/print" [disabled]="!deck.count()">
-        Print cards
+      <label for="clip">Clip length</label>
+      <select
+        id="clip"
+        class="field last"
+        [ngModel]="player.clipLength()"
+        (ngModelChange)="onClipChange($event)"
+      >
+        @for (option of clipOptions; track option.value) {
+          <option [value]="option.value">{{ option.label }}</option>
+        }
+      </select>
+    </section>
+
+    <section class="panel">
+      <h3 class="sect">Deck</h3>
+
+      <p class="deckcount">
+        @if (deck.count()) {
+          <b>{{ deck.count() }}</b> cards in the deck.
+        } @else {
+          No cards yet — build one from a playlist.
+        }
+      </p>
+
+      <div class="row gap-sm">
+        <button class="btn ghost sm" type="button" routerLink="/deck">Build deck</button>
+        <button class="btn ghost sm" type="button" routerLink="/print" [disabled]="!deck.count()">
+          Print cards
+        </button>
+      </div>
+
+      <div class="row gap-sm">
+        <button class="btn ghost sm" type="button" (click)="exportDeck()" [disabled]="!deck.count()">
+          Export
+        </button>
+        <button class="btn ghost sm" type="button" (click)="file.click()">Import</button>
+      </div>
+      <input #file type="file" accept="application/json" hidden (change)="importDeck($event)" />
+
+      <button class="btn ghost sm share-link last" type="button" routerLink="/share">
+        <app-icon name="share-2" />
+        Hand this deck to another phone
       </button>
-    </div>
+    </section>
 
-    <div class="row gap">
-      <button class="btn ghost sm" type="button" (click)="exportDeck()" [disabled]="!deck.count()">
-        Export
+    <section class="panel">
+      <h3 class="sect">Account</h3>
+      <button class="btn ghost sm signout last" type="button" (click)="signOut()">
+        Disconnect Spotify
       </button>
-      <button class="btn ghost sm" type="button" (click)="file.click()">Import</button>
-    </div>
-    <input #file type="file" accept="application/json" hidden (change)="importDeck($event)" />
-
-    <label>Share across devices</label>
-    <p class="note">
-      Build a deck on one phone, then hand it to another — no file to move. Sharing works on the
-      deployed site, not local preview.
-    </p>
-    <button class="btn ghost sm share-link" type="button" routerLink="/share">
-      <app-icon name="share-2" />
-      Open sharing
-    </button>
-
-    <button class="btn ghost sm signout" type="button" (click)="signOut()">Disconnect Spotify</button>
+    </section>
   </div>
 </div>

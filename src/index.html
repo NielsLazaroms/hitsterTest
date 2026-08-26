@@ -5,18 +5,35 @@
   <title>Mixtape</title>
   <base href="/">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#171320">
-  <meta name="color-scheme" content="dark">
+  <!-- Two theme-colors so the mobile browser chrome matches whichever theme is live. -->
+  <meta name="theme-color" content="#e7f1f1" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#141719" media="(prefers-color-scheme: dark)">
+  <meta name="color-scheme" content="light dark">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icon-192.png" type="image/png">
   <link rel="apple-touch-icon" href="icon-192.png">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <!-- Caveat is used only for the handwritten deck name on the Share cassette. -->
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+
+  <!-- Set the saved theme before first paint so there is no flash of the wrong
+       one. Mirrors the ThemeService: pref 'light'/'dark' pins the attribute,
+       'system' (or none) defers to the OS. Default is light. -->
+  <script>
+    try {
+      var raw = localStorage.getItem('mixtape.theme');
+      var pref = raw ? JSON.parse(raw) : 'light';
+      if (pref === 'light' || pref === 'dark') {
+        document.documentElement.setAttribute('data-theme', pref);
+      }
+    } catch (e) { /* storage blocked — fall back to the light default */ }
+  </script>
+
+  <!-- Type: Bricolage Grotesque (display), Hanken Grotesk (body),
+       JetBrains Mono (readouts), Caveat (the handwritten deck name on kraft). -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Caveat:wght@600;700&display=swap" rel="stylesheet">
 </head>
 <body>
   <app-root></app-root>

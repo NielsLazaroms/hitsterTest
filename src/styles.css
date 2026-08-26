@@ -1,27 +1,134 @@
 /* Mixtape — global design tokens and shared UI primitives.
-   Page-specific rules live in each component's own stylesheet. */
+   Page-specific rules live in each component's own stylesheet.
+
+   The look: a cassette insert, not a black box. Cool paper, retro teal, one
+   coral pop for the action that matters. Light-first, with a graphite dark
+   variant. Every colour flows through a token so both themes stay honest —
+   never hardcode a hex in a component. */
+
+/* ---------------------------------------------------------------- tokens ---- */
 
 :root {
-  --bg: #171320;
-  --panel: #211b2b;
-  --panel-2: #2a2237;
-  --line: #392f49;
-  --text: #ede7f0;
-  --dim: #a093aa;
-  --accent: #c79bd4;
-  --accent-solid: #6d3f7a;
-  --ok: #79c79b;
-  --warn: #dfb864;
-  --bad: #ee9188;
-  --radius: 12px;
+  color-scheme: light;
 
-  /* The Share cassette: a warm paper inlay card against the plum shell, plus
-     the handwritten face reserved for the deck name written on it. */
-  --tape-label: #e9dfc8;
-  --tape-label-2: #dccfb0;
-  --tape-ink: #2a2237;
+  /* surfaces — cool paper, biased faintly cyan so the neutral reads chosen */
+  --bg: #e7f1f1;
+  --panel: #ffffff;
+  --panel-2: #eef7f6;
+  --line: #d3e3e1;
+
+  /* ink */
+  --text: #123330;
+  --dim: #4f6d69;
+
+  /* brand — a single teal→cyan family, no second hue. `--teal-deep` is the
+     readable teal TEXT colour and flips with the theme (deep teal on light,
+     bright cyan on dark); `--teal-fill` stays deep teal in both themes for
+     surfaces under white/light text. `--coral*` is the same family: `--coral`
+     is the brighter cyan for glows and the REC light (never text), `--coral-deep`
+     is the deep-teal button fill. */
+  --teal: #0f9a8f;
+  --teal-bright: #17b3a5;
+  --teal-deep: #0a6b63;
+  --teal-fill: #0a6b63;
+  --coral: #12b6a6;
+  --coral-deep: #0a6b63;
+
+  /* legacy names kept so component CSS follows for free */
+  --accent: var(--teal);
+  --accent-solid: var(--coral-deep);
+
+  /* status — distinct from the accent hue, dark enough to read on light tints */
+  --ok: #0f7a4f;
+  --warn: #8a5e12;
+  --bad: #b83c25;
+
+  /* the machine's readouts — a printed teal chiclet in light */
+  --readout-well: linear-gradient(180deg, #eaf4f2, #dcebe8);
+  --readout-ink: var(--teal-deep);
+  --readout-glow: 0 1px 0 #ffffff;
+
+  /* the media — kraft paper and sepia tape, the analog surfaces */
+  --kraft: #dccaa2;
+  --kraft-2: #cdb98d;
+  --ink-on-kraft: #2a2318;
+  --tape: #6f5a45;
   --tape-band: #6b5847;
+  --vu: #0f9a8f;
+
+  /* depth */
+  --shadow-sm: 0 12px 26px -16px rgb(16 54 49 / 42%);
+  --shadow-lg: 0 34px 70px -34px rgb(16 54 49 / 48%);
+
+  /* Softer than boxes: pill actions, chunky panels, gently rounded fields —
+     it reads like moulded hardware rather than a stack of outlined rectangles. */
+  --radius: 14px;
+  --radius-lg: 22px;
+  --radius-field: 14px;
+  --radius-pill: 999px;
+
+  --font-display: 'Bricolage Grotesque', system-ui, sans-serif;
+  --font-body: 'Hanken Grotesk', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   --font-hand: 'Caveat', ui-rounded, cursive;
+}
+
+/* Graphite dark — neutral charcoal so teal and coral read at full saturation. */
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --bg: #141719;
+    --panel: #1e2225;
+    --panel-2: #262b2e;
+    --line: #2c3236;
+    --text: #eef1f2;
+    --dim: #9aa3a6;
+    --teal: #26cbb6;
+    --teal-bright: #63e6d3;
+    --teal-deep: #63e6d3;
+    --teal-fill: #0e6f65;
+    --coral: #4fe0d0;
+    --coral-deep: #0e6f65;
+    --ok: #5bd0a4;
+    --warn: #e6b25a;
+    --bad: #ff8a6b;
+    --readout-well: linear-gradient(180deg, #0e1113, #141719);
+    --readout-ink: var(--teal-bright);
+    --readout-glow: 0 0 12px rgb(47 210 195 / 50%), 0 0 2px rgb(150 255 240 / 60%);
+    --vu: #4fd8c9;
+    --shadow-sm: 0 12px 26px -16px #000;
+    --shadow-lg: 0 40px 80px -34px #000;
+  }
+}
+
+/* Manual overrides win over the OS preference in both directions. */
+:root[data-theme='light'] {
+  color-scheme: light;
+  --bg: #e7f1f1; --panel: #ffffff; --panel-2: #eef7f6; --line: #d3e3e1;
+  --text: #123330; --dim: #4f6d69;
+  --teal: #0f9a8f; --teal-bright: #17b3a5; --teal-deep: #0a6b63; --teal-fill: #0a6b63;
+  --coral: #12b6a6; --coral-deep: #0a6b63;
+  --ok: #0f7a4f; --warn: #8a5e12; --bad: #b83c25;
+  --readout-well: linear-gradient(180deg, #eaf4f2, #dcebe8);
+  --readout-ink: var(--teal-deep); --readout-glow: 0 1px 0 #ffffff;
+  --vu: #0f9a8f;
+  --shadow-sm: 0 12px 26px -16px rgb(16 54 49 / 42%);
+  --shadow-lg: 0 34px 70px -34px rgb(16 54 49 / 48%);
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --bg: #141719; --panel: #1e2225; --panel-2: #262b2e; --line: #2c3236;
+  --text: #eef1f2; --dim: #9aa3a6;
+  --teal: #26cbb6; --teal-bright: #63e6d3; --teal-deep: #63e6d3; --teal-fill: #0e6f65;
+  --coral: #4fe0d0; --coral-deep: #0e6f65;
+  --ok: #5bd0a4; --warn: #e6b25a; --bad: #ff8a6b;
+  --readout-well: linear-gradient(180deg, #0e1113, #141719);
+  --readout-ink: var(--teal-bright);
+  --readout-glow: 0 0 12px rgb(47 210 195 / 50%), 0 0 2px rgb(150 255 240 / 60%);
+  --vu: #4fd8c9;
+  --shadow-sm: 0 12px 26px -16px #000;
+  --shadow-lg: 0 40px 80px -34px #000;
 }
 
 * {
@@ -39,9 +146,10 @@ body {
 body {
   background: var(--bg);
   color: var(--text);
-  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  font-family: var(--font-body), sans-serif;
   font-size: 16px;
   line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
   overscroll-behavior: none;
   padding-top: env(safe-area-inset-top);
   padding-bottom: env(safe-area-inset-bottom);
@@ -62,7 +170,7 @@ select {
 }
 
 :focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--teal);
   outline-offset: 2px;
 }
 
@@ -74,8 +182,6 @@ select {
   min-height: 100vh;
 }
 
-/* Prefer the dynamic viewport height where supported, so the sticky bar and
-   layout account for mobile browser chrome that comes and goes. */
 @supports (min-height: 100dvh) {
   .page {
     min-height: 100dvh;
@@ -90,14 +196,17 @@ select {
   align-items: center;
   gap: 12px;
   padding: 14px 18px;
-  background: var(--bg);
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  backdrop-filter: saturate(1.4) blur(10px);
   border-bottom: 1px solid var(--line);
 }
 
 .bar h2 {
   flex: 1;
-  font-size: 15px;
-  font-weight: 600;
+  font-family: var(--font-display), sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
 }
 
 .bar .spacer {
@@ -105,38 +214,51 @@ select {
 }
 
 .bar button {
-  padding: 6px 10px;
-  font-size: 13px;
-  color: var(--accent);
+  padding: 7px 14px;
+  font-family: var(--font-mono), monospace;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: var(--teal-deep);
+  background: var(--panel);
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: var(--radius-pill);
 }
 
-/* Square, icon-only header actions — Share and Settings live here side by side. */
+.bar button:hover {
+  border-color: var(--teal);
+}
+
+/* Square, icon-only header actions. */
 .bar .iconbtn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 38px;
-  height: 38px;
+  width: 40px;
+  height: 40px;
   padding: 0;
-  color: var(--accent);
+  color: var(--teal-deep);
   background: var(--panel);
   border: 1px solid var(--line);
-  border-radius: 10px;
+  border-radius: 50%;
+  box-shadow: var(--shadow-sm);
   transition:
     border-color 0.15s ease,
-    background 0.15s ease;
+    color 0.15s ease,
+    transform 0.1s ease;
 }
 
 .bar .iconbtn:hover {
-  background: var(--panel-2);
-  border-color: var(--accent-solid);
+  color: var(--teal);
+  border-color: var(--teal);
+}
+
+.bar .iconbtn:active {
+  transform: translateY(1px);
 }
 
 .body {
   flex: 1;
-  padding: 20px 18px 40px;
+  padding: 22px 18px 44px;
   overflow-y: auto;
 }
 
@@ -152,13 +274,16 @@ select {
 
 h1 {
   margin-bottom: 8px;
-  font-size: 26px;
-  font-weight: 700;
-  letter-spacing: -0.02em;
+  font-family: var(--font-display), sans-serif;
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  line-height: 1.05;
+  text-wrap: balance;
 }
 
 .lede {
-  max-width: 34ch;
+  max-width: 40ch;
   margin-bottom: 24px;
   font-size: 15px;
   color: var(--dim);
@@ -170,11 +295,14 @@ h1 {
   color: var(--dim);
 }
 
+/* Uppercase labels read as the machine's silkscreen — set in mono. */
 label {
   display: block;
-  margin-bottom: 6px;
-  font-size: 12px;
-  letter-spacing: 0.09em;
+  margin-bottom: 7px;
+  font-family: var(--font-mono), monospace;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--dim);
 }
@@ -186,33 +314,87 @@ label {
   margin-bottom: 16px;
   padding: 13px 14px;
   font-size: 15px;
+  color: var(--text);
   background: var(--panel);
   border: 1px solid var(--line);
-  border-radius: 10px;
+  border-radius: var(--radius-field);
+  transition: border-color 0.15s ease;
+}
+
+.field::placeholder {
+  color: color-mix(in srgb, var(--dim) 70%, transparent);
+}
+
+.field:focus {
+  outline: none;
+  border-color: var(--teal);
+}
+
+select.field {
+  appearance: none;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--teal) 50%),
+    linear-gradient(135deg, var(--teal) 50%, transparent 50%);
+  background-position:
+    right 18px center,
+    right 13px center;
+  background-size:
+    5px 5px,
+    5px 5px;
+  background-repeat: no-repeat;
+  padding-right: 36px;
 }
 
 .btn {
   display: block;
   width: 100%;
   padding: 15px;
+  font-family: var(--font-display), sans-serif;
   font-size: 16px;
-  font-weight: 600;
+  font-weight: 700;
+  letter-spacing: 0.01em;
   color: #fff;
   text-align: center;
-  background: var(--accent-solid);
-  border-radius: var(--radius);
+  background: linear-gradient(180deg, var(--coral-deep), color-mix(in srgb, var(--coral-deep) 82%, #000));
+  border-radius: var(--radius-pill);
+  box-shadow:
+    0 2px 0 color-mix(in srgb, var(--coral-deep) 60%, #000),
+    inset 0 1px 0 rgb(255 255 255 / 18%),
+    var(--shadow-sm);
+  transition:
+    transform 0.1s ease,
+    box-shadow 0.1s ease,
+    filter 0.15s ease;
+}
+
+.btn:hover {
+  filter: brightness(1.04);
+}
+
+.btn:active {
+  transform: translateY(2px);
+  box-shadow: 0 0 0 color-mix(in srgb, var(--coral-deep) 65%, #000);
 }
 
 .btn:disabled {
   opacity: 0.4;
   cursor: default;
+  box-shadow: none;
 }
 
+/* Ghost — the quiet secondary. Teal outline, no fill. */
 .btn.ghost {
-  font-weight: 500;
+  font-weight: 600;
   color: var(--text);
-  background: none;
+  background: var(--panel);
   border: 1px solid var(--line);
+  box-shadow: var(--shadow-sm);
+}
+
+.btn.ghost:hover {
+  filter: none;
+  border-color: var(--teal);
+  color: var(--teal-deep);
 }
 
 .btn.sm {
@@ -233,27 +415,32 @@ label {
 
 .msg {
   margin-bottom: 16px;
-  padding: 12px 14px;
+  padding: 13px 16px;
   font-size: 14px;
-  border-radius: 10px;
+  border-radius: var(--radius);
 }
 
 .msg.err {
   color: var(--bad);
-  background: #37211f;
-  border: 1px solid #4d2b28;
+  background: color-mix(in srgb, var(--bad) 12%, var(--panel));
+  border: 1px solid color-mix(in srgb, var(--bad) 32%, var(--line));
 }
 
 .msg.ok {
   color: var(--ok);
-  background: #1d3229;
-  border: 1px solid #27473a;
+  background: color-mix(in srgb, var(--ok) 12%, var(--panel));
+  border: 1px solid color-mix(in srgb, var(--ok) 32%, var(--line));
 }
 
 .msg.warn {
   color: var(--warn);
-  background: #332914;
-  border: 1px solid #4a3c1d;
+  background: color-mix(in srgb, var(--warn) 13%, var(--panel));
+  border: 1px solid color-mix(in srgb, var(--warn) 34%, var(--line));
+}
+
+.msg b {
+  color: var(--text);
+  font-weight: 600;
 }
 
 /* -------------------------------------------------------------- steps ---- */
@@ -268,7 +455,7 @@ label {
 .steps li {
   position: relative;
   margin-bottom: 14px;
-  padding-left: 30px;
+  padding-left: 32px;
   font-size: 14.5px;
   color: var(--dim);
 }
@@ -278,19 +465,22 @@ label {
   color: var(--text);
 }
 
+/* Numbered because setup genuinely is an ordered sequence. */
 .steps li .n {
   position: absolute;
-  top: 1px;
+  top: 0;
   left: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 20px;
-  height: 20px;
+  width: 21px;
+  height: 21px;
+  font-family: var(--font-mono), monospace;
   font-size: 11px;
-  font-weight: 600;
-  color: #fff;
-  background: var(--accent-solid);
+  font-weight: 700;
+  color: var(--teal-deep);
+  background: color-mix(in srgb, var(--teal) 16%, var(--panel));
+  border: 1px solid color-mix(in srgb, var(--teal) 40%, var(--line));
   border-radius: 50%;
 }
 
@@ -299,23 +489,24 @@ label {
   align-items: center;
   gap: 10px;
   margin-bottom: 8px;
-  padding: 11px 13px;
+  padding: 12px 15px;
   background: var(--panel-2);
   border: 1px solid var(--line);
-  border-radius: 10px;
+  border-radius: var(--radius);
 }
 
 .copybox code {
   flex: 1;
-  font-family: ui-monospace, monospace;
+  font-family: var(--font-mono), monospace;
   font-size: 12.5px;
-  color: var(--accent);
+  color: var(--teal-deep);
   word-break: break-all;
 }
 
 .copybox button {
+  font-family: var(--font-mono), monospace;
   font-size: 12px;
-  color: var(--accent);
+  color: var(--teal-deep);
   white-space: nowrap;
 }
 

@@ -50,7 +50,7 @@ input[type='number'] {
   font-variant-numeric: tabular-nums;
   background: var(--panel);
   border: 1px solid var(--line);
-  border-radius: 7px;
+  border-radius: 10px;
 }
 
 input.flag {
@@ -92,16 +92,12 @@ input.flag {
 /* Raw diagnostic output — meant to be read, and pasted somewhere for help. */
 .report {
   margin: 0 0 16px;
-  padding: 12px;
-  border-radius: 8px;
-  background: #14161a;
-  color: #d6dae0;
-  font:
-    12px/1.5 ui-monospace,
-    SFMono-Regular,
-    Menlo,
-    Consolas,
-    monospace;
+  padding: 14px;
+  border-radius: 14px;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  color: var(--text);
+  font: 12px/1.5 var(--font-mono), monospace;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
   user-select: text;

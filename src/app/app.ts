@@ -1,5 +1,6 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
+import { Theme } from './core/theme';
 
 @Component({
   selector: 'app-root',
@@ -8,4 +9,11 @@ import { RouterOutlet } from '@angular/router';
   templateUrl: './app.html',
   styleUrl: './app.css',
 })
-export class App {}
+export class App {
+  constructor() {
+    // Resolve the theme service on boot so the saved preference is applied and
+    // kept in sync from the start, not only once Settings is opened. Nothing
+    // needs to hold the reference — it is a root singleton with a live effect.
+    inject(Theme);
+  }
+}

@@ -2,20 +2,79 @@
   text-align: center;
 }
 
-.gap {
-  margin-bottom: 26px;
+/* Each group of controls sits on its own panel — the app read as a small
+   control deck rather than one long stack of buttons. */
+.panel {
+  margin-bottom: 16px;
+  padding: 20px;
+  background: var(--panel);
+  border-radius: var(--radius-lg);
+  box-shadow:
+    var(--shadow-sm),
+    inset 0 1px 0 rgb(255 255 255 / 6%);
+}
+
+/* A silkscreened section label, like a legend printed on the faceplate. */
+.sect {
+  margin-bottom: 16px;
+  padding-bottom: 11px;
+  font-family: var(--font-mono), monospace;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--teal-deep);
+  border-bottom: 1px solid var(--line);
+}
+
+/* The last control in a panel shouldn't carry the trailing gap the shared
+   primitives add — the panel padding already handles it. */
+.field.last,
+.btn.last {
+  margin-bottom: 0;
 }
 
 .gap-sm {
   margin-bottom: 12px;
 }
 
-.note.gap {
-  margin-top: 10px;
+.deckcount {
+  margin: 0 0 14px;
+  font-size: 14px;
+  color: var(--dim);
 }
 
-.deckcount {
-  margin: 0 0 12px;
+.deckcount b {
+  color: var(--text);
+  font-weight: 700;
+}
+
+/* Appearance switch — a physical selector row. */
+.segmented {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  background: var(--panel-2);
+  border-radius: var(--radius-pill);
+}
+
+.segmented button {
+  flex: 1;
+  padding: 10px;
+  font-family: var(--font-display), sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--dim);
+  border-radius: var(--radius-pill);
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.segmented button.on {
+  color: #fff;
+  background: var(--teal-fill);
+  box-shadow: var(--shadow-sm);
 }
 
 /* The link out to the dedicated Share page. */
@@ -27,6 +86,7 @@
   --icon-size: 16px;
 }
 
-.signout {
-  margin-top: 26px;
+.signout:hover {
+  border-color: var(--bad);
+  color: var(--bad);
 }

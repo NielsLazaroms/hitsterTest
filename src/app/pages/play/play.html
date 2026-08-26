@@ -1,6 +1,7 @@
 <div class="page">
   <div class="bar">
-    <h2>Mixtape</h2>
+    <span class="led" [class.hot]="player.status() === 'playing'" aria-hidden="true"></span>
+    <h2 class="wordmark">Mixtape</h2>
     <button class="iconbtn" type="button" routerLink="/share" aria-label="Share deck">
       <app-icon name="share-2" />
     </button>
@@ -62,38 +63,69 @@
     <!-- ---------------------------------------------------- playing ---- -->
     @case ('playing') {
       <div class="body now">
-        <div class="wave" [class.still]="player.status() !== 'playing'" aria-hidden="true">
-          <i></i><i></i><i></i><i></i><i></i>
-        </div>
-
-        <p class="nowlabel">
+        <p class="status">
           @switch (player.status()) {
-            @case ('playing') { Playing }
+            @case ('playing') { <span class="on">Now playing</span> }
             @case ('paused') { Paused }
-            @case ('finished') { Time }
-            @default { Loading }
+            @case ('finished') { Time&rsquo;s up }
+            @default { Loading&hellip; }
           }
         </p>
 
-        <p class="timer">{{ player.clock() }}</p>
-        <p class="cardtag">{{ card()?.id }}</p>
+        <!-- The transport: two reels turning while the tape runs, the counter
+             between them. Nothing here may hint at the song. -->
+        <div class="transport">
+          <span class="reel" [class.spinning]="player.status() === 'playing'" aria-hidden="true">
+            <span class="hub"></span>
+          </span>
+
+          <div class="counter">
+            <span class="readout">{{ player.clock() }}</span>
+            <span class="lab">Tape counter</span>
+          </div>
+
+          <span class="reel" [class.spinning]="player.status() === 'playing'" aria-hidden="true">
+            <span class="hub"></span>
+          </span>
+        </div>
+
+        <div class="vu" [class.still]="player.status() !== 'playing'" aria-hidden="true">
+          <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+        </div>
+
+        <p class="cardtag">Card &middot; {{ card()?.id }}</p>
 
         <div class="controls">
-          <button class="btn ghost" type="button" (click)="player.restart()">Restart</button>
-          <button class="btn ghost" type="button" (click)="togglePause()">
-            {{ player.status() === 'playing' ? 'Pause' : 'Resume' }}
+          <button class="key" type="button" (click)="player.restart()" aria-label="Restart">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 5h2v14H6zM20 5 9 12l11 7z"/></svg>
+            <span>Restart</span>
           </button>
-          <button class="btn wide" type="button" (click)="nextCard()">Next card</button>
+          <button class="key" type="button" (click)="togglePause()">
+            @if (player.status() === 'playing') {
+              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>
+              <span>Pause</span>
+            } @else {
+              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+              <span>Resume</span>
+            }
+          </button>
+          <button class="key lit wide" type="button" (click)="nextCard()">
+            <span>Next card</span>
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4 5l11 7L4 19zM16 5h2.5v14H16z"/></svg>
+          </button>
         </div>
 
         <div class="reveal">
           @if (revealed()) {
-            <p class="ar">{{ card()?.artist }}</p>
-            <p class="yr">{{ card()?.year }}</p>
-            <p class="ti">{{ card()?.title }}</p>
+            <div class="jcard">
+              <span class="tape-strip" aria-hidden="true"></span>
+              <p class="ar">{{ card()?.artist }}</p>
+              <p class="yr">{{ card()?.year }}</p>
+              <p class="ti">{{ card()?.title }}</p>
+            </div>
           } @else {
             <button class="revealbtn" type="button" (click)="revealed.set(true)">
-              Reveal the answer
+              &#9656; Reveal the answer
             </button>
           }
         </div>

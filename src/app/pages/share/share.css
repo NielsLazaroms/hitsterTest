@@ -13,7 +13,18 @@
 
 /* ------------------------------------------------------------- cassette ---- */
 
+/* The cassette is a physical object — a dark plastic shell the same in any
+   room light — so its shell tokens are deliberately theme-independent, the way
+   the printed cards are always white. The kraft label and teal hubs come from
+   the global palette and shift gently with the theme. */
 .cassette {
+  --shell-1: #2b302d;
+  --shell-2: #191d1b;
+  --shell-line: #3a423f;
+  --reel-face: #1c211f;
+  --reel-core: #12100f;
+  --window-bg: #0e1210;
+
   position: relative;
   width: 100%;
   max-width: 340px;
@@ -23,12 +34,12 @@
   flex-direction: column;
   gap: 14px;
   aspect-ratio: 1.6;
-  background: linear-gradient(160deg, var(--panel-2), var(--panel) 70%);
-  border: 1px solid var(--line);
-  border-radius: 14px;
+  background: linear-gradient(160deg, var(--shell-1), var(--shell-2) 72%);
+  border: 1px solid var(--shell-line);
+  border-radius: 18px;
   box-shadow:
-    0 18px 40px -24px #000,
-    inset 0 1px 0 #ffffff12;
+    var(--shadow-lg),
+    inset 0 1px 0 rgb(255 255 255 / 8%);
 }
 
 .cassette.empty {
@@ -40,25 +51,13 @@
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: radial-gradient(circle at 35% 35%, #4a3f59, #1c1725);
-  box-shadow: inset 0 0 0 1px #00000040;
+  background: radial-gradient(circle at 35% 35%, #4a544f, #14100f);
+  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 25%);
 }
-.screw.tl {
-  top: 9px;
-  left: 9px;
-}
-.screw.tr {
-  top: 9px;
-  right: 9px;
-}
-.screw.bl {
-  bottom: 9px;
-  left: 9px;
-}
-.screw.br {
-  bottom: 9px;
-  right: 9px;
-}
+.screw.tl { top: 9px; left: 9px; }
+.screw.tr { top: 9px; right: 9px; }
+.screw.bl { bottom: 9px; left: 9px; }
+.screw.br { bottom: 9px; right: 9px; }
 
 /* The paper inlay card. */
 .label {
@@ -68,17 +67,15 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
-  background: repeating-linear-gradient(
-      var(--tape-label) 0 27px,
-      #00000010 27px 28px
-    ),
-    linear-gradient(180deg, var(--tape-label), var(--tape-label-2));
+  background:
+    repeating-linear-gradient(var(--kraft) 0 27px, rgb(0 0 0 / 6%) 27px 28px),
+    linear-gradient(180deg, var(--kraft), var(--kraft-2));
   border-radius: 6px;
-  box-shadow: inset 0 0 0 1px #0000001a;
+  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 10%);
   overflow: hidden;
 }
 
-/* The "A / B" side tab printed down the left edge. */
+/* The "A" side tab printed down the left edge. */
 .side {
   position: absolute;
   top: 0;
@@ -88,11 +85,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  font-family: var(--font-mono), monospace;
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.05em;
-  color: var(--tape-label);
-  background: var(--accent-solid);
+  color: var(--kraft);
+  background: var(--teal-fill);
   writing-mode: vertical-rl;
   transform: rotate(180deg);
 }
@@ -102,8 +100,7 @@
   font-weight: 700;
   font-size: 30px;
   line-height: 1.05;
-  color: var(--tape-ink);
-  /* A handwritten line rarely fills more than a couple of rows on a label. */
+  color: var(--ink-on-kraft);
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -117,11 +114,11 @@
   align-items: center;
   gap: 7px;
   font-size: 12px;
-  color: #5a4d63;
+  color: #6a5a3f;
 }
 
 .tape-meta .no {
-  font-family: ui-monospace, monospace;
+  font-family: var(--font-mono), monospace;
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
@@ -134,9 +131,9 @@
   align-items: center;
   justify-content: space-between;
   padding: 0 14px;
-  background: #14101c;
+  background: var(--window-bg);
   border-radius: 6px;
-  box-shadow: inset 0 0 0 1px #00000055;
+  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 33%);
 }
 
 /* The tape stretched between the reels. */
@@ -160,8 +157,8 @@
   width: 54px;
   height: 54px;
   border-radius: 50%;
-  background: radial-gradient(circle at 50% 50%, #2a2237 0 34%, #17121f 35%);
-  box-shadow: inset 0 0 0 1px #ffffff10;
+  background: radial-gradient(circle at 50% 50%, var(--reel-face) 0 34%, var(--reel-core) 35%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 6%);
 }
 
 /* The toothed hub, turning as if the tape were running. */
@@ -170,9 +167,9 @@
   height: 24px;
   border-radius: 50%;
   background:
-    repeating-conic-gradient(var(--accent) 0deg 12deg, transparent 12deg 60deg),
-    var(--accent-solid);
-  box-shadow: inset 0 0 0 4px #14101c;
+    repeating-conic-gradient(var(--teal) 0deg 12deg, transparent 12deg 60deg),
+    var(--teal-deep);
+  box-shadow: inset 0 0 0 4px var(--window-bg);
   animation: reelspin 9s linear infinite;
 }
 
@@ -181,9 +178,7 @@
 }
 
 @keyframes reelspin {
-  to {
-    transform: rotate(360deg);
-  }
+  to { transform: rotate(360deg); }
 }
 
 /* --------------------------------------------------------------- shared ---- */
@@ -207,19 +202,18 @@
   padding: 12px 14px;
   background: var(--panel-2);
   border: 1px solid var(--line);
-  border-radius: 12px;
+  border-radius: 16px;
 }
 
 .codeval {
   flex: 1;
-  font-family: ui-monospace, monospace;
+  font-family: var(--font-mono), monospace;
   font-size: 30px;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.32em;
   text-align: center;
   text-transform: lowercase;
-  color: var(--accent);
-  /* letter-spacing pushes text right; nudge back so it reads centered. */
+  color: var(--teal-deep);
   text-indent: 0.32em;
 }
 
@@ -228,16 +222,17 @@
   align-items: center;
   gap: 6px;
   padding: 8px 12px;
+  font-family: var(--font-mono), monospace;
   font-size: 13px;
-  color: var(--accent);
+  color: var(--teal-deep);
   background: var(--panel);
   border: 1px solid var(--line);
-  border-radius: 9px;
+  border-radius: var(--radius-pill);
   --icon-size: 15px;
 }
 
 .copy:hover {
-  border-color: var(--accent-solid);
+  border-color: var(--teal);
 }
 
 /* The QR as a sticker. */
@@ -245,9 +240,9 @@
   width: fit-content;
   margin: 18px auto 0;
   padding: 12px;
-  background: var(--tape-label);
-  border-radius: 8px;
-  box-shadow: 0 12px 26px -16px #000;
+  background: var(--kraft);
+  border-radius: 12px;
+  box-shadow: var(--shadow-sm);
   transform: rotate(-2.5deg);
 }
 
@@ -271,6 +266,7 @@
   align-items: center;
   gap: 12px;
   margin: 30px 0 20px;
+  font-family: var(--font-mono), monospace;
   font-size: 12px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -294,7 +290,7 @@
 .receive .field {
   flex: 1;
   margin-bottom: 0;
-  font-family: ui-monospace, monospace;
+  font-family: var(--font-mono), monospace;
   letter-spacing: 0.28em;
 }
 

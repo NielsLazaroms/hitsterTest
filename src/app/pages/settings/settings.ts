@@ -6,6 +6,7 @@ import { Icon } from '../../core/icon';
 import { Player } from '../../core/player';
 import { SpotifyApi } from '../../core/spotify-api';
 import { SpotifyAuth } from '../../core/spotify-auth';
+import { Theme, type ThemePref } from '../../core/theme';
 import type { Card, SpotifyDevice } from '../../core/models';
 
 @Component({
@@ -23,6 +24,13 @@ export class Settings {
 
   protected readonly deck = inject(DeckService);
   protected readonly player = inject(Player);
+  protected readonly theme = inject(Theme);
+
+  readonly themeOptions: { value: ThemePref; label: string }[] = [
+    { value: 'light', label: 'Light' },
+    { value: 'dark', label: 'Dark' },
+    { value: 'system', label: 'System' },
+  ];
 
   readonly devices = signal<SpotifyDevice[]>([]);
   readonly deviceError = signal('');
