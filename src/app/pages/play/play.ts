@@ -38,7 +38,6 @@ export class Play implements OnDestroy {
   readonly mode = signal<Mode>('idle');
   readonly hint = signal('Point at the code on the front of a card.');
   readonly manualCode = signal('');
-  readonly revealed = signal(false);
 
   readonly inApp = isInAppBrowser();
   readonly card = computed(() => this.player.card());
@@ -134,7 +133,6 @@ export class Play implements OnDestroy {
     // A scanned card is self-contained: the id is the track. Play it straight
     // away from a URI built from the id — nothing is looked up or stored to
     // start playback.
-    this.revealed.set(false);
     this.mode.set('playing');
     await this.player.start({ id, uri: `spotify:track:${id}`, title: '', artist: '', year: 0 });
 
@@ -144,15 +142,11 @@ export class Play implements OnDestroy {
       return;
     }
 
-    // Fill in the answer for the reveal, best-effort. Playback has already
-    // started, so a slow or failed lookup never blocks the round — and the
-    // answer is printed on the card back regardless.
+    // Look up the track length so the tape counter stops when the song ends.
     try {
-      const { card, durationMs } = await this.api.track(id);
-      this.player.reveal(id, card);
-      this.player.setDuration(id, durationMs);
+      this.player.setDuration(id, await this.api.trackLengthMs(id));
     } catch {
-      /* leave the reveal blank */
+      /* no length — the clock just runs to the clip limit or a manual stop */
     }
   }
 
@@ -162,7 +156,6 @@ export class Play implements OnDestroy {
   }
 
   async nextCard(): Promise<void> {
-    this.revealed.set(false);
     this.hint.set('Point at the code on the front of a card.');
     // Open the camera straight away — no extra "Scan a card" tap. Acquire it
     // first so it stays inside this tap gesture, then stop the old song in the

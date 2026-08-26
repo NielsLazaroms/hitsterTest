@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { SpotifyAuth } from './spotify-auth';
 import type { Probe } from './diagnostics';
-import type { Card, SpotifyDevice } from './models';
+import type { SpotifyDevice } from './models';
 
 const BASE = 'https://api.spotify.com/v1';
 
@@ -95,28 +95,15 @@ export class SpotifyApi {
   }
 
   /**
-   * Looks up one track by its id, so a scanned card (which carries only the id)
-   * can reconstruct the answer to reveal — the app stores nothing locally.
+   * The track's length in ms, so the tape counter can stop when the song ends.
+   * A scanned card carries only the id, and nothing is stored, so this is looked
+   * up live.
    */
-  async track(id: string): Promise<{ card: Card; durationMs: number }> {
-    const data = await this.request<{
-      name: string;
-      artists: { name: string }[];
-      album?: { release_date: string };
-      duration_ms?: number;
-    }>(`/tracks/${encodeURIComponent(id)}`);
-
-    const year = Number.parseInt((data?.album?.release_date ?? '').slice(0, 4), 10);
-    return {
-      card: {
-        id,
-        uri: `spotify:track:${id}`,
-        title: data?.name ?? '',
-        artist: (data?.artists ?? []).map((a) => a.name).join(', '),
-        year: Number.isFinite(year) ? year : 0,
-      },
-      durationMs: data?.duration_ms ?? 0,
-    };
+  async trackLengthMs(id: string): Promise<number> {
+    const data = await this.request<{ duration_ms?: number }>(
+      `/tracks/${encodeURIComponent(id)}`,
+    );
+    return data?.duration_ms ?? 0;
   }
 
   async play(uri: string, deviceId: string | null): Promise<void> {

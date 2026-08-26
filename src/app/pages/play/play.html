@@ -114,25 +114,6 @@
             <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4 5l11 7L4 19zM16 5h2.5v14H16z"/></svg>
           </button>
         </div>
-
-        <div class="reveal">
-          @if (revealed()) {
-            @if (card()?.title) {
-              <div class="jcard">
-                <span class="tape-strip" aria-hidden="true"></span>
-                <p class="ar">{{ card()?.artist }}</p>
-                <p class="yr">{{ card()?.year }}</p>
-                <p class="ti">{{ card()?.title }}</p>
-              </div>
-            } @else {
-              <p class="hint">The answer is on the back of the card.</p>
-            }
-          } @else {
-            <button class="revealbtn" type="button" (click)="revealed.set(true)">
-              &#9656; Reveal the answer
-            </button>
-          }
-        </div>
       </div>
     }
   }

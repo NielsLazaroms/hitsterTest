@@ -58,15 +58,6 @@ export class Player {
   }
 
   /**
-   * Fills in the answer for the reveal once it has been looked up, without
-   * touching playback. Guarded by id so a slow lookup for a card the player has
-   * already moved past cannot overwrite the current one.
-   */
-  reveal(id: string, card: Card): void {
-    if (this.card()?.id === id) this.card.set(card);
-  }
-
-  /**
    * Once the track length is known, arm the clock to stop when the song ends
    * (or at the clip length, whichever comes first) — otherwise "play until I
    * stop it" leaves the tape counter running after the audio has finished.
