@@ -42,8 +42,10 @@ export interface TileOptions {
   margin: number;
   /** Gap between tiles when laid out in a grid, mm. */
   gap: number;
-  /** Widest the grid may grow before wrapping to a new row, mm. */
+  /** Usable bed width; the grid wraps to a new row past it, mm. */
   bedWidth: number;
+  /** Usable bed depth; the deck splits into a new file past it, mm. */
+  bedDepth: number;
 }
 
 export const DEFAULT_TILE: TileOptions = {
@@ -57,7 +59,8 @@ export const DEFAULT_TILE: TileOptions = {
   quiet: 2,
   margin: 1.5,
   gap: 4,
-  bedWidth: 200,
+  bedWidth: 250,
+  bedDepth: 210,
 };
 
 /**
@@ -316,17 +319,45 @@ export function tileMesh(
   );
 }
 
-/** How many tiles fit across the bed before wrapping to the next row. */
-export function gridColumns(count: number, opts: TileOptions): number {
+/** How many tiles fit along a bed dimension of the given length. */
+function bedFit(length: number, opts: TileOptions): number {
   const pitch = opts.tileSize + opts.gap;
-  const fit = Math.floor((opts.bedWidth + opts.gap) / pitch);
-  return Math.max(1, Math.min(count, fit));
+  return Math.max(1, Math.floor((length + opts.gap) / pitch));
 }
 
-/** Lays every tile out in a grid and returns the filled triangle sink. */
+/** Tile columns per plate — how many fit across the bed. */
+export function plateColumns(opts: TileOptions): number {
+  return bedFit(opts.bedWidth, opts);
+}
+
+/** Tile rows per plate — how many fit down the bed. */
+export function plateRows(opts: TileOptions): number {
+  return bedFit(opts.bedDepth, opts);
+}
+
+/** Tiles that fit on one bed, and so land in one STL file. */
+export function plateCapacity(opts: TileOptions): number {
+  return plateColumns(opts) * plateRows(opts);
+}
+
+/**
+ * Splits a deck into bed-sized plates, in order, so each becomes its own file.
+ * The last plate holds the remainder.
+ */
+export function splitPlates(tiles: TileFaces[], opts: TileOptions): TileFaces[][] {
+  const per = plateCapacity(opts);
+  const plates: TileFaces[][] = [];
+  for (let i = 0; i < tiles.length; i += per) plates.push(tiles.slice(i, i + per));
+  return plates;
+}
+
+/**
+ * Lays one plate of tiles out in a grid and returns the filled triangle sink.
+ * Expects at most {@link plateCapacity} tiles; the caller splits first.
+ */
 export function deckMesh(tiles: TileFaces[], opts: TileOptions): TriangleSink {
   const sink = new TriangleSink();
-  const cols = gridColumns(tiles.length, opts);
+  const cols = Math.min(tiles.length || 1, plateColumns(opts));
   const rows = Math.ceil(tiles.length / cols);
   const pitch = opts.tileSize + opts.gap;
 

@@ -101,13 +101,23 @@ export function trim(grid: boolean[][]): boolean[][] {
   return out.length ? out : [[false]];
 }
 
-/** Saves an STL buffer to a file via a throwaway object URL. */
-export function downloadStl(buffer: ArrayBuffer, filename: string): void {
-  const blob = new Blob([buffer], { type: 'model/stl' });
+/** Saves any bytes to a file via a throwaway object URL. */
+function save(data: BlobPart, filename: string, mime: string): void {
+  const blob = new Blob([data], { type: mime });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
   a.download = filename;
   a.click();
   URL.revokeObjectURL(url);
+}
+
+/** Downloads a single STL buffer. */
+export function downloadStl(buffer: ArrayBuffer, filename: string): void {
+  save(buffer, filename, 'model/stl');
+}
+
+/** Downloads a ZIP archive of bundled files. */
+export function downloadZip(data: Uint8Array<ArrayBuffer>, filename: string): void {
+  save(data, filename, 'application/zip');
 }

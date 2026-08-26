@@ -34,12 +34,20 @@
     </div>
 
     <p class="note info">
-      The 3D file lays every card out as a 40&nbsp;mm tile, {{ tileColumns() }} across, with a
-      4&nbsp;mm gap. The QR and its code stand proud on top; the artist, year and title are raised
-      on the underside, mirrored so they read once you turn the tile over like a card. Everything
-      raised changes at one layer height, so a single filament colour-change gives you dark marks on
-      a light tile. The QR is sized as large as the tile allows, but it is still small — test-scan
-      one tile before printing a whole deck.
+      The 3D export lays every card out as a 40&nbsp;mm tile with a 4&nbsp;mm gap, split into
+      <b>{{ fileCount() }}</b> {{ fileCount() === 1 ? 'plate' : 'plates' }} of up to
+      {{ plateCapacity }} tiles ({{ plateGrid }}) — each sized for a 250&nbsp;×&nbsp;210&nbsp;mm
+      bed, so no plate is wider than your printer.
+      {{
+        fileCount() > 1
+          ? 'They arrive together in a single .zip.'
+          : 'It downloads as a single .stl.'
+      }}
+      The QR and its code stand proud on top; the artist, year and title are raised on the
+      underside, mirrored so they read once you turn the tile over like a card. Everything raised
+      changes at one layer height, so a single filament colour-change gives you dark marks on a
+      light tile. The QR is sized as large as the tile allows, but it is still small — test-scan one
+      tile before printing a whole deck.
     </p>
 
     <details class="help">

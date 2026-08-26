@@ -7,11 +7,15 @@ import { qrSvg, qrMatrix } from '../../core/qr';
 import {
   DEFAULT_TILE,
   deckMesh,
-  gridColumns,
+  plateColumns,
+  plateRows,
+  plateCapacity,
+  splitPlates,
   serializeBinaryStl,
   type TileFaces,
 } from '../../core/stl';
-import { downloadStl, rasterText } from '../../core/raster';
+import { downloadStl, downloadZip, rasterText } from '../../core/raster';
+import { zipStore } from '../../core/zip';
 import type { Card } from '../../core/models';
 
 const PER_PAGE = 12;
@@ -86,8 +90,12 @@ export class PrintSheet {
     return Math.floor(pageIndex / 2) + 1;
   }
 
-  /** How many tiles fit across the 3D print bed, for the on-screen note. */
-  readonly tileColumns = computed(() => gridColumns(this.deck.count(), DEFAULT_TILE));
+  /** Grid a single bed-sized file holds, e.g. "5 × 4". */
+  readonly plateGrid = `${plateColumns(DEFAULT_TILE)} × ${plateRows(DEFAULT_TILE)}`;
+  /** Most tiles in one file. */
+  readonly plateCapacity = plateCapacity(DEFAULT_TILE);
+  /** How many files the current deck will produce. */
+  readonly fileCount = computed(() => Math.ceil(this.deck.count() / this.plateCapacity) || 0);
 
   /** Guards the button while a large deck's mesh is being built. */
   readonly building = signal(false);
@@ -97,9 +105,13 @@ export class PrintSheet {
   }
 
   /**
-   * Builds one STL of every card as an extruded tile — QR and its code raised
-   * on top, the answer raised underneath — and downloads it. The work is
-   * synchronous and can take a moment on a big deck, so the button is disabled
+   * Turns every card into an extruded tile — QR and its code raised on top, the
+   * answer raised underneath — and downloads the deck split into bed-sized
+   * plates, each a grid that fits a 250 × 210 mm bed. A single plate downloads
+   * as one STL; several are bundled into one ZIP so the browser is not asked to
+   * fire off a stack of downloads.
+   *
+   * Building is synchronous and can take a moment, so the button is disabled
    * across a paint that lets "Building…" show first.
    */
   async download3d(): Promise<void> {
@@ -114,9 +126,19 @@ export class PrintSheet {
         back: rasterText([card.artist, String(card.year), card.title]),
       }));
 
-      const buffer = serializeBinaryStl(deckMesh(tiles, DEFAULT_TILE));
       const slug = (this.deckName() || 'deck').toLowerCase().replace(/[^a-z0-9]+/g, '-');
-      downloadStl(buffer, `${slug}-3d-tiles.stl`);
+      const plates = splitPlates(tiles, DEFAULT_TILE);
+
+      if (plates.length === 1) {
+        downloadStl(serializeBinaryStl(deckMesh(plates[0], DEFAULT_TILE)), `${slug}-3d-tiles.stl`);
+        return;
+      }
+
+      const entries = plates.map((plate, i) => ({
+        name: `${slug}-3d-tiles-${i + 1}of${plates.length}.stl`,
+        data: new Uint8Array(serializeBinaryStl(deckMesh(plate, DEFAULT_TILE))),
+      }));
+      downloadZip(zipStore(entries), `${slug}-3d-tiles.zip`);
     } finally {
       this.building.set(false);
     }

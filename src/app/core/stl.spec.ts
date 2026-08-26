@@ -3,7 +3,10 @@ import {
   extrude,
   deckMesh,
   serializeBinaryStl,
-  gridColumns,
+  plateColumns,
+  plateRows,
+  plateCapacity,
+  splitPlates,
   DEFAULT_TILE,
   TriangleSink,
   type TileFaces,
@@ -118,14 +121,23 @@ describe('serializeBinaryStl', () => {
   });
 });
 
-describe('deckMesh', () => {
+describe('plates', () => {
   const face: TileFaces = { qr: [[true]], code: [[false]], back: [[false]] };
 
-  it('fits tiles across the bed and wraps into rows', () => {
-    expect(gridColumns(10, DEFAULT_TILE)).toBe(4); // (200+4)/(40+4) = 4
+  it('fits the bed at 44 mm pitch: 5 across, 4 down, 20 per file', () => {
+    // (250+4)/44 = 5 cols, (210+4)/44 = 4 rows.
+    expect(plateColumns(DEFAULT_TILE)).toBe(5);
+    expect(plateRows(DEFAULT_TILE)).toBe(4);
+    expect(plateCapacity(DEFAULT_TILE)).toBe(20);
   });
 
-  it('produces a non-empty watertight mesh for a small deck', () => {
+  it('splits a deck into full plates plus a remainder', () => {
+    const deck = Array.from({ length: 47 }, () => face);
+    const plates = splitPlates(deck, DEFAULT_TILE);
+    expect(plates.map((p) => p.length)).toEqual([20, 20, 7]);
+  });
+
+  it('produces a non-empty mesh whose triangle count is box-aligned', () => {
     const sink = deckMesh([face, face, face], DEFAULT_TILE);
     // Three base boxes (12 tris each) plus a lit QR module per tile, at least.
     expect(sink.count).toBeGreaterThanOrEqual(3 * 12 + 3 * 12);
