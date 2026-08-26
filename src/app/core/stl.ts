@@ -74,7 +74,9 @@ export const DEFAULT_TILE: TileOptions = {
   // block is the same colour as the tile, so it already reads as quiet zone.
   // That lets the QR itself grow without starving the scanner of a border.
   quiet: 2,
-  margin: 1.5,
+  // Small flat inset around the QR and the engraving. Kept tight so the back has
+  // room for a two-line title plus a two-line artist without shrinking the text.
+  margin: 1,
   gap: 4,
   bedWidth: 250,
   bedDepth: 210,

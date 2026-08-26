@@ -143,27 +143,25 @@ export class PrintSheet {
         ];
       };
 
-      // Title on top (always two lines — padded when shorter, truncated when
-      // longer), the big year in the middle, artist on one line at the bottom.
-      // Holding the title and artist to fixed heights makes the whole back a
+      // Title on top and artist at the bottom, each held to a fixed two-line
+      // band (padded when shorter, truncated when longer), with the big year in
+      // the middle. Holding both to the same fixed height makes the whole back a
       // constant height, so the mesh centres it with the year at the same level
       // on every tile. The pixel sizes are only the physical size *ratio*.
+      const twoLine = (text: string, weight = 400): boolean[][] =>
+        padCenter(
+          rasterText([text], { pixelsPerLine: 22, weight, maxWidth: backWrapPx, maxLines: 2 }),
+          titleRows,
+        );
+
       const back = (card: Card): boolean[][] =>
         stackGrids(
           [
-            padCenter(
-              rasterText([card.title], { pixelsPerLine: 22, maxWidth: backWrapPx, maxLines: 2 }),
-              titleRows,
-            ),
+            twoLine(card.title),
             rasterText([String(card.year)], { pixelsPerLine: 54, weight: 700 }),
-            rasterText([card.artist], {
-              pixelsPerLine: 22,
-              weight: 600,
-              maxWidth: backWrapPx,
-              maxLines: 1,
-            }),
+            twoLine(card.artist, 600),
           ],
-          12,
+          10,
         );
 
       const tiles: TileFaces[] = this.deck.cards().map((card) => ({
