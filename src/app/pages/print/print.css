@@ -181,20 +181,28 @@
   color: #9a9a9a;
 }
 
-.back {
+/* The back is top-anchored (not centred) so the year sits at the same height on
+   every card: artist is one fixed line at the top, the year locks just beneath
+   it, and the title fills whatever space is left below. */
+.card.back {
+  justify-content: flex-start;
   text-align: center;
 }
 
 .back .ar {
+  max-width: 100%;
+  margin-top: 3mm;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
   font-size: 6.2pt;
-  line-height: 1.4;
   letter-spacing: 0.13em;
   text-transform: uppercase;
   color: #0a6b63;
 }
 
 .back .yr {
-  margin: 2.5mm 0;
+  margin: 2mm 0 3mm;
   font-family: 'Arial Narrow', Arial, sans-serif;
   font-size: 30pt;
   font-weight: 700;
@@ -202,7 +210,13 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* Fills the space under the year; clamps so a long title can't spill off the
+   card, without ever pushing the year. */
 .back .ti {
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
   font-family: Georgia, serif;
   font-size: 10pt;
   line-height: 1.3;
