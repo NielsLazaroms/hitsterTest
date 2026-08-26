@@ -2,8 +2,8 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { RouterLink } from '@angular/router';
 import { DeckService } from '../../core/deck';
+import { LucideArrowLeft, LucideBox, LucidePrinter } from '@lucide/angular';
 import { SpotifyAuth } from '../../core/spotify-auth';
-import { Icon } from '../../core/icon';
 import { qrSvg, qrMatrix } from '../../core/qr';
 import {
   DEFAULT_TILE,
@@ -33,7 +33,7 @@ interface Sheet {
 
 @Component({
   selector: 'app-print',
-  imports: [RouterLink, Icon],
+  imports: [RouterLink, LucideArrowLeft, LucideBox, LucidePrinter],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './print.html',
   styleUrl: './print.css',

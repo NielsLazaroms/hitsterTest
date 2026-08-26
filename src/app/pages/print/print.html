@@ -1,7 +1,7 @@
 <div class="page screenonly">
   <div class="bar">
     <button class="iconbtn" type="button" routerLink="/settings" aria-label="Back to settings">
-      <app-icon name="arrow-left" />
+      <svg lucideArrowLeft></svg>
     </button>
     <h2>Print</h2>
     <span class="spacer"></span>
@@ -27,7 +27,7 @@
     <section class="out">
       <p class="silk">Paper cards</p>
       <button class="btn action" type="button" (click)="print()" [disabled]="!deck.count()">
-        <app-icon name="printer" /> Open the print dialog
+        <svg lucidePrinter></svg> Open the print dialog
       </button>
       <p class="dest">
         Odd pages are the QR fronts, even pages the answers. Every QR points at
@@ -81,7 +81,7 @@
         (click)="download3d()"
         [disabled]="building() || deck.count() === 0"
       >
-        <app-icon name="box" /> {{ building() ? 'Building…' : 'Download 3D tiles (.stl)' }}
+        <svg lucideBox></svg> {{ building() ? 'Building…' : 'Download 3D tiles (.stl)' }}
       </button>
       <p class="dest">
         Every card becomes a 40&nbsp;mm tile with a 4&nbsp;mm gap, split into

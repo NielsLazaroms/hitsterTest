@@ -1,13 +1,14 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { LucideCheck, LucideX } from '@lucide/angular';
 import { DeckService } from '../../core/deck';
 import { Diagnostics } from '../../core/diagnostics';
 import type { Card, DraftCard } from '../../core/models';
 
 @Component({
   selector: 'app-deck-builder',
-  imports: [FormsModule, RouterLink],
+  imports: [FormsModule, RouterLink, LucideCheck, LucideX],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './deck-builder.html',
   styleUrl: './deck-builder.css',

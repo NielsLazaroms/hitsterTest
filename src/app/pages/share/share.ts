@@ -2,8 +2,14 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import {
+  LucideArrowLeft,
+  LucideCheck,
+  LucideCopy,
+  LucideDownload,
+  LucideShare2,
+} from '@lucide/angular';
 import { DeckService } from '../../core/deck';
-import { Icon } from '../../core/icon';
 import { qrSvg } from '../../core/qr';
 
 /**
@@ -13,7 +19,15 @@ import { qrSvg } from '../../core/qr';
  */
 @Component({
   selector: 'app-share',
-  imports: [FormsModule, RouterLink, Icon],
+  imports: [
+    FormsModule,
+    RouterLink,
+    LucideArrowLeft,
+    LucideCheck,
+    LucideCopy,
+    LucideDownload,
+    LucideShare2,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './share.html',
   styleUrl: './share.css',

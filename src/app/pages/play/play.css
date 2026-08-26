@@ -56,6 +56,7 @@
   aspect-ratio: 1;
   color: #fff;
   font-family: var(--font-display), sans-serif;
+  --icon-size: 52px;
   background: radial-gradient(circle at 50% 35%, var(--coral-deep), color-mix(in srgb, var(--coral-deep) 82%, #000));
   border-radius: 50%;
   box-shadow:
@@ -66,11 +67,6 @@
 
 .scanbtn:active {
   transform: scale(0.97);
-}
-
-.scanbtn svg {
-  width: 52px;
-  height: 52px;
 }
 
 .scanbtn span {
@@ -306,6 +302,7 @@
   font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.03em;
+  --icon-size: 16px;
   color: var(--text);
   background: linear-gradient(180deg, var(--panel), var(--panel-2));
   border: 1px solid var(--line);
@@ -314,9 +311,10 @@
   transition: transform 0.1s ease, box-shadow 0.1s ease;
 }
 
-.key svg {
-  width: 16px;
-  height: 16px;
+/* Transport keys read as solid tape-deck buttons: fill Lucide's outline
+   glyphs (the skip "bars" are zero-area strokes, so stroke stays on too). */
+.key .solid {
+  fill: currentColor;
 }
 
 .key:active {

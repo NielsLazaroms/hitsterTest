@@ -1,8 +1,8 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { LucideArrowLeft, LucideShare2 } from '@lucide/angular';
 import { DeckService } from '../../core/deck';
-import { Icon } from '../../core/icon';
 import { Player } from '../../core/player';
 import { SpotifyApi } from '../../core/spotify-api';
 import { SpotifyAuth } from '../../core/spotify-auth';
@@ -11,7 +11,7 @@ import type { Card, SpotifyDevice } from '../../core/models';
 
 @Component({
   selector: 'app-settings',
-  imports: [FormsModule, RouterLink, Icon],
+  imports: [FormsModule, RouterLink, LucideArrowLeft, LucideShare2],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './settings.html',
   styleUrl: './settings.css',

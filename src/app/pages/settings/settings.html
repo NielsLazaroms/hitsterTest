@@ -1,11 +1,11 @@
 <div class="page">
   <div class="bar">
     <button class="iconbtn" type="button" routerLink="/play" aria-label="Back to play">
-      <app-icon name="arrow-left" />
+      <svg lucideArrowLeft></svg>
     </button>
     <h2 class="title">Settings</h2>
     <button class="iconbtn" type="button" routerLink="/share" aria-label="Share deck">
-      <app-icon name="share-2" />
+      <svg lucideShare2></svg>
     </button>
   </div>
 
@@ -100,7 +100,7 @@
       <input #file type="file" accept="application/json" hidden (change)="importDeck($event)" />
 
       <button class="btn ghost sm share-link last" type="button" routerLink="/share">
-        <app-icon name="share-2" />
+        <svg lucideShare2></svg>
         Hand this deck to another phone
       </button>
     </section>

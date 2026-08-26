@@ -8,7 +8,7 @@
   <div class="body">
     @if (saved()) {
       <div class="saved">
-        <div class="tick" aria-hidden="true">✓</div>
+        <div class="tick" aria-hidden="true"><svg lucideCheck></svg></div>
         <h1>Deck saved</h1>
         <p class="lede">
           {{ deck.deckName() }}, {{ deck.count() }}
@@ -94,7 +94,7 @@
                 </td>
                 <td>
                   <button class="drop" type="button" (click)="remove(draft.id)" aria-label="Remove">
-                    ×
+                    <svg lucideX></svg>
                   </button>
                 </td>
               </tr>

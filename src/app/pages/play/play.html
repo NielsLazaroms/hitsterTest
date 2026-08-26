@@ -3,10 +3,10 @@
     <span class="led" [class.hot]="player.status() === 'playing'" aria-hidden="true"></span>
     <h2 class="wordmark">Mixtape</h2>
     <button class="iconbtn" type="button" routerLink="/share" aria-label="Share deck">
-      <app-icon name="share-2" />
+      <svg lucideShare2></svg>
     </button>
     <button class="iconbtn" type="button" routerLink="/settings" aria-label="Settings">
-      <app-icon name="settings" />
+      <svg lucideSettings></svg>
     </button>
   </div>
 
@@ -15,11 +15,7 @@
     @case ('idle') {
       <div class="body stage">
         <button class="scanbtn" type="button" (click)="startScan()">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
-               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M3 8V5a2 2 0 0 1 2-2h3M16 3h3a2 2 0 0 1 2 2v3M21 16v3a2 2 0 0 1-2 2h-3M8 21H5a2 2 0 0 1-2-2v-3" />
-            <path d="M7 12h10" />
-          </svg>
+          <svg lucideScanLine [strokeWidth]="1.8"></svg>
           <span>Scan a card</span>
         </button>
 
@@ -97,21 +93,21 @@
 
         <div class="controls">
           <button class="key" type="button" (click)="player.restart()" aria-label="Restart">
-            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 5h2v14H6zM20 5 9 12l11 7z"/></svg>
+            <svg lucideSkipBack class="solid"></svg>
             <span>Restart</span>
           </button>
           <button class="key" type="button" (click)="togglePause()">
             @if (player.status() === 'playing') {
-              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>
+              <svg lucidePause class="solid"></svg>
               <span>Pause</span>
             } @else {
-              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+              <svg lucidePlay class="solid"></svg>
               <span>Resume</span>
             }
           </button>
           <button class="key lit wide" type="button" (click)="nextCard()">
             <span>Next card</span>
-            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4 5l11 7L4 19zM16 5h2.5v14H16z"/></svg>
+            <svg lucideSkipForward class="solid"></svg>
           </button>
         </div>
 

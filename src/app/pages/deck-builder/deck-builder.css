@@ -74,9 +74,10 @@ input.flag {
 }
 
 .drop {
+  display: inline-flex;
   padding: 2px 6px;
-  font-size: 18px;
   line-height: 1;
+  --icon-size: 18px;
   color: var(--dim);
   border-radius: 6px;
 }
@@ -103,7 +104,7 @@ input.flag {
   width: 54px;
   height: 54px;
   margin: 0 auto 18px;
-  font-size: 25px;
+  --icon-size: 28px;
   color: #fff;
   background: var(--teal-fill);
   border-radius: 50%;

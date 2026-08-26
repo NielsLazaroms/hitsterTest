@@ -1,7 +1,7 @@
 <div class="page">
   <div class="bar">
     <button class="iconbtn" type="button" routerLink="/play" aria-label="Back to play">
-      <app-icon name="arrow-left" />
+      <svg lucideArrowLeft></svg>
     </button>
     <h2>Share</h2>
     <span class="spacer"></span>
@@ -48,7 +48,7 @@
         (click)="shareDeck()"
         [disabled]="!deck.count() || sharing()"
       >
-        <app-icon name="share-2" />
+        <svg lucideShare2></svg>
         {{ sharing() ? 'Making a copy…' : 'Share this deck' }}
       </button>
       @if (!deck.count()) {
@@ -58,7 +58,11 @@
       <div class="codebar">
         <span class="codeval">{{ shareCode() }}</span>
         <button class="copy" type="button" (click)="copyCode()" [attr.aria-label]="copied() ? 'Copied' : 'Copy code'">
-          <app-icon [name]="copied() ? 'check' : 'copy'" />
+          @if (copied()) {
+            <svg lucideCheck></svg>
+          } @else {
+            <svg lucideCopy></svg>
+          }
           {{ copied() ? 'Copied' : 'Copy' }}
         </button>
       </div>
@@ -98,7 +102,7 @@
         (click)="loadCode()"
         [disabled]="!codeInput().trim() || loadingCode()"
       >
-        <app-icon name="download" />
+        <svg lucideDownload></svg>
         {{ loadingCode() ? 'Loading…' : 'Load' }}
       </button>
     </div>

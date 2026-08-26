@@ -10,8 +10,16 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import {
+  LucidePause,
+  LucidePlay,
+  LucideScanLine,
+  LucideSettings,
+  LucideShare2,
+  LucideSkipBack,
+  LucideSkipForward,
+} from '@lucide/angular';
 import { DeckService } from '../../core/deck';
-import { Icon } from '../../core/icon';
 import { Player } from '../../core/player';
 import { isInAppBrowser } from '../../core/environment';
 import { QrScanner, cardIdFromScan, explainCameraError } from '../../core/scanner';
@@ -20,7 +28,17 @@ type Mode = 'idle' | 'scanning' | 'manual' | 'playing';
 
 @Component({
   selector: 'app-play',
-  imports: [FormsModule, RouterLink, Icon],
+  imports: [
+    FormsModule,
+    RouterLink,
+    LucidePause,
+    LucidePlay,
+    LucideScanLine,
+    LucideSettings,
+    LucideShare2,
+    LucideSkipBack,
+    LucideSkipForward,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './play.html',
   styleUrl: './play.css',
