@@ -127,7 +127,9 @@ export class PrintSheet {
 
       // Small artist, a big bold year, small italic title — the printed-card
       // hierarchy. All three share one cell size when extruded, so the pixel
-      // sizes below are the physical size ratio, the same on every tile.
+      // sizes below are the physical size ratio, the same on every tile. The
+      // generous gap spreads them out — artist high, year centred, title low —
+      // rather than clustering them in the middle, matching the printed cards.
       const back = (card: Card): boolean[][] =>
         stackGrids(
           [
@@ -135,7 +137,7 @@ export class PrintSheet {
             rasterText([String(card.year)], { pixelsPerLine: 54, weight: 700 }),
             rasterText([card.title], { pixelsPerLine: 22, italic: true, maxWidth: backWrapPx }),
           ],
-          8,
+          44,
         );
 
       const tiles: TileFaces[] = this.deck.cards().map((card) => ({
