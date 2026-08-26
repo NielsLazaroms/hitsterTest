@@ -19,14 +19,6 @@ const ALPHABET = 'abcdefghjkmnpqrstuvwxyz23456789';
 const MAX_CARDS = 500;
 const MAX_BYTES = 1_000_000;
 
-/**
- * How long a shared deck stays reachable. @netlify/blobs@9 has no native
- * expiry, so we stamp `createdAt` on write and treat anything older than this
- * as gone on read (lazy expiry) — deleting it as we go, which also reclaims the
- * storage. This bounds how far the `decks` store can grow from active sharing.
- */
-const TTL_MS = 60 * 1000; // 1 minute — TESTING; restore to 90 days before deploy
-
 /** Mirror of the client's card guard — a stored blob is untrusted input. */
 function isCard(value) {
   return (
@@ -56,20 +48,11 @@ export default async (req) => {
       return Response.json({ error: 'Enter a four-character code.' }, { status: 400 });
     }
 
-    const entry = await store.getWithMetadata(code, { type: 'json' });
-    if (!entry) {
+    const deck = await store.get(code, { type: 'json' });
+    if (!deck) {
       return Response.json({ error: 'No deck found for that code.' }, { status: 404 });
     }
-
-    // Lazy expiry: a deck past its TTL is treated as absent and cleared out, so
-    // stale shares stop working and their storage is reclaimed on next access.
-    const createdAt = entry.metadata?.createdAt;
-    if (typeof createdAt === 'number' && Date.now() - createdAt > TTL_MS) {
-      await store.delete(code);
-      return Response.json({ error: 'This shared deck has expired.' }, { status: 410 });
-    }
-
-    return Response.json(entry.data);
+    return Response.json(deck);
   }
 
   if (req.method === 'POST') {
@@ -107,7 +90,7 @@ export default async (req) => {
     for (let attempt = 0; attempt < 8; attempt++) {
       const code = randomCode();
       if (await store.getMetadata(code)) continue;
-      await store.setJSON(code, payload, { metadata: { createdAt: Date.now() } });
+      await store.setJSON(code, payload);
       return Response.json({ code });
     }
     return Response.json({ error: 'Could not allocate a code — try again.' }, { status: 503 });
