@@ -1,7 +1,7 @@
 // Deck sharing backend. A deck built on one device is uploaded here and handed
 // back a short code; any other device loads it by typing that code in.
 //
-// Storage is Netlify Blobs — a free key-value store that lives inside this same
+// Storage is Netlify Blobs, a free key-value store that lives inside this same
 // deploy, so there is no separate service, account, or database to secure. The
 // only door to it is this function, which is why the validation below matters:
 // POST is an open write endpoint on the public internet.
@@ -12,14 +12,14 @@ import { getStore } from '@netlify/blobs';
 
 export const config = { path: '/api/deck' };
 
-/** Same alphabet the app uses for card ids — no look-alike characters. */
+/** Same alphabet the app uses for card ids: no look-alike characters. */
 const ALPHABET = 'abcdefghjkmnpqrstuvwxyz23456789';
 
 /** Guard rails so the endpoint can't be used as a free general file host. */
 const MAX_CARDS = 500;
 const MAX_BYTES = 1_000_000;
 
-/** Mirror of the client's card guard — a stored blob is untrusted input. */
+/** Mirror of the client's card guard: a stored blob is untrusted input. */
 function isCard(value) {
   return (
     value &&
@@ -93,7 +93,7 @@ export default async (req) => {
       await store.setJSON(code, payload);
       return Response.json({ code });
     }
-    return Response.json({ error: 'Could not allocate a code — try again.' }, { status: 503 });
+    return Response.json({ error: 'Could not allocate a code. Try again.' }, { status: 503 });
   }
 
   return Response.json({ error: 'Method not allowed.' }, { status: 405 });

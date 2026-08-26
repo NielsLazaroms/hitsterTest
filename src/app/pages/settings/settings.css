@@ -2,7 +2,7 @@
   text-align: center;
 }
 
-/* Each group of controls sits on its own panel — the app read as a small
+/* Each group of controls sits on its own panel, the app read as a small
    control deck rather than one long stack of buttons. */
 .panel {
   margin-bottom: 16px;
@@ -28,7 +28,7 @@
 }
 
 /* The last control in a panel shouldn't carry the trailing gap the shared
-   primitives add — the panel padding already handles it. */
+   primitives add; the panel padding already handles it. */
 .field.last,
 .btn.last {
   margin-bottom: 0;
@@ -49,7 +49,7 @@
   font-weight: 700;
 }
 
-/* Appearance switch — a physical selector row. */
+/* Appearance switch: a physical selector row. */
 .segmented {
   display: flex;
   gap: 4px;

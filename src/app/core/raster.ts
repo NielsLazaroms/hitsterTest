@@ -2,7 +2,7 @@
  * Browser-only helpers for the 3D export: turning text into the boolean grids
  * that {@link ./stl} extrudes, and handing the finished STL to the user.
  *
- * Text is rasterised rather than turned into real glyph outlines on purpose —
+ * Text is rasterised rather than turned into real glyph outlines on purpose:
  * a pixel grid rides the exact same extrusion path as the QR modules, so the
  * whole feature needs no font-parsing or polygon-triangulation dependency. The
  * result is a slightly chunky embossed label, which is all a printed tile wants.
@@ -20,7 +20,7 @@ export interface RasterOptions {
   italic?: boolean;
   /**
    * Wrap width in pixels. Given, a long line breaks onto more lines instead of
-   * widening the canvas — which, once the caller extrudes at a fixed cell size,
+   * widening the canvas, which, once the caller extrudes at a fixed cell size,
    * keeps the text the same physical size whatever the title's length.
    */
   maxWidth?: number;
@@ -28,8 +28,8 @@ export interface RasterOptions {
 
 /**
  * Greedily wraps each line to `maxWidth`, measuring with the supplied callback.
- * Pure and canvas-free so the wrapping — the half that decides how big the text
- * ends up — can be unit-tested. A single word wider than the limit is left on
+ * Pure and canvas-free so the wrapping (the half that decides how big the text
+ * ends up) can be unit-tested. A single word wider than the limit is left on
  * its own line rather than split mid-word.
  */
 export function wrapLines(
@@ -71,7 +71,7 @@ export function rasterText(lines: string[], opts: RasterOptions = {}): boolean[]
   const font = `${opts.italic ? 'italic ' : ''}${weight} ${px}px ${family}`;
 
   // First pass: measure, and wrap long lines so the canvas never grows past the
-  // requested width — that is what keeps every card's text one physical size.
+  // requested width, which is what keeps every card's text one physical size.
   const probe = document.createElement('canvas').getContext('2d');
   if (!probe) return [[false]];
   probe.font = font;
@@ -104,7 +104,7 @@ export function rasterText(lines: string[], opts: RasterOptions = {}): boolean[]
 }
 
 /**
- * Thresholds a canvas' RGBA buffer into a boolean grid on the alpha channel —
+ * Thresholds a canvas' RGBA buffer into a boolean grid on the alpha channel:
  * pure, so the grid-shaping half of {@link rasterText} is testable without a
  * real canvas (the text rendering itself needs a browser).
  */

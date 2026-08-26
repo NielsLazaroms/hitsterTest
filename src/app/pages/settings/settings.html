@@ -46,7 +46,7 @@
         } @else if (deviceError()) {
           <option value="">{{ deviceError() }}</option>
         } @else if (devices().length === 0) {
-          <option value="">Nothing found — open Spotify and play something</option>
+          <option value="">Nothing found. Open Spotify and play something</option>
         } @else {
           @for (device of devices(); track device.id) {
             <option [value]="device.id">{{ device.name }} ({{ device.type }})</option>
@@ -80,7 +80,7 @@
         @if (deck.count()) {
           <b>{{ deck.count() }}</b> cards in the deck.
         } @else {
-          No cards yet — build one from a playlist.
+          No cards yet. Build one from a playlist.
         }
       </p>
 

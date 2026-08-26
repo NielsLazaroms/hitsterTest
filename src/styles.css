@@ -1,9 +1,9 @@
-/* Mixtape — global design tokens and shared UI primitives.
+/* Mixtape: global design tokens and shared UI primitives.
    Page-specific rules live in each component's own stylesheet.
 
    The look: a cassette insert, not a black box. Cool paper, retro teal, one
    coral pop for the action that matters. Light-first, with a graphite dark
-   variant. Every colour flows through a token so both themes stay honest —
+   variant. Every colour flows through a token so both themes stay honest;
    never hardcode a hex in a component. */
 
 /* ---------------------------------------------------------------- tokens ---- */
@@ -11,7 +11,7 @@
 :root {
   color-scheme: light;
 
-  /* surfaces — cool paper, biased faintly cyan so the neutral reads chosen */
+  /* surfaces: cool paper, biased faintly cyan so the neutral reads chosen */
   --bg: #e7f1f1;
   --panel: #ffffff;
   --panel-2: #eef7f6;
@@ -21,7 +21,7 @@
   --text: #123330;
   --dim: #4f6d69;
 
-  /* brand — a single teal→cyan family, no second hue. `--teal-deep` is the
+  /* brand: a single teal→cyan family, no second hue. `--teal-deep` is the
      readable teal TEXT colour and flips with the theme (deep teal on light,
      bright cyan on dark); `--teal-fill` stays deep teal in both themes for
      surfaces under white/light text. `--coral*` is the same family: `--coral`
@@ -38,17 +38,17 @@
   --accent: var(--teal);
   --accent-solid: var(--coral-deep);
 
-  /* status — distinct from the accent hue, dark enough to read on light tints */
+  /* status: distinct from the accent hue, dark enough to read on light tints */
   --ok: #0f7a4f;
   --warn: #8a5e12;
   --bad: #b83c25;
 
-  /* the machine's readouts — a printed teal chiclet in light */
+  /* the machine's readouts: a printed teal chiclet in light */
   --readout-well: linear-gradient(180deg, #eaf4f2, #dcebe8);
   --readout-ink: var(--teal-deep);
   --readout-glow: 0 1px 0 #ffffff;
 
-  /* the media — kraft paper and sepia tape, the analog surfaces */
+  /* the media: kraft paper and sepia tape, the analog surfaces */
   --kraft: #dccaa2;
   --kraft-2: #cdb98d;
   --ink-on-kraft: #2a2318;
@@ -60,7 +60,7 @@
   --shadow-sm: 0 12px 26px -16px rgb(16 54 49 / 42%);
   --shadow-lg: 0 34px 70px -34px rgb(16 54 49 / 48%);
 
-  /* Softer than boxes: pill actions, chunky panels, gently rounded fields —
+  /* Softer than boxes: pill actions, chunky panels, gently rounded fields;
      it reads like moulded hardware rather than a stack of outlined rectangles. */
   --radius: 14px;
   --radius-lg: 22px;
@@ -73,7 +73,7 @@
   --font-hand: 'Caveat', ui-rounded, cursive;
 }
 
-/* Graphite dark — neutral charcoal so teal and coral read at full saturation. */
+/* Graphite dark: neutral charcoal so teal and coral read at full saturation. */
 @media (prefers-color-scheme: dark) {
   :root {
     color-scheme: dark;
@@ -295,7 +295,7 @@ h1 {
   color: var(--dim);
 }
 
-/* Uppercase labels read as the machine's silkscreen — set in mono. */
+/* Uppercase labels read as the machine's silkscreen, set in mono. */
 label {
   display: block;
   margin-bottom: 7px;
@@ -382,7 +382,7 @@ select.field {
   box-shadow: none;
 }
 
-/* Ghost — the quiet secondary. Teal outline, no fill. */
+/* Ghost: the quiet secondary. Teal outline, no fill. */
 .btn.ghost {
   font-weight: 600;
   color: var(--text);
@@ -523,7 +523,7 @@ select.field {
 /* ---------------------------------------------------------------- print ---- */
 
 /* QR codes are injected as raw SVG, so component style scoping cannot see
-   them — they are sized from here instead. */
+   them, so they are sized from here instead. */
 .qr svg {
   display: block;
   width: 100%;

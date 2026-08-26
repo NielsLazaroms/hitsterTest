@@ -65,7 +65,7 @@ export class DeckService {
       const cards = parsed.filter(isCard);
       if (cards.length) this.cards.set(cards);
     } catch {
-      /* no deck shipped, or it is unreadable — the app starts empty as before */
+      /* no deck shipped, or it is unreadable, so the app starts empty as before */
     }
   }
 
@@ -98,7 +98,7 @@ export class DeckService {
         body: JSON.stringify({ name: this.deckName(), cards: this.cards() }),
       });
     } catch {
-      throw new Error('Sharing needs the deployed site — it is unavailable in local preview.');
+      throw new Error('Sharing needs the deployed site. It is unavailable in local preview.');
     }
 
     const data: unknown = await response.json().catch(() => null);
@@ -208,11 +208,11 @@ function explainPlaylistError(error: unknown): Error {
   if (error instanceof SpotifyError && error.status === 403) {
     const detail = [error.message, error.reason && `reason: ${error.reason}`]
       .filter(Boolean)
-      .join(' — ');
+      .join('. ');
     return new Error(
       'Spotify refused this playlist (403). Likely one of: ' +
-        '(1) your login is missing playlist permissions — sign out in Settings and reconnect; ' +
-        '(2) your Spotify app has not enabled the Web API — in the developer dashboard, edit the app and tick "Web API" under "Which API/SDKs are you planning to use?"; ' +
+        '(1) your login is missing playlist permissions, so sign out in Settings and reconnect; ' +
+        '(2) your Spotify app has not enabled the Web API: in the developer dashboard, edit the app and tick "Web API" under "Which API/SDKs are you planning to use?"; ' +
         '(3) your Spotify app is in Development Mode and this account is not added under User Management in the developer dashboard.' +
         (detail ? ` [Spotify said: ${detail}]` : ''),
     );
@@ -221,7 +221,7 @@ function explainPlaylistError(error: unknown): Error {
     return new Error(
       'Spotify could not find that playlist (404). Check the link, and note that ' +
         'Spotify-owned editorial or algorithmic playlists (Discover Weekly, Daily Mix, etc.) ' +
-        'are not readable by third-party apps — use a normal user playlist instead.',
+        'are not readable by third-party apps. Use a normal user playlist instead.',
     );
   }
   if (error instanceof SpotifyError) {

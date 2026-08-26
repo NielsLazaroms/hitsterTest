@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { SpotifyApi } from './spotify-api';
 import { REQUIRED_SCOPES, SpotifyAuth } from './spotify-auth';
 
-/** One raw endpoint result — status and body, never thrown. */
+/** One raw endpoint result: status and body, never thrown. */
 export interface Probe {
   label: string;
   path: string;
@@ -41,7 +41,7 @@ export class Diagnostics {
       return [
         'The stored Spotify login could not be renewed, so nothing could be asked of ' +
           'Spotify at all. This is not about the playlist. Spotify said: ' +
-          `"${login.detail}". Do not disconnect yet — that erases the login this check ` +
+          `"${login.detail}". Do not disconnect yet. That erases the login this check ` +
           'reads. Try again in a minute first; if it keeps failing, then reconnect in Settings.',
         '',
         ...this.context(id),
@@ -93,7 +93,7 @@ export class Diagnostics {
       `client id      ${this.auth.clientId() || '(none)'}`,
       `redirect uri   ${this.auth.redirectUri}`,
       `playlist id    ${playlistId ?? '(could not read one out of that link)'}`,
-      `scopes held    ${granted.length ? granted.join(' ') : '(unknown — recorded from the next reconnect on)'}`,
+      `scopes held    ${granted.length ? granted.join(' ') : '(unknown, recorded from the next reconnect on)'}`,
       `scopes missing ${missing.length ? missing.join(' ') : 'none'}`,
     ];
   }
@@ -117,7 +117,7 @@ function verdict(probes: Probe[], playlistId: string | null): string {
   const filtered = by('its items, as the builder asks for them');
 
   if (me?.status === 'network error')
-    return 'Cannot reach Spotify at all — check the connection, or an ad blocker / VPN.';
+    return 'Cannot reach Spotify at all. Check the connection, or an ad blocker / VPN.';
 
   if (me?.status === 401)
     return (
@@ -128,7 +128,7 @@ function verdict(probes: Probe[], playlistId: string | null): string {
   if (me?.status === 403)
     return (
       'Every Spotify endpoint is refused, including the one that only says who you are. That ' +
-      'is not about the playlist — the app itself is not allowed to call the Web API for this ' +
+      'is not about the playlist. The app itself is not allowed to call the Web API for this ' +
       'account. Two settings in the developer dashboard cause this and both are worth ' +
       'checking: (a) edit the app and tick "Web API" under "Which API/SDKs are you planning ' +
       'to use?"; (b) under User Management, add the Spotify account you are signed in as ' +
@@ -138,15 +138,15 @@ function verdict(probes: Probe[], playlistId: string | null): string {
 
   if (me?.ok && mine?.status === 403)
     return (
-      'Reading who you are works, but reading your playlists is refused — the token is missing ' +
+      'Reading who you are works, but reading your playlists is refused. The token is missing ' +
       'the playlist scopes. Disconnect and reconnect in Settings: a renewed token keeps the ' +
       'scopes of the original consent, so reconnecting is the only way to widen them.'
     );
 
   if (items?.ok && filtered?.ok && !filtered.body.includes('spotify:'))
     return (
-      'The endpoint answers, but the field filter the builder uses returns nothing usable — ' +
-      'the nested key name is wrong for this account. Read the two "its items" lines below: ' +
+      'The endpoint answers, but the field filter the builder uses returns nothing usable. ' +
+      'The nested key name is wrong for this account. Read the two "its items" lines below: ' +
       'the unfiltered one shows what Spotify actually calls that object.'
     );
 
@@ -168,5 +168,5 @@ function verdict(probes: Probe[], playlistId: string | null): string {
 
   if (probes.every((probe) => probe.ok)) return 'Everything answered. Try loading the deck again.';
 
-  return 'Mixed results — the lines below say which call failed and what Spotify replied.';
+  return 'Mixed results. The lines below say which call failed and what Spotify replied.';
 }

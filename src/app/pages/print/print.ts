@@ -3,6 +3,7 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { RouterLink } from '@angular/router';
 import { DeckService } from '../../core/deck';
 import { SpotifyAuth } from '../../core/spotify-auth';
+import { Icon } from '../../core/icon';
 import { qrSvg, qrMatrix } from '../../core/qr';
 import {
   DEFAULT_TILE,
@@ -32,7 +33,7 @@ interface Sheet {
 
 @Component({
   selector: 'app-print',
-  imports: [RouterLink],
+  imports: [RouterLink, Icon],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './print.html',
   styleUrl: './print.css',
@@ -82,10 +83,10 @@ export class PrintSheet {
     return out;
   });
 
-  /** Pieces of paper, as opposed to sides — each one is printed front and back. */
+  /** Pieces of paper, as opposed to sides: each one is printed front and back. */
   readonly paperCount = computed(() => Math.ceil(this.deck.count() / PER_PAGE));
 
-  /** Which piece of paper a given page index lands on — two pages per sheet. */
+  /** Which piece of paper a given page index lands on: two pages per sheet. */
   paperNumber(pageIndex: number): number {
     return Math.floor(pageIndex / 2) + 1;
   }
@@ -105,8 +106,8 @@ export class PrintSheet {
   }
 
   /**
-   * Turns every card into an extruded tile — QR and its code raised on top, the
-   * answer raised underneath — and downloads the deck split into bed-sized
+   * Turns every card into an extruded tile (QR and its code raised on top, the
+   * answer raised underneath) and downloads the deck split into bed-sized
    * plates, each a grid that fits a 250 × 210 mm bed. A single plate downloads
    * as one STL; several are bundled into one ZIP so the browser is not asked to
    * fire off a stack of downloads.
@@ -121,7 +122,7 @@ export class PrintSheet {
 
     try {
       // Wrap the back text at the tile's usable width so a long title breaks
-      // onto more lines rather than shrinking — every card ends up one size.
+      // onto more lines rather than shrinking, so every card ends up one size.
       const innerMm = DEFAULT_TILE.tileSize - 2 * DEFAULT_TILE.margin;
       const backWrapPx = Math.floor(innerMm / DEFAULT_TILE.backCell);
 

@@ -3,14 +3,14 @@
  * binary STL of extruded tiles, ready for a slicer.
  *
  * The whole file is deliberately free of any browser or framework dependency:
- * it takes grids in and gives triangle data out, so the geometry — and above
- * all the mirroring, which is the part that silently breaks — can be pinned by
+ * it takes grids in and gives triangle data out, so the geometry (and above
+ * all the mirroring, which is the part that silently breaks) can be pinned by
  * a unit test. Rasterising text to a grid and triggering the download are the
  * browser's job and live elsewhere.
  *
  * Every raised feature is emitted as its own fully closed box rather than as
  * one stitched surface with holes. The result is a set of overlapping closed
- * solids, not a single manifold shell — a slicer unions them without complaint,
+ * solids, not a single manifold shell. A slicer unions them without complaint,
  * but a strict mesh-repair tool will note the internal faces. Boxes are sunk
  * slightly into the base so the union is clean; a coincident face would instead
  * show up as an artefact. Adjacent lit cells in a row are merged into a single
@@ -47,8 +47,8 @@ export interface TileOptions {
   /** Usable bed depth; the deck splits into a new file past it, mm. */
   bedDepth: number;
   /**
-   * Physical size of one back-text raster pixel, mm. Fixing this — rather than
-   * scaling each card's block to fill its space — is what keeps the answer the
+   * Physical size of one back-text raster pixel, mm. Fixing this (rather than
+   * scaling each card's block to fill its space) is what keeps the answer the
    * same size on every tile; a long title just wraps onto more lines.
    */
   backCell: number;
@@ -67,7 +67,7 @@ export const DEFAULT_TILE: TileOptions = {
   gap: 4,
   bedWidth: 250,
   bedDepth: 210,
-  // 0.12 mm × the raster's ~30 px line height ≈ a 3.6 mm line — legible and the
+  // 0.12 mm × the raster's ~30 px line height ≈ a 3.6 mm line, legible and the
   // same on every card. rasterText renders back text at 24 px, so this is the
   // conversion from those pixels to millimetres.
   backCell: 0.12,
@@ -180,11 +180,11 @@ export function box(
  * Extrudes the lit cells of a grid into raised boxes.
  *
  * The grid is image space: column grows rightward, row grows *downward*. On the
- * build plate Y grows upward, so row is mapped to −Y — get that backwards and
+ * build plate Y grows upward, so row is mapped to −Y. Get that backwards and
  * the top-face view comes out mirrored (a QR that will not scan, text that
  * reads in reverse). `flipX` additionally mirrors the columns, which is what
  * the bottom face needs so the answer reads correctly once the tile is turned
- * over about its vertical edge — the same book-style flip the paper deck uses.
+ * over about its vertical edge, the same book-style flip the paper deck uses.
  */
 export function extrude(
   sink: TriangleSink,
@@ -341,12 +341,12 @@ function bedFit(length: number, opts: TileOptions): number {
   return Math.max(1, Math.floor((length + opts.gap) / pitch));
 }
 
-/** Tile columns per plate — how many fit across the bed. */
+/** Tile columns per plate: how many fit across the bed. */
 export function plateColumns(opts: TileOptions): number {
   return bedFit(opts.bedWidth, opts);
 }
 
-/** Tile rows per plate — how many fit down the bed. */
+/** Tile rows per plate: how many fit down the bed. */
 export function plateRows(opts: TileOptions): number {
   return bedFit(opts.bedDepth, opts);
 }

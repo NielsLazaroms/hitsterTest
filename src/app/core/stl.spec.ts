@@ -35,7 +35,7 @@ function triangles(sink: TriangleSink): Tri[] {
   return out;
 }
 
-/** Axis-aligned bounds over every vertex — the box a single extrusion covers. */
+/** Axis-aligned bounds over every vertex: the box a single extrusion covers. */
 function bounds(sink: TriangleSink) {
   const lo = [Infinity, Infinity, Infinity];
   const hi = [-Infinity, -Infinity, -Infinity];

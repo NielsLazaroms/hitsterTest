@@ -89,7 +89,44 @@ input.flag {
   margin-top: 22px;
 }
 
-/* Raw diagnostic output — meant to be read, and pasted somewhere for help. */
+/* The "what next" step after saving: a calm confirmation, then choices. */
+.saved {
+  max-width: 26rem;
+  margin: 7vh auto 0;
+  text-align: center;
+}
+
+.tick {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 54px;
+  height: 54px;
+  margin: 0 auto 18px;
+  font-size: 25px;
+  color: #fff;
+  background: var(--teal-fill);
+  border-radius: 50%;
+  box-shadow: var(--shadow-sm);
+}
+
+.saved .lede {
+  margin: 8px auto 24px;
+}
+
+.saved .nextrow {
+  margin-top: 10px;
+}
+
+/* A quiet way back to the table, not a full-width action. */
+.saved .keep {
+  width: auto;
+  margin: 20px auto 0;
+  padding-left: 22px;
+  padding-right: 22px;
+}
+
+/* Raw diagnostic output: meant to be read, and pasted somewhere for help. */
 .report {
   margin: 0 0 16px;
   padding: 14px;

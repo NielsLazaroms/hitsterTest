@@ -6,6 +6,23 @@
   </div>
 
   <div class="body">
+    @if (saved()) {
+      <div class="saved">
+        <div class="tick" aria-hidden="true">✓</div>
+        <h1>Deck saved</h1>
+        <p class="lede">
+          {{ deck.deckName() }}, {{ deck.count() }}
+          {{ deck.count() === 1 ? 'card' : 'cards' }} saved on this phone. What next?
+        </p>
+
+        <button class="btn" type="button" routerLink="/print">Print the cards</button>
+        <div class="row nextrow">
+          <button class="btn ghost" type="button" routerLink="/share">Share a copy</button>
+          <button class="btn ghost" type="button" routerLink="/play">Play now</button>
+        </div>
+        <button class="btn ghost sm keep" type="button" (click)="edit()">Keep editing</button>
+      </div>
+    } @else {
     @if (error()) {
       <p class="msg err">{{ error() }}</p>
       <button class="btn ghost sm" type="button" [disabled]="diagnosing()" (click)="diagnose()">
@@ -34,7 +51,7 @@
       {{ loading() ? 'Loading…' : 'Load tracks' }}
     </button>
     <p class="note intro">
-      Use a playlist you own — Spotify only returns full track lists for your own playlists.
+      Use a playlist you own. Spotify only returns full track lists for your own playlists.
     </p>
 
     @if (drafts().length) {
@@ -71,7 +88,7 @@
                   <div class="ta">{{ draft.artist }}</div>
                   @if (draft.suspect) {
                     <div class="flagnote">
-                      from "{{ draft.album }}" — likely not the original release
+                      from "{{ draft.album }}", likely not the original release
                     </div>
                   }
                 </td>
@@ -87,6 +104,7 @@
       </div>
 
       <button class="btn save" type="button" (click)="save()">Save {{ ready() }} cards</button>
+    }
     }
   </div>
 </div>
