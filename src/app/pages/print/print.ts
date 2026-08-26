@@ -124,19 +124,35 @@ export class PrintSheet {
       const innerMm = DEFAULT_TILE.tileSize - 2 * DEFAULT_TILE.margin;
       const backWrapPx = Math.floor(innerMm / DEFAULT_TILE.backCell);
 
-      // Song title on top, a big bold year centred, the band under it. The three
-      // grids share one cell size when extruded, so the pixel sizes below are
-      // only the physical size *ratio* — the year always reads largest. A tight
-      // gap keeps the block short so it doesn't overflow the tile and shrink
-      // every line uniformly.
+      // Pads a grid down to a fixed height with blank rows. A grid already taller
+      // is left alone.
+      const padBelow = (grid: boolean[][], rows: number): boolean[][] => {
+        if (grid.length >= rows) return grid;
+        const width = grid[0]?.length ?? 1;
+        const out = grid.map((row) => row.slice());
+        while (out.length < rows) out.push(new Array(width).fill(false));
+        return out;
+      };
+
+      // Year on top, then artist, then title. The three grids share one cell size
+      // when extruded, so the pixel sizes below are only the physical size
+      // *ratio* — the year always reads largest.
+      //
+      // The stacked block is then padded down to the tile's full inner height
+      // with blank rows underneath. The mesh centres that block, so a fixed
+      // height means the year at its top always lands at the same level — which
+      // is the whole point: lay the tiles in a row and the years line up.
       const back = (card: Card): boolean[][] =>
-        stackGrids(
-          [
-            rasterText([card.title], { pixelsPerLine: 22, maxWidth: backWrapPx }),
-            rasterText([String(card.year)], { pixelsPerLine: 54, weight: 700 }),
-            rasterText([card.artist], { pixelsPerLine: 22, weight: 600, maxWidth: backWrapPx }),
-          ],
-          12,
+        padBelow(
+          stackGrids(
+            [
+              rasterText([String(card.year)], { pixelsPerLine: 54, weight: 700 }),
+              rasterText([card.artist], { pixelsPerLine: 22, weight: 600, maxWidth: backWrapPx }),
+              rasterText([card.title], { pixelsPerLine: 22, maxWidth: backWrapPx }),
+            ],
+            12,
+          ),
+          backWrapPx,
         );
 
       const tiles: TileFaces[] = this.deck.cards().map((card) => ({
