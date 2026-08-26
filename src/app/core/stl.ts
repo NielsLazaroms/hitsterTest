@@ -51,8 +51,11 @@ export const DEFAULT_TILE: TileOptions = {
   baseThickness: 1.6,
   relief: 0.6,
   sink: 0.2,
-  quiet: 4,
-  margin: 2.5,
+  // Two modules rather than the textbook four: the flat base margin around the
+  // block is the same colour as the tile, so it already reads as quiet zone.
+  // That lets the QR itself grow without starving the scanner of a border.
+  quiet: 2,
+  margin: 1.5,
   gap: 4,
   bedWidth: 200,
 };
@@ -260,9 +263,11 @@ export function tileMesh(
 
   const inner = S - 2 * margin;
 
-  // Top face: QR block anchored to the top, code strip below it.
-  const codeStrip = Math.min(4, inner * 0.18);
-  const gapToCode = 1.5;
+  // Top face: QR block anchored to the top, a slim code strip below it. The
+  // code is only a manual-entry fallback, so it is kept small to hand the QR as
+  // much of the tile as possible.
+  const codeStrip = Math.min(2.5, inner * 0.09);
+  const gapToCode = 0.8;
   const qrBlock = Math.min(inner, inner - codeStrip - gapToCode);
   const qrBlockLeft = offsetX + (S - qrBlock) / 2;
   const qrBlockTop = offsetY + S - margin;
