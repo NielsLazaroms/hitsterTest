@@ -65,6 +65,9 @@ export class Play implements OnDestroy {
       // tap that opened it, and a refusal never leaves a dead camera screen.
       await this.scanner.acquire();
     } catch (error) {
+      // Fall back to the scan screen (never leave the caller's screen, e.g. the
+      // playing view when this was reached from "Next card").
+      this.mode.set('idle');
       this.hint.set(explainCameraError(error, this.inApp));
       return;
     }
@@ -158,12 +161,19 @@ export class Play implements OnDestroy {
     else await this.player.resume();
   }
 
-  nextCard(): void {
+  async nextCard(): Promise<void> {
     this.revealed.set(false);
     this.hint.set('Point at the code on the front of a card.');
-    // Return to the scan screen immediately; stop the song and its timer in the
-    // background so the pause request never delays the next scan.
-    this.mode.set('idle');
+    // Open the camera straight away — no extra "Scan a card" tap. Acquire it
+    // first so it stays inside this tap gesture, then stop the old song in the
+    // background. If the camera can't open, startScan drops to the scan screen.
+    await this.startScan();
     void this.player.clear();
+  }
+
+  /** Returns to the scan screen without opening the camera (manual-entry back). */
+  toIdle(): void {
+    this.hint.set('Point at the code on the front of a card.');
+    this.mode.set('idle');
   }
 }
