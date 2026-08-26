@@ -202,7 +202,13 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* Title capped at two lines; a longer one truncates with an ellipsis so it can't
+   grow the block and shove the year off centre. */
 .back .ti {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
   font-family: Georgia, serif;
   font-size: 10pt;
   line-height: 1.3;

@@ -22,6 +22,8 @@ export interface RasterOptions {
    * keeps the text the same physical size whatever the title's length.
    */
   maxWidth?: number;
+  /** Cap the wrapped text at this many lines, truncating the last with an ellipsis. */
+  maxLines?: number;
 }
 
 /**
@@ -53,6 +55,29 @@ export function wrapLines(
 }
 
 /**
+ * Keeps at most `maxLines` lines, ending a truncated block with an ellipsis and
+ * dropping trailing words from the last line so it still fits `maxWidth`.
+ */
+export function clampLines(
+  lines: string[],
+  maxLines: number | undefined,
+  measure: (text: string) => number,
+  maxWidth?: number,
+): string[] {
+  if (!maxLines || lines.length <= maxLines) return lines;
+
+  const kept = lines.slice(0, maxLines);
+  let last = kept[maxLines - 1];
+  if (maxWidth) {
+    const words = last.split(' ');
+    while (words.length > 1 && measure(`${words.join(' ')}…`) > maxWidth) words.pop();
+    last = words.join(' ');
+  }
+  kept[maxLines - 1] = `${last}…`;
+  return kept;
+}
+
+/**
  * Renders one or more lines centred on a transparent canvas and thresholds the
  * alpha channel into a boolean grid. Empty and blank lines collapse to a 1×1
  * empty grid so callers can hand the result straight to the mesh builder.
@@ -74,7 +99,8 @@ export function rasterText(lines: string[], opts: RasterOptions = {}): boolean[]
   if (!probe) return [[false]];
   probe.font = font;
   const measure = (t: string) => probe.measureText(t).width;
-  const text = opts.maxWidth ? wrapLines(input, measure, opts.maxWidth) : input;
+  const wrapped = opts.maxWidth ? wrapLines(input, measure, opts.maxWidth) : input;
+  const text = clampLines(wrapped, opts.maxLines, measure, opts.maxWidth);
   if (!text.length) return [[false]];
 
   const widths = text.map((l) => Math.ceil(measure(l)));
