@@ -1,4 +1,21 @@
-import { gridFromAlpha, trim } from './raster';
+import { gridFromAlpha, trim, wrapLines } from './raster';
+
+// Measure text by character count, so wrap widths read as "max characters".
+const byChars = (t: string) => t.length;
+
+describe('wrapLines', () => {
+  it('breaks a long line onto multiple lines at word boundaries', () => {
+    expect(wrapLines(['the quick brown fox'], byChars, 9)).toEqual(['the quick', 'brown fox']);
+  });
+
+  it('keeps a word longer than the limit on its own line rather than splitting it', () => {
+    expect(wrapLines(['supercalifragilistic'], byChars, 9)).toEqual(['supercalifragilistic']);
+  });
+
+  it('wraps each input line independently', () => {
+    expect(wrapLines(['aa bb', 'cc dd'], byChars, 5)).toEqual(['aa bb', 'cc dd']);
+  });
+});
 
 /** Builds an RGBA buffer from a boolean grid (alpha 255 where true). */
 function rgba(grid: boolean[][]): number[] {

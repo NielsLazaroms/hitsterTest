@@ -46,6 +46,12 @@ export interface TileOptions {
   bedWidth: number;
   /** Usable bed depth; the deck splits into a new file past it, mm. */
   bedDepth: number;
+  /**
+   * Physical size of one back-text raster pixel, mm. Fixing this — rather than
+   * scaling each card's block to fill its space — is what keeps the answer the
+   * same size on every tile; a long title just wraps onto more lines.
+   */
+  backCell: number;
 }
 
 export const DEFAULT_TILE: TileOptions = {
@@ -61,6 +67,10 @@ export const DEFAULT_TILE: TileOptions = {
   gap: 4,
   bedWidth: 250,
   bedDepth: 210,
+  // 0.12 mm × the raster's ~30 px line height ≈ a 3.6 mm line — legible and the
+  // same on every card. rasterText renders back text at 24 px, so this is the
+  // conversion from those pixels to millimetres.
+  backCell: 0.12,
 };
 
 /**
@@ -227,12 +237,16 @@ function placeFeature(
   z0: number,
   z1: number,
   flipX: boolean,
+  maxCell?: number,
 ): void {
   const rows = grid.length;
   const cols = rows ? grid[0].length : 0;
   if (!rows || !cols) return;
 
-  const cell = Math.min(boxW / cols, boxH / rows);
+  // Fill the box by default; with maxCell, hold a fixed physical size instead
+  // and only shrink if the grid would otherwise overflow the box.
+  let cell = Math.min(boxW / cols, boxH / rows);
+  if (maxCell !== undefined) cell = Math.min(cell, maxCell);
   const w = cols * cell,
     h = rows * cell;
   const left = boxX + (boxW - w) / 2;
@@ -305,7 +319,8 @@ export function tileMesh(
     false,
   );
 
-  // Bottom face: the answer, mirrored so it reads after a book-style flip.
+  // Bottom face: the answer, mirrored so it reads after a book-style flip, and
+  // held to a fixed text size so it matches across every card in the deck.
   placeFeature(
     sink,
     faces.back,
@@ -316,6 +331,7 @@ export function tileMesh(
     botZ0,
     botZ1,
     true,
+    opts.backCell,
   );
 }
 

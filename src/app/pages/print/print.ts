@@ -120,10 +120,15 @@ export class PrintSheet {
     await new Promise((resolve) => setTimeout(resolve, 0));
 
     try {
+      // Wrap the back text at the tile's usable width so a long title breaks
+      // onto more lines rather than shrinking — every card ends up one size.
+      const innerMm = DEFAULT_TILE.tileSize - 2 * DEFAULT_TILE.margin;
+      const backWrapPx = Math.floor(innerMm / DEFAULT_TILE.backCell);
+
       const tiles: TileFaces[] = this.deck.cards().map((card) => ({
         qr: qrMatrix(`${this.auth.redirectUri}?t=${card.id}`),
         code: rasterText([card.id.toUpperCase()], { weight: 700 }),
-        back: rasterText([card.artist, String(card.year), card.title]),
+        back: rasterText([card.artist, String(card.year), card.title], { maxWidth: backWrapPx }),
       }));
 
       const slug = (this.deckName() || 'deck').toLowerCase().replace(/[^a-z0-9]+/g, '-');

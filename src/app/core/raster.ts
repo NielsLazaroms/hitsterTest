@@ -16,6 +16,40 @@ export interface RasterOptions {
   font?: string;
   /** Extra weight, e.g. `700` for the loud middle line. */
   weight?: number | string;
+  /**
+   * Wrap width in pixels. Given, a long line breaks onto more lines instead of
+   * widening the canvas — which, once the caller extrudes at a fixed cell size,
+   * keeps the text the same physical size whatever the title's length.
+   */
+  maxWidth?: number;
+}
+
+/**
+ * Greedily wraps each line to `maxWidth`, measuring with the supplied callback.
+ * Pure and canvas-free so the wrapping — the half that decides how big the text
+ * ends up — can be unit-tested. A single word wider than the limit is left on
+ * its own line rather than split mid-word.
+ */
+export function wrapLines(
+  lines: string[],
+  measure: (text: string) => number,
+  maxWidth: number,
+): string[] {
+  const out: string[] = [];
+  for (const line of lines) {
+    let current = '';
+    for (const word of line.split(/\s+/).filter(Boolean)) {
+      const trial = current ? `${current} ${word}` : word;
+      if (current && measure(trial) > maxWidth) {
+        out.push(current);
+        current = word;
+      } else {
+        current = trial;
+      }
+    }
+    if (current) out.push(current);
+  }
+  return out;
 }
 
 /**
@@ -27,18 +61,23 @@ export function rasterText(lines: string[], opts: RasterOptions = {}): boolean[]
   const px = opts.pixelsPerLine ?? 24;
   const family = opts.font ?? 'Arial, sans-serif';
   const weight = opts.weight ?? 400;
-  const text = lines.map((l) => l.trim()).filter(Boolean);
-  if (!text.length) return [[false]];
+  const input = lines.map((l) => l.trim()).filter(Boolean);
+  if (!input.length) return [[false]];
 
   const pad = Math.round(px * 0.15);
   const lineGap = Math.round(px * 0.3);
   const font = `${weight} ${px}px ${family}`;
 
-  // First pass: measure so the canvas is only as wide as the widest line.
+  // First pass: measure, and wrap long lines so the canvas never grows past the
+  // requested width — that is what keeps every card's text one physical size.
   const probe = document.createElement('canvas').getContext('2d');
   if (!probe) return [[false]];
   probe.font = font;
-  const widths = text.map((l) => Math.ceil(probe.measureText(l).width));
+  const measure = (t: string) => probe.measureText(t).width;
+  const text = opts.maxWidth ? wrapLines(input, measure, opts.maxWidth) : input;
+  if (!text.length) return [[false]];
+
+  const widths = text.map((l) => Math.ceil(measure(l)));
   const width = Math.max(1, ...widths) + pad * 2;
   const lineH = Math.round(px * 1.25);
   const height = lineH * text.length + lineGap * (text.length - 1) + pad * 2;
