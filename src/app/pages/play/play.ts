@@ -145,7 +145,9 @@ export class Play implements OnDestroy {
     // started, so a slow or failed lookup never blocks the round — and the
     // answer is printed on the card back regardless.
     try {
-      this.player.reveal(id, await this.api.track(id));
+      const { card, durationMs } = await this.api.track(id);
+      this.player.reveal(id, card);
+      this.player.setDuration(id, durationMs);
     } catch {
       /* leave the reveal blank */
     }
@@ -156,10 +158,12 @@ export class Play implements OnDestroy {
     else await this.player.resume();
   }
 
-  async nextCard(): Promise<void> {
-    await this.player.clear();
+  nextCard(): void {
     this.revealed.set(false);
     this.hint.set('Point at the code on the front of a card.');
+    // Return to the scan screen immediately; stop the song and its timer in the
+    // background so the pause request never delays the next scan.
     this.mode.set('idle');
+    void this.player.clear();
   }
 }

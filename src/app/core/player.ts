@@ -28,6 +28,8 @@ export class Player {
   private ticker: ReturnType<typeof setInterval> | null = null;
   private clipTimer: ReturnType<typeof setTimeout> | null = null;
   private startedAt = 0;
+  /** Track length once known, so the clock stops when the song actually ends. */
+  private durationMs = 0;
 
   setDevice(id: string): void {
     this.deviceId.set(id);
@@ -42,6 +44,7 @@ export class Player {
   async start(card: Card): Promise<void> {
     this.error.set('');
     this.card.set(card);
+    this.durationMs = 0;
     try {
       await this.api.play(card.uri, this.deviceId() || null);
     } catch (error) {
@@ -61,6 +64,17 @@ export class Player {
    */
   reveal(id: string, card: Card): void {
     if (this.card()?.id === id) this.card.set(card);
+  }
+
+  /**
+   * Once the track length is known, arm the clock to stop when the song ends
+   * (or at the clip length, whichever comes first) — otherwise "play until I
+   * stop it" leaves the tape counter running after the audio has finished.
+   */
+  setDuration(id: string, durationMs: number): void {
+    if (this.card()?.id !== id) return;
+    this.durationMs = durationMs;
+    if (this.status() === 'playing') this.armStop(this.seconds());
   }
 
   async restart(): Promise<void> {
@@ -99,9 +113,26 @@ export class Player {
       this.seconds.set(Math.floor((Date.now() - this.startedAt) / 1000));
     }, 250);
 
+    this.armStop(fromSeconds);
+  }
+
+  /**
+   * Schedules the single stop timer at the earliest of the clip length and the
+   * track's own end. Re-armable, so it updates when the duration arrives after
+   * playback has already started.
+   */
+  private armStop(fromSeconds: number): void {
+    if (this.clipTimer) clearTimeout(this.clipTimer);
+    this.clipTimer = null;
+
     const clip = this.clipLength();
-    if (clip > 0) {
-      this.clipTimer = setTimeout(() => void this.pause('clip'), Math.max(0, clip - fromSeconds) * 1000);
+    const clipSec = clip > 0 ? clip : Infinity;
+    const durSec = this.durationMs > 0 ? this.durationMs / 1000 : Infinity;
+    const stopAt = Math.min(clipSec, durSec);
+
+    if (stopAt !== Infinity) {
+      const delay = Math.max(0, stopAt - fromSeconds) * 1000;
+      this.clipTimer = setTimeout(() => void this.pause('clip'), delay);
     }
   }
 

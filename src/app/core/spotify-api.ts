@@ -98,20 +98,24 @@ export class SpotifyApi {
    * Looks up one track by its id, so a scanned card (which carries only the id)
    * can reconstruct the answer to reveal — the app stores nothing locally.
    */
-  async track(id: string): Promise<Card> {
+  async track(id: string): Promise<{ card: Card; durationMs: number }> {
     const data = await this.request<{
       name: string;
       artists: { name: string }[];
       album?: { release_date: string };
+      duration_ms?: number;
     }>(`/tracks/${encodeURIComponent(id)}`);
 
     const year = Number.parseInt((data?.album?.release_date ?? '').slice(0, 4), 10);
     return {
-      id,
-      uri: `spotify:track:${id}`,
-      title: data?.name ?? '',
-      artist: (data?.artists ?? []).map((a) => a.name).join(', '),
-      year: Number.isFinite(year) ? year : 0,
+      card: {
+        id,
+        uri: `spotify:track:${id}`,
+        title: data?.name ?? '',
+        artist: (data?.artists ?? []).map((a) => a.name).join(', '),
+        year: Number.isFinite(year) ? year : 0,
+      },
+      durationMs: data?.duration_ms ?? 0,
     };
   }
 
