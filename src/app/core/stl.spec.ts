@@ -1,6 +1,7 @@
 import {
   box,
   extrude,
+  engraveFill,
   deckMesh,
   serializeBinaryStl,
   plateColumns,
@@ -108,6 +109,28 @@ describe('extrude orientation', () => {
     const { lo, hi } = bounds(sink);
     expect(lo[0]).toBe(0);
     expect(hi[0]).toBe(3);
+  });
+});
+
+describe('engraveFill', () => {
+  it('fills solid around the centred text, leaving the letters empty', () => {
+    // A single lit pixel becomes the one empty cell in an otherwise solid grid.
+    const fill = engraveFill([[true]], 3);
+    expect(fill).toEqual([
+      [true, true, true],
+      [true, false, true],
+      [true, true, true],
+    ]);
+  });
+
+  it('carves the text at its true position so the flip mirrors it like the raised text', () => {
+    // Lit at the left column; the empty channel must land on the left too, before
+    // extrude's flipX mirrors the whole grid.
+    const fill = engraveFill([[true, false]], 2);
+    expect(fill).toEqual([
+      [false, true],
+      [true, true],
+    ]);
   });
 });
 

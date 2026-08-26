@@ -17,21 +17,25 @@
  * box first, which keeps the triangle count down on a full deck.
  */
 
-/** A square tile: the QR raised on top, the answer raised underneath. */
+/** A square tile: the QR raised on top, the answer engraved underneath. */
 export interface TileFaces {
   /** QR module grid, `qr[row][col]` true where dark. Row 0 is the top. */
   qr: boolean[][];
-  /** Rasterised answer (title / year / artist / code), raised on the bottom face. */
+  /** Rasterised answer (title / year / artist / code), engraved into the underside. */
   back: boolean[][];
 }
 
 export interface TileOptions {
   /** Side of the square tile, mm. */
   tileSize: number;
-  /** Solid core between the two relief faces, mm. */
+  /** Solid body of the tile, mm. The engraved text is cut up into its underside,
+   * so the wall left over a channel is `baseThickness − engrave`; keep it thick
+   * enough that that stays sturdy. */
   baseThickness: number;
-  /** How far raised features stand out from the base, mm. */
+  /** How far the raised QR stands out from the top face, mm. */
   relief: number;
+  /** How deep the answer text is engraved into the underside, mm. */
+  engrave: number;
   /** How far each feature sinks into the base so solids union cleanly, mm. */
   sink: number;
   /** Flat quiet-zone border around the QR, in QR modules. */
@@ -57,8 +61,13 @@ export const DEFAULT_TILE: TileOptions = {
   // room to be large, and fewer tiles pack onto a plate. This is the main dial:
   // raise it for larger cards, which also gives the back more vertical budget.
   tileSize: 65,
-  baseThickness: 1.6,
+  // Thicker than a raised-text tile: engraving cuts the answer into the body, so
+  // this leaves ~1.6 mm of wall (baseThickness − engrave) over each channel.
+  baseThickness: 2.4,
   relief: 0.6,
+  // Depth of the engraved answer. Deeper reads better but eats into the wall
+  // above; pair a deeper cut with a thicker baseThickness.
+  engrave: 0.8,
   sink: 0.2,
   // Two modules rather than the textbook four: the flat base margin around the
   // block is the same colour as the tile, so it already reads as quiet zone.
@@ -258,8 +267,68 @@ function placeFeature(
 }
 
 /**
- * One tile at the given grid offset: a solid base, the QR and code raised on
- * top within a quiet-zone border, and the answer raised on the underside.
+ * Builds the underside fill for an engraved tile: an `n`×`n` grid that is solid
+ * (`true`) everywhere except the centred text, which is left empty (`false`).
+ * Extruded, the solid becomes the flat underside and the empty text becomes
+ * recessed channels — engraving, done additively by filling around the letters.
+ * `n` is chosen to span the whole tile so the fill has no internal seams. Pure,
+ * so the inversion and centring can be unit-tested without a mesh.
+ */
+export function engraveFill(text: boolean[][], n: number): boolean[][] {
+  const rows = text.length;
+  const cols = rows ? text[0].length : 0;
+  const rOff = Math.floor((n - rows) / 2);
+  const cOff = Math.floor((n - cols) / 2);
+  const out: boolean[][] = [];
+  for (let r = 0; r < n; r++) {
+    const line: boolean[] = new Array(n).fill(true);
+    const tr = r - rOff;
+    if (tr >= 0 && tr < rows) {
+      const trow = text[tr];
+      for (let c = 0; c < cols; c++) {
+        const tc = cOff + c;
+        if (tc >= 0 && tc < n && trow[c]) line[tc] = false;
+      }
+    }
+    out.push(line);
+  }
+  return out;
+}
+
+/**
+ * Engraves the answer into the whole underside: sizes the text to a fixed cell
+ * (shrinking only if it would overflow the inner square, the same rule the QR
+ * uses), fills the tile around it, and extrudes that flipped in X so the
+ * channels read after a book-style flip — reusing {@link extrude}'s mirror path
+ * so the recessed text lands exactly where the raised text used to.
+ */
+function placeEngraving(
+  sink: TriangleSink,
+  text: boolean[][],
+  offsetX: number,
+  offsetY: number,
+  S: number,
+  inner: number,
+  backCell: number,
+  z0: number,
+  z1: number,
+): void {
+  const rows = text.length;
+  const cols = rows ? text[0].length : 0;
+  if (!rows || !cols) return;
+
+  let cell = Math.min(inner / cols, inner / rows, backCell);
+  // Snap the cell so a whole number of them spans the tile; the fill then lines
+  // up with the tile edges exactly, with no sliver of unfilled underside.
+  const n = Math.max(rows, cols, Math.round(S / cell));
+  cell = S / n;
+
+  extrude(sink, engraveFill(text, n), offsetX, offsetY + S, cell, z0, z1, true, offsetX + S);
+}
+
+/**
+ * One tile at the given grid offset: a solid body, the QR raised on top within
+ * a quiet-zone border, and the answer engraved into the underside.
  */
 export function tileMesh(
   sink: TriangleSink,
@@ -268,18 +337,20 @@ export function tileMesh(
   offsetX = 0,
   offsetY = 0,
 ): void {
-  const { tileSize: S, baseThickness, relief, sink: overlap, quiet, margin } = opts;
+  const { tileSize: S, baseThickness, relief, engrave, sink: overlap, quiet, margin } = opts;
 
-  // Z bands: bottom relief sits below the base, top relief above it.
-  const baseBottom = relief;
-  const baseTop = relief + baseThickness;
-  const topZ1 = baseTop + relief;
+  // Z bands, underside flat at z = 0: a solid body, the QR raised above it on
+  // the top face, and the answer cut as channels up into the underside.
+  const baseTop = baseThickness;
   const topZ0 = baseTop - overlap;
-  const botZ0 = 0;
-  const botZ1 = baseBottom + overlap;
+  const topZ1 = baseTop + relief;
+  const bodyBottom = engrave; // the solid body sits above the engraved band
+  const fillZ0 = 0;
+  const fillZ1 = engrave + overlap; // underside fill rises into the body, clean union
 
-  // Solid core.
-  box(sink, offsetX, offsetY, baseBottom, offsetX + S, offsetY + S, baseTop);
+  // Solid body above the engraved band. The channels are the gaps the fill
+  // below leaves; this box is their flat roof.
+  box(sink, offsetX, offsetY, bodyBottom, offsetX + S, offsetY + S, baseTop);
 
   const inner = S - 2 * margin;
 
@@ -307,20 +378,10 @@ export function tileMesh(
     false,
   );
 
-  // Bottom face: the answer, mirrored so it reads after a book-style flip, and
-  // held to a fixed text size so it matches across every card in the deck.
-  placeFeature(
-    sink,
-    faces.back,
-    offsetX + margin,
-    offsetY + margin,
-    inner,
-    inner,
-    botZ0,
-    botZ1,
-    true,
-    opts.backCell,
-  );
+  // Underside: the answer engraved as recessed channels, mirrored so it reads
+  // after a book-style flip, held to a fixed text size so it matches across
+  // every card in the deck.
+  placeEngraving(sink, faces.back, offsetX, offsetY, S, inner, opts.backCell, fillZ0, fillZ1);
 }
 
 /** How many tiles fit along a bed dimension of the given length. */

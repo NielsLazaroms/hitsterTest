@@ -111,7 +111,7 @@ export class PrintSheet {
 
   /**
    * Turns every card into an extruded tile (the QR raised on top, the answer
-   * and its manual-entry code raised underneath) and downloads the deck split
+   * and its manual-entry code engraved into the underside) and downloads the deck split
    * into bed-sized plates, each a grid that fits a 250 × 210 mm bed. A single
    * plate downloads as one STL; several are bundled into one ZIP so the browser
    * is not asked to fire off a stack of downloads.
