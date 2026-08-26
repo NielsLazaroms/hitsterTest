@@ -124,17 +124,44 @@ export class PrintSheet {
       const innerMm = DEFAULT_TILE.tileSize - 2 * DEFAULT_TILE.margin;
       const backWrapPx = Math.floor(innerMm / DEFAULT_TILE.backCell);
 
-      // Title on top (at most two lines, else truncated), the big year in the
-      // middle, artist at the bottom. The three grids share one cell size when
-      // extruded, so the pixel sizes below are only the physical size *ratio* —
-      // the year always reads largest. Capping the title keeps the block short
-      // so the mesh centres it without shrinking every line.
+      // A one-line reference height, so the title area can be held to exactly two
+      // lines whether the title wraps or not.
+      const lineRef = rasterText(['Mg'], { pixelsPerLine: 22 }).length;
+      const titleRows = lineRef * 2 + Math.round(22 * 0.3);
+
+      // Centres a shorter grid inside a fixed-height band with blank rows.
+      const padCenter = (grid: boolean[][], rows: number): boolean[][] => {
+        if (grid.length >= rows) return grid;
+        const width = grid[0]?.length ?? 1;
+        const blank = (): boolean[] => new Array(width).fill(false);
+        const total = rows - grid.length;
+        const top = Math.floor(total / 2);
+        return [
+          ...Array.from({ length: top }, blank),
+          ...grid.map((row) => row.slice()),
+          ...Array.from({ length: total - top }, blank),
+        ];
+      };
+
+      // Title on top (always two lines — padded when shorter, truncated when
+      // longer), the big year in the middle, artist on one line at the bottom.
+      // Holding the title and artist to fixed heights makes the whole back a
+      // constant height, so the mesh centres it with the year at the same level
+      // on every tile. The pixel sizes are only the physical size *ratio*.
       const back = (card: Card): boolean[][] =>
         stackGrids(
           [
-            rasterText([card.title], { pixelsPerLine: 22, maxWidth: backWrapPx, maxLines: 2 }),
+            padCenter(
+              rasterText([card.title], { pixelsPerLine: 22, maxWidth: backWrapPx, maxLines: 2 }),
+              titleRows,
+            ),
             rasterText([String(card.year)], { pixelsPerLine: 54, weight: 700 }),
-            rasterText([card.artist], { pixelsPerLine: 22, weight: 600, maxWidth: backWrapPx }),
+            rasterText([card.artist], {
+              pixelsPerLine: 22,
+              weight: 600,
+              maxWidth: backWrapPx,
+              maxLines: 1,
+            }),
           ],
           12,
         );

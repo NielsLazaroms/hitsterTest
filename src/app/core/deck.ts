@@ -96,7 +96,7 @@ export class DeckService {
         drafts.push({
           id: trackId(track.uri),
           uri: track.uri,
-          title: track.name,
+          title: cleanTitle(track.name),
           artist: track.artists.map((a) => a.name).join(', '),
           year: Number.isFinite(year) ? year : null,
           album: track.album.name ?? '',
@@ -115,6 +115,31 @@ export class DeckService {
 /** The bare Spotify id from a `spotify:track:<id>` URI — what the QR encodes. */
 export function trackId(uri: string): string {
   return uri.slice(uri.lastIndexOf(':') + 1);
+}
+
+/**
+ * Strips Spotify's remaster / version / year annotations from a track title, so
+ * the card back reads "Bohemian Rhapsody" rather than "Bohemian Rhapsody - 2011
+ * Remaster" — and, for a year-guessing game, so a year baked into the title
+ * cannot give the answer away.
+ *
+ * Only annotations in bracket groups or after a trailing dash are removed; an
+ * inline year that is part of the real title (Prince's "1999", "Summer of '69")
+ * has no such marker and is left untouched.
+ */
+export function cleanTitle(name: string): string {
+  const ANNOT =
+    /remaster(ed)?|re-?master|\bversion\b|\bmix\b|\bedit\b|\bmono\b|\bstereo\b|\b(?:19|20)\d{2}\b/i;
+  let t = name;
+  // Bracketed annotation groups, e.g. "(2011 Remaster)", "(Remastered)".
+  t = t.replace(/\s*[([][^)\]]*[)\]]/g, (seg) => (ANNOT.test(seg) ? '' : seg));
+  // Trailing " - annotation" tails, repeatedly (e.g. "- 2011 - Remaster").
+  let prev = '';
+  while (prev !== t) {
+    prev = t;
+    t = t.replace(/\s*[-–—]\s*[^-–—]*$/, (seg) => (ANNOT.test(seg) ? '' : seg));
+  }
+  return t.replace(/\s{2,}/g, ' ').trim() || name.trim();
 }
 
 /**
