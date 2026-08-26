@@ -1,70 +1,104 @@
 <div class="page screenonly">
   <div class="bar">
-    <button type="button" routerLink="/settings">Back</button>
-    <h2 class="title">Print cards</h2>
+    <button class="iconbtn" type="button" routerLink="/settings" aria-label="Back to settings">
+      <app-icon name="arrow-left" />
+    </button>
+    <h2>Print</h2>
     <span class="spacer"></span>
   </div>
 
   <div class="body">
-    <p class="note info">
-      {{ deck.count() }} cards on <b>{{ paperCount() }}</b>
-      {{ paperCount() === 1 ? 'sheet of paper' : 'sheets of paper' }}, printed on both sides —
-      {{ sheets().length }} pages in all. Odd pages are the QR fronts, even pages the answers. Every
-      QR points at <code>{{ appUrl }}</code
-      >.
-    </p>
+    <!-- Plain-language summary of what will come out of the printer. The
+         faithful, to-scale preview lives further down. -->
+    <div class="summary">
+      <p class="summary-name">{{ deck.count() ? deckName() : 'No deck yet' }}</p>
+      @if (deck.count()) {
+        <p class="summary-line">
+          <b>{{ deck.count() }}</b> {{ deck.count() === 1 ? 'card' : 'cards' }} →
+          <b>{{ paperCount() }}</b> {{ paperCount() === 1 ? 'sheet' : 'sheets' }} of paper,
+          printed on both sides ·
+          <b>{{ sheets().length }}</b> {{ sheets().length === 1 ? 'page' : 'pages' }} in all
+        </p>
+      } @else {
+        <p class="summary-line">Build a deck first, then come back to print it.</p>
+      }
+    </div>
 
-    <p class="msg warn">
-      Two settings decide whether this works. <b>Scale: 100% / actual size</b>, never "fit to page".
-      <b>Two-sided: flip on the long edge</b> — the way a book opens, not end over end. The backs
-      are already mirrored for that. A short-edge flip does not merely turn the answers upside down,
-      it lands each one on the wrong card, and you would only find that out mid-game.
-    </p>
+    <section class="out">
+      <p class="silk">Paper cards</p>
+      <button class="btn action" type="button" (click)="print()" [disabled]="!deck.count()">
+        <app-icon name="printer" /> Open the print dialog
+      </button>
+      <p class="dest">
+        Odd pages are the QR fronts, even pages the answers. Every QR points at
+        <code>{{ appUrl }}</code>.
+      </p>
+    </section>
 
-    <div class="actions">
-      <button class="btn" type="button" (click)="print()">Open the print dialog</button>
+    <div class="checklist">
+      <p class="silk flag">Get these two right</p>
+      <ul>
+        <li>
+          <span class="k">Scale</span>
+          <span class="v"
+            ><b>100%, actual size.</b> Never “fit to page”, or the QR shrinks past the point a phone
+            can read it.</span
+          >
+        </li>
+        <li>
+          <span class="k">Two-sided</span>
+          <span class="v"
+            ><b>Flip on the long edge</b>, the way a book opens, not end over end. The backs are
+            already mirrored for that. A short-edge flip doesn’t just turn the answers upside down:
+            it lands each one on the <b>wrong card</b>, and you’d only find out mid-game, after the
+            paper is spent.</span
+          >
+        </li>
+      </ul>
+
+      <details class="help">
+        <summary>My printer can’t print both sides by itself</summary>
+        <p>
+          Print the odd pages first. In the print dialog set Pages to
+          <code>1{{ paperCount() > 1 ? ', 3, 5…' : '' }}</code
+          >, or pick “Odd pages only” if your dialog offers it. Take that stack out, turn it over
+          about the <b>long edge</b> (the way you turn a page in a book, not end over end), and put
+          it back in the tray. Then print the even pages.
+        </p>
+        <p>
+          Which way up the paper goes back in differs per printer. Do one sheet first and hold it up
+          to the light: the four corner marks on the front and back should sit exactly on top of each
+          other. If they do not, turn the paper the other way and try once more.
+        </p>
+      </details>
+    </div>
+
+    <section class="out">
+      <p class="silk">3D tiles</p>
       <button
-        class="btn ghost"
+        class="btn ghost action"
         type="button"
         (click)="download3d()"
         [disabled]="building() || deck.count() === 0"
       >
-        {{ building() ? 'Building…' : 'Download 3D tiles (.stl)' }}
+        <app-icon name="box" /> {{ building() ? 'Building…' : 'Download 3D tiles (.stl)' }}
       </button>
-    </div>
-
-    <p class="note info">
-      The 3D export lays every card out as a 40&nbsp;mm tile with a 4&nbsp;mm gap, split into
-      <b>{{ fileCount() }}</b> {{ fileCount() === 1 ? 'plate' : 'plates' }} of up to
-      {{ plateCapacity }} tiles ({{ plateGrid }}) — each sized for a 250&nbsp;×&nbsp;210&nbsp;mm
-      bed, so no plate is wider than your printer.
-      {{
-        fileCount() > 1
-          ? 'They arrive together in a single .zip.'
-          : 'It downloads as a single .stl.'
-      }}
-      The QR and its code stand proud on top; the artist, year and title are raised on the
-      underside, mirrored so they read once you turn the tile over like a card. Everything raised
-      changes at one layer height, so a single filament colour-change gives you dark marks on a
-      light tile. The QR is sized as large as the tile allows, but it is still small — test-scan one
-      tile before printing a whole deck.
-    </p>
-
-    <details class="help">
-      <summary>My printer cannot print both sides by itself</summary>
-      <p>
-        Print the odd pages first — in the print dialog set Pages to
-        <code>1{{ paperCount() > 1 ? ', 3, 5…' : '' }}</code
-        >, or pick "Odd pages only" if your dialog offers it. Take that stack out, turn it over
-        about the <b>long edge</b> — the way you turn a page in a book, not end over end — and put
-        it back in the tray. Then print the even pages.
+      <p class="dest">
+        Every card becomes a 40&nbsp;mm tile with a 4&nbsp;mm gap, split into
+        <b>{{ fileCount() }}</b> {{ fileCount() === 1 ? 'plate' : 'plates' }} of up to
+        {{ plateCapacity }} tiles ({{ plateGrid }}), each sized for a
+        250&nbsp;×&nbsp;210&nbsp;mm bed, so no plate is wider than your printer.
+        {{
+          fileCount() > 1
+            ? 'They arrive together in a single .zip.'
+            : 'It downloads as a single .stl.'
+        }}
+        The QR and its code stand proud on top; the artist, year and title are raised on the
+        underside, mirrored so they read once you turn the tile over. Everything raised changes at
+        one layer height, so a single filament colour-change gives dark marks on a light tile. The
+        QR is small even at full tile size. Test-scan one before printing a whole deck.
       </p>
-      <p>
-        Which way up the paper goes back in differs per printer. Do one sheet first and hold it up
-        to the light: the four corner marks on the front and back should sit exactly on top of each
-        other. If they do not, turn the paper the other way and try once more.
-      </p>
-    </details>
+    </section>
   </div>
 </div>
 
@@ -72,7 +106,7 @@
   @for (sheet of sheets(); track $index) {
     <p class="caption screenonly">
       Paper {{ paperNumber($index) }} of {{ paperCount() }},
-      {{ sheet.side === 'front' ? 'front — QR codes' : 'back — answers, mirrored' }}
+      {{ sheet.side === 'front' ? 'front: QR codes' : 'back: answers, mirrored' }}
       <span class="pageno">page {{ $index + 1 }}</span>
     </p>
     <div class="sheet">

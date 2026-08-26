@@ -17,7 +17,7 @@ type BarcodeDetectorCtor = new (options: { formats: string[] }) => BarcodeDetect
  * falls back to decoding canvas frames with jsQR everywhere else (iOS Safari).
  *
  * getUserMedia only works in a secure context, which means https:// or the
- * loopback address — http://127.0.0.1:5200 is fine, a LAN IP is not.
+ * loopback address: http://127.0.0.1:5200 is fine, a LAN IP is not.
  */
 /**
  * Turns a getUserMedia failure into something a player can act on.
@@ -66,8 +66,8 @@ export class QrScanner {
 
   /**
    * Opens the camera. Kept separate from attaching it so the caller can ask
-   * while the user's tap is still the current gesture — browsers are stricter
-   * about permission prompts raised later — and so a refusal is known before
+   * while the user's tap is still the current gesture (browsers are stricter
+   * about permission prompts raised later), and so a refusal is known before
    * the camera screen is shown.
    */
   async acquire(): Promise<MediaStream> {

@@ -1,5 +1,5 @@
 /**
- * A minimal ZIP writer — just enough to bundle the per-plate STL files into one
+ * A minimal ZIP writer, just enough to bundle the per-plate STL files into one
  * download. Entries are stored uncompressed (method 0): a binary STL barely
  * shrinks under deflate, so storing it keeps this dependency-free and the code
  * short enough to trust by reading. Kept pure (bytes in, bytes out) so it can be

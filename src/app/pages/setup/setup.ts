@@ -39,7 +39,7 @@ export class Setup {
     const id = (this.builtIn ? this.auth.clientId() : this.clientId()).trim();
     if (!/^[a-f0-9]{20,}$/i.test(id)) {
       this.error.set(
-        'That does not look like a Client ID — it is a long string of letters and numbers.',
+        'That does not look like a Client ID. It is a long string of letters and numbers.',
       );
       return;
     }

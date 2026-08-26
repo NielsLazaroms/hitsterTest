@@ -1,4 +1,4 @@
-/* Share — component-scoped, so plain class names are safe here. The only
+/* Share: component-scoped, so plain class names are safe here. The only
    exception is the QR, injected as raw SVG and sized by the global `.qr svg`. */
 
 .body {
@@ -13,8 +13,8 @@
 
 /* ------------------------------------------------------------- cassette ---- */
 
-/* The cassette is a physical object — a dark plastic shell the same in any
-   room light — so its shell tokens are deliberately theme-independent, the way
+/* The cassette is a physical object, a dark plastic shell the same in any
+   room light, so its shell tokens are deliberately theme-independent, the way
    the printed cards are always white. The kraft label and teal hubs come from
    the global palette and shift gently with the theme. */
 .cassette {

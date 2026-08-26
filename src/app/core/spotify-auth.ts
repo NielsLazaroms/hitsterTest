@@ -28,7 +28,7 @@ export class SpotifyAuth {
   /**
    * The address Spotify redirects back to, and the address the QR codes encode.
    *
-   * Spotify rejects "localhost" outright — during local development the app must
+   * Spotify rejects "localhost" outright: during local development the app must
    * be reached at http://127.0.0.1:5200/ and that exact string must be registered
    * as a Redirect URI in the developer dashboard.
    */

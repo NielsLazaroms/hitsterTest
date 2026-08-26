@@ -127,7 +127,7 @@ function translatePlaybackError(error: unknown): Error {
       );
     }
     if (error.status === 403) {
-      return new Error('Spotify refused playback — this needs a Premium account.');
+      return new Error('Spotify refused playback. This needs a Premium account.');
     }
   }
   return error instanceof Error ? error : new Error('Playback failed.');

@@ -1,4 +1,4 @@
-/** Namespaced localStorage that never throws — private mode, cleared data, etc. */
+/** Namespaced localStorage that never throws: private mode, cleared data, etc. */
 
 const PREFIX = 'mixtape.';
 
@@ -15,7 +15,7 @@ export function write(key: string, value: unknown): void {
   try {
     localStorage.setItem(PREFIX + key, JSON.stringify(value));
   } catch {
-    /* storage unavailable — the app still works for this session */
+    /* storage unavailable, but the app still works for this session */
   }
 }
 

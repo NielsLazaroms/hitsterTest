@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { RouterLink } from '@angular/router';
 import { DeckService } from '../../core/deck';
 import { Diagnostics } from '../../core/diagnostics';
 import type { Card, DraftCard } from '../../core/models';
@@ -13,9 +13,8 @@ import type { Card, DraftCard } from '../../core/models';
   styleUrl: './deck-builder.css',
 })
 export class DeckBuilder {
-  private readonly deck = inject(DeckService);
+  protected readonly deck = inject(DeckService);
   private readonly diagnostics = inject(Diagnostics);
-  private readonly router = inject(Router);
 
   readonly playlistUrl = signal('');
   readonly drafts = signal<DraftCard[]>([]);
@@ -24,6 +23,8 @@ export class DeckBuilder {
   readonly notice = signal('');
   readonly report = signal('');
   readonly diagnosing = signal(false);
+  /** True once the deck is saved, so we show the "what next" step in place. */
+  readonly saved = signal(false);
 
   readonly suspectCount = computed(() => this.drafts().filter((d) => d.suspect).length);
   readonly ready = computed(() => this.drafts().filter((d) => d.year !== null).length);
@@ -80,8 +81,14 @@ export class DeckBuilder {
       .map(({ id, uri, title, artist, year }) => ({ id, uri, title, artist, year }));
 
     this.deck.save(cards);
-    // Land on Share and make a copy straight away, so a freshly built deck shows
-    // its code without a second button press.
-    void this.router.navigate(['/share'], { queryParams: { fresh: 1 } });
+    // Stay put and offer the next step rather than forcing a share. Making a
+    // shared copy uploads the deck to the server, so it should be a choice, not
+    // a side effect of saving.
+    this.saved.set(true);
+  }
+
+  /** Back to the table from the saved step, to tweak a year or drop a card. */
+  edit(): void {
+    this.saved.set(false);
   }
 }

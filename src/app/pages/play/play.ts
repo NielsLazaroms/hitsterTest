@@ -91,7 +91,7 @@ export class Play implements OnDestroy {
   /**
    * The <video> only exists once Angular has rendered the scanning branch, and
    * that happens on a later task than the signal write. Awaiting a resolved
-   * promise is not enough — it runs before change detection, so the element is
+   * promise is not enough: it runs before change detection, so the element is
    * still missing and the scan used to abort without saying anything.
    */
   private async videoElement(): Promise<HTMLVideoElement | null> {

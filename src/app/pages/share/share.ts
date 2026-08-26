@@ -24,7 +24,7 @@ export class Share {
 
   protected readonly deck = inject(DeckService);
 
-  /** The code written on the label, once known — from sharing or from a scan. */
+  /** The code written on the label, once known: from sharing or from a scan. */
   readonly shareCode = signal('');
   readonly shareQr = signal<SafeHtml | null>(null);
   readonly sharing = signal(false);
@@ -40,19 +40,12 @@ export class Share {
   constructor() {
     const params = this.route.snapshot.queryParamMap;
 
-    // A QR scanned from another phone lands here as /share?code=xxxx — pull that
+    // A QR scanned from another phone lands here as /share?code=xxxx, so pull that
     // deck straight away so scanning is all it takes.
     const code = params.get('code');
     if (code) {
       this.codeInput.set(code);
       void this.loadCode();
-      return;
-    }
-
-    // The deck builder sends /share?fresh=1 after saving, so a just-built deck
-    // shows its code without a second tap.
-    if (params.get('fresh') && this.deck.count()) {
-      void this.shareDeck();
     }
   }
 
@@ -96,7 +89,7 @@ export class Share {
       this.copied.set(true);
       setTimeout(() => this.copied.set(false), 1600);
     } catch {
-      // Clipboard blocked (insecure context, or denied) — the code is on screen
+      // Clipboard blocked (insecure context, or denied), so the code is on screen
       // to read out, so this is a convenience that can quietly do nothing.
     }
   }

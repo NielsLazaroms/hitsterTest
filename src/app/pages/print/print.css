@@ -1,30 +1,117 @@
-.title {
-  text-align: center;
-}
-
-/* The preview below is part of the same scroll, so the header must not
-   claim a full viewport of height. */
+/* The control screen sits in the same scroll as the printable sheets below, so
+   its header must not claim a full viewport of height. Everything in this file
+   down to the `.sheets` rule is screen-only chrome; from there on it is the
+   exact-millimetre print layout and must be left alone. */
 .page.screenonly {
   min-height: auto;
 }
-.info {
-  margin: 0 0 22px;
+
+/* ---- summary: plain words for what the printer will produce ------------- */
+
+.summary {
+  margin-bottom: 26px;
 }
 
-.actions {
-  display: flex;
-  flex-direction: column;
+.summary-name {
+  font-family: var(--font-hand), cursive;
+  font-size: 32px;
+  line-height: 1;
+  color: var(--teal-deep);
+}
+
+.summary-line {
+  margin-top: 6px;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--dim);
+}
+.summary-line b {
+  font-weight: 700;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- output sections --------------------------------------------------- */
+
+.out {
+  margin-bottom: 22px;
+}
+
+/* A silkscreened section label, matching the machine's mono labelling. */
+.silk {
+  margin-bottom: 10px;
+  font-family: var(--font-mono), monospace;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+.btn.action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  --icon-size: 18px;
+}
+
+.dest {
+  margin-top: 9px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--dim);
+}
+.dest b {
+  color: var(--text);
+  font-weight: 600;
+}
+.dest code {
+  font-family: var(--font-mono), monospace;
+  color: var(--teal-deep);
+  word-break: break-all;
+}
+
+/* ---- the two settings that decide whether printing works --------------- */
+
+.checklist {
+  margin-bottom: 26px;
+  padding: 16px 18px;
+  background: color-mix(in srgb, var(--warn) 9%, var(--panel));
+  border: 1px solid color-mix(in srgb, var(--warn) 30%, var(--line));
+  border-radius: var(--radius);
+}
+.silk.flag {
+  margin-bottom: 10px;
+  color: var(--warn);
+}
+.checklist ul {
+  list-style: none;
+}
+.checklist li {
+  display: grid;
+  grid-template-columns: 66px 1fr;
   gap: 10px;
+  align-items: baseline;
+  padding: 9px 0;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--dim);
 }
-
-.btn[disabled] {
-  cursor: default;
-  opacity: 0.55;
-  filter: none;
+.checklist li + li {
+  border-top: 1px solid color-mix(in srgb, var(--warn) 20%, var(--line));
 }
-.info code {
-  font-family: ui-monospace, monospace;
-  color: var(--accent);
+.checklist .k {
+  font-family: var(--font-mono), monospace;
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--warn);
+}
+.checklist .v b {
+  color: var(--text);
+  font-weight: 600;
 }
 
 /* On screen the sheets are a shrunken preview so the front/back pairing is
@@ -71,7 +158,7 @@
   border: 0.2mm solid #cfcfcf;
 }
 
-/* The SVG itself is sized from styles.css — it arrives via [innerHTML],
+/* The SVG itself is sized from styles.css; it arrives via [innerHTML],
    so component style scoping never reaches it. */
 .qr {
   width: 34mm;
@@ -179,15 +266,20 @@
 
 /* Kept out of the way until the printer turns out not to duplex on its own. */
 .help {
-  margin-top: 18px;
+  margin-top: 12px;
+  padding-top: 12px;
   font-size: 13px;
   line-height: 1.6;
   color: var(--dim);
+  border-top: 1px solid color-mix(in srgb, var(--warn) 20%, var(--line));
 }
 
 .help summary {
   cursor: pointer;
-  color: var(--accent);
+  color: var(--teal-deep);
+  font-family: var(--font-mono), monospace;
+  font-size: 12px;
+  letter-spacing: 0.02em;
 }
 
 .help p {
