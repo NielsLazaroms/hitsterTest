@@ -1,4 +1,4 @@
-import { gridFromAlpha, trim, wrapLines } from './raster';
+import { gridFromAlpha, trim, wrapLines, stackGrids } from './raster';
 
 // Measure text by character count, so wrap widths read as "max characters".
 const byChars = (t: string) => t.length;
@@ -14,6 +14,20 @@ describe('wrapLines', () => {
 
   it('wraps each input line independently', () => {
     expect(wrapLines(['aa bb', 'cc dd'], byChars, 5)).toEqual(['aa bb', 'cc dd']);
+  });
+});
+
+describe('stackGrids', () => {
+  it('stacks grids centred with a blank-row gap', () => {
+    expect(stackGrids([[[true]], [[true, true, true]]], 1)).toEqual([
+      [false, true, false],
+      [false, false, false],
+      [true, true, true],
+    ]);
+  });
+
+  it('skips empty grids', () => {
+    expect(stackGrids([[[false]], [[true]]], 0)).toEqual([[true]]);
   });
 });
 

@@ -14,7 +14,7 @@ import {
   serializeBinaryStl,
   type TileFaces,
 } from '../../core/stl';
-import { downloadStl, downloadZip, rasterText } from '../../core/raster';
+import { downloadStl, downloadZip, rasterText, stackGrids } from '../../core/raster';
 import { zipStore } from '../../core/zip';
 import type { Card } from '../../core/models';
 
@@ -125,10 +125,23 @@ export class PrintSheet {
       const innerMm = DEFAULT_TILE.tileSize - 2 * DEFAULT_TILE.margin;
       const backWrapPx = Math.floor(innerMm / DEFAULT_TILE.backCell);
 
+      // Small artist, a big bold year, small italic title — the printed-card
+      // hierarchy. All three share one cell size when extruded, so the pixel
+      // sizes below are the physical size ratio, the same on every tile.
+      const back = (card: Card): boolean[][] =>
+        stackGrids(
+          [
+            rasterText([card.artist], { pixelsPerLine: 22, weight: 600, maxWidth: backWrapPx }),
+            rasterText([String(card.year)], { pixelsPerLine: 54, weight: 700 }),
+            rasterText([card.title], { pixelsPerLine: 22, italic: true, maxWidth: backWrapPx }),
+          ],
+          8,
+        );
+
       const tiles: TileFaces[] = this.deck.cards().map((card) => ({
         qr: qrMatrix(`${this.auth.redirectUri}?t=${card.id}`),
         code: rasterText([card.id.toUpperCase()], { weight: 700 }),
-        back: rasterText([card.artist, String(card.year), card.title], { maxWidth: backWrapPx }),
+        back: back(card),
       }));
 
       const slug = (this.deckName() || 'deck').toLowerCase().replace(/[^a-z0-9]+/g, '-');

@@ -16,6 +16,8 @@ export interface RasterOptions {
   font?: string;
   /** Extra weight, e.g. `700` for the loud middle line. */
   weight?: number | string;
+  /** Render italic, as the title is on the printed cards. */
+  italic?: boolean;
   /**
    * Wrap width in pixels. Given, a long line breaks onto more lines instead of
    * widening the canvas — which, once the caller extrudes at a fixed cell size,
@@ -66,7 +68,7 @@ export function rasterText(lines: string[], opts: RasterOptions = {}): boolean[]
 
   const pad = Math.round(px * 0.15);
   const lineGap = Math.round(px * 0.3);
-  const font = `${weight} ${px}px ${family}`;
+  const font = `${opts.italic ? 'italic ' : ''}${weight} ${px}px ${family}`;
 
   // First pass: measure, and wrap long lines so the canvas never grows past the
   // requested width — that is what keeps every card's text one physical size.
@@ -120,6 +122,30 @@ export function gridFromAlpha(
     grid.push(rowArr);
   }
   return grid;
+}
+
+/**
+ * Stacks grids vertically, centred, with `gap` blank rows between them. Because
+ * each grid was rasterised at its own font size but they share one cell size
+ * when extruded, this is how the back gets a small artist, a big year, and a
+ * small title in a single feature. Empty grids are skipped.
+ */
+export function stackGrids(grids: boolean[][][], gap = 0): boolean[][] {
+  const real = grids.filter((g) => g.length && g.some((row) => row.some(Boolean)));
+  if (!real.length) return [[false]];
+
+  const width = Math.max(...real.map((g) => g[0].length));
+  const out: boolean[][] = [];
+  real.forEach((grid, i) => {
+    if (i > 0) for (let k = 0; k < gap; k++) out.push(new Array(width).fill(false));
+    const offset = Math.floor((width - grid[0].length) / 2);
+    for (const row of grid) {
+      const line: boolean[] = new Array(width).fill(false);
+      for (let c = 0; c < row.length; c++) line[offset + c] = row[c];
+      out.push(line);
+    }
+  });
+  return out;
 }
 
 /** Drops fully-empty border rows and columns so the label fills its box. */
