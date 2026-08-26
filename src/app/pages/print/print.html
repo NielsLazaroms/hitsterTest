@@ -84,8 +84,8 @@
         <app-icon name="box" /> {{ building() ? 'Building…' : 'Download 3D tiles (.stl)' }}
       </button>
       <p class="dest">
-        Every card becomes a 40&nbsp;mm tile with a 4&nbsp;mm gap, split into
-        <b>{{ fileCount() }}</b> {{ fileCount() === 1 ? 'plate' : 'plates' }} of up to
+        Every card becomes a {{ tileSize }}&nbsp;mm tile with a {{ tileGap }}&nbsp;mm gap, split
+        into <b>{{ fileCount() }}</b> {{ fileCount() === 1 ? 'plate' : 'plates' }} of up to
         {{ plateCapacity }} tiles ({{ plateGrid }}), each sized for a
         250&nbsp;×&nbsp;210&nbsp;mm bed, so no plate is wider than your printer.
         {{
@@ -93,10 +93,10 @@
             ? 'They arrive together in a single .zip.'
             : 'It downloads as a single .stl.'
         }}
-        The QR and its code stand proud on top; the artist, year and title are raised on the
-        underside, mirrored so they read once you turn the tile over. Everything raised changes at
-        one layer height, so a single filament colour-change gives dark marks on a light tile. The
-        QR is small even at full tile size. Test-scan one before printing a whole deck.
+        The QR fills the top of the tile; the title, year, artist and manual-entry code are raised
+        on the underside, mirrored so they read once you turn the tile over. Everything raised
+        changes at one layer height, so a single filament colour-change gives dark marks on a light
+        tile. Test-scan one before printing a whole deck.
       </p>
     </section>
   </div>

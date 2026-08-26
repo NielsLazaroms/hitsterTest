@@ -17,13 +17,11 @@
  * box first, which keeps the triangle count down on a full deck.
  */
 
-/** A square tile: QR + code raised on top, the answer raised underneath. */
+/** A square tile: the QR raised on top, the answer raised underneath. */
 export interface TileFaces {
   /** QR module grid, `qr[row][col]` true where dark. Row 0 is the top. */
   qr: boolean[][];
-  /** Rasterised card code, shown under the QR on the top face. */
-  code: boolean[][];
-  /** Rasterised answer (artist / year / title), raised on the bottom face. */
+  /** Rasterised answer (title / year / artist / code), raised on the bottom face. */
   back: boolean[][];
 }
 
@@ -55,7 +53,10 @@ export interface TileOptions {
 }
 
 export const DEFAULT_TILE: TileOptions = {
-  tileSize: 40,
+  // Roughly a playing card, so the QR reads from a distance, the back text has
+  // room to be large, and fewer tiles pack onto a plate. This is the main dial:
+  // raise it for larger cards, which also gives the back more vertical budget.
+  tileSize: 65,
   baseThickness: 1.6,
   relief: 0.6,
   sink: 0.2,
@@ -67,10 +68,12 @@ export const DEFAULT_TILE: TileOptions = {
   gap: 4,
   bedWidth: 250,
   bedDepth: 210,
-  // 0.12 mm × the raster's ~30 px line height ≈ a 3.6 mm line, legible and the
-  // same on every card. rasterText renders back text at 24 px, so this is the
-  // conversion from those pixels to millimetres.
-  backCell: 0.12,
+  // Physical size of one back-text raster pixel, ~3x the first test print. It is
+  // a ceiling, not a target: it only binds while the whole stacked block still
+  // fits the tile's inner square. A tall block (a wrapped title, big gaps)
+  // overflows and shrinks every line uniformly instead, so a larger tileSize is
+  // what buys the vertical budget to actually reach this size.
+  backCell: 0.36,
 };
 
 /**
@@ -280,13 +283,11 @@ export function tileMesh(
 
   const inner = S - 2 * margin;
 
-  // Top face: QR block anchored to the top, a slim code strip below it. The
-  // code is only a manual-entry fallback, so it is kept small to hand the QR as
-  // much of the tile as possible.
-  const codeStrip = Math.min(2.5, inner * 0.09);
-  const gapToCode = 0.8;
-  const qrBlock = Math.min(inner, inner - codeStrip - gapToCode);
-  const qrBlockLeft = offsetX + (S - qrBlock) / 2;
+  // Top face: the QR fills the whole inner square so it scans from as far away
+  // as possible. The manual-entry code lives on the back now, so nothing else
+  // competes with it for the top.
+  const qrBlock = inner;
+  const qrBlockLeft = offsetX + margin;
   const qrBlockTop = offsetY + S - margin;
 
   // Inset the QR by its quiet zone; the untouched base around it is that flat
@@ -301,19 +302,6 @@ export function tileMesh(
     qrBlockTop - qrBlock + qrInset,
     modules * cellBlock,
     modules * cellBlock,
-    topZ0,
-    topZ1,
-    false,
-  );
-
-  const codeTop = qrBlockTop - qrBlock - gapToCode;
-  placeFeature(
-    sink,
-    faces.code,
-    offsetX + margin,
-    codeTop - codeStrip,
-    inner,
-    codeStrip,
     topZ0,
     topZ1,
     false,

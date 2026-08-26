@@ -91,7 +91,11 @@ export class PrintSheet {
     return Math.floor(pageIndex / 2) + 1;
   }
 
-  /** Grid a single bed-sized file holds, e.g. "5 × 4". */
+  /** Side of one printed tile, mm; the copy quotes it so it never drifts. */
+  readonly tileSize = DEFAULT_TILE.tileSize;
+  /** Gap left between tiles on the plate, mm. */
+  readonly tileGap = DEFAULT_TILE.gap;
+  /** Grid a single bed-sized file holds, e.g. "4 × 3". */
   readonly plateGrid = `${plateColumns(DEFAULT_TILE)} × ${plateRows(DEFAULT_TILE)}`;
   /** Most tiles in one file. */
   readonly plateCapacity = plateCapacity(DEFAULT_TILE);
@@ -106,11 +110,11 @@ export class PrintSheet {
   }
 
   /**
-   * Turns every card into an extruded tile (QR and its code raised on top, the
-   * answer raised underneath) and downloads the deck split into bed-sized
-   * plates, each a grid that fits a 250 × 210 mm bed. A single plate downloads
-   * as one STL; several are bundled into one ZIP so the browser is not asked to
-   * fire off a stack of downloads.
+   * Turns every card into an extruded tile (the QR raised on top, the answer
+   * and its manual-entry code raised underneath) and downloads the deck split
+   * into bed-sized plates, each a grid that fits a 250 × 210 mm bed. A single
+   * plate downloads as one STL; several are bundled into one ZIP so the browser
+   * is not asked to fire off a stack of downloads.
    *
    * Building is synchronous and can take a moment, so the button is disabled
    * across a paint that lets "Building…" show first.
@@ -126,23 +130,25 @@ export class PrintSheet {
       const innerMm = DEFAULT_TILE.tileSize - 2 * DEFAULT_TILE.margin;
       const backWrapPx = Math.floor(innerMm / DEFAULT_TILE.backCell);
 
-      // Song title on top (small italic), a big bold year centred, the band at
-      // the bottom (small). All three share one cell size when extruded, so the
-      // pixel sizes below are the physical size ratio, the same on every tile.
-      // The generous gap spreads them out rather than clustering them.
+      // Song title on top, a big bold year centred, the band under it, then the
+      // manual-entry code last (the scanner fallback, moved off the top so the
+      // QR can fill it). The four grids share one cell size when extruded, so
+      // the pixel sizes below are only the physical size *ratio* — the year
+      // always reads largest. A tight gap keeps the block short so it doesn't
+      // overflow the tile and shrink every line uniformly.
       const back = (card: Card): boolean[][] =>
         stackGrids(
           [
-            rasterText([card.title], { pixelsPerLine: 22, italic: true, maxWidth: backWrapPx }),
+            rasterText([card.title], { pixelsPerLine: 22, maxWidth: backWrapPx }),
             rasterText([String(card.year)], { pixelsPerLine: 54, weight: 700 }),
             rasterText([card.artist], { pixelsPerLine: 22, weight: 600, maxWidth: backWrapPx }),
+            rasterText([card.id.toUpperCase()], { pixelsPerLine: 16, weight: 700 }),
           ],
-          44,
+          12,
         );
 
       const tiles: TileFaces[] = this.deck.cards().map((card) => ({
         qr: qrMatrix(`${this.auth.redirectUri}?t=${card.id}`),
-        code: rasterText([card.id.toUpperCase()], { weight: 700 }),
         back: back(card),
       }));
 

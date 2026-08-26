@@ -16,8 +16,6 @@ export interface RasterOptions {
   font?: string;
   /** Extra weight, e.g. `700` for the loud middle line. */
   weight?: number | string;
-  /** Render italic, as the title is on the printed cards. */
-  italic?: boolean;
   /**
    * Wrap width in pixels. Given, a long line breaks onto more lines instead of
    * widening the canvas, which, once the caller extrudes at a fixed cell size,
@@ -68,7 +66,7 @@ export function rasterText(lines: string[], opts: RasterOptions = {}): boolean[]
 
   const pad = Math.round(px * 0.15);
   const lineGap = Math.round(px * 0.3);
-  const font = `${opts.italic ? 'italic ' : ''}${weight} ${px}px ${family}`;
+  const font = `${weight} ${px}px ${family}`;
 
   // First pass: measure, and wrap long lines so the canvas never grows past the
   // requested width, which is what keeps every card's text one physical size.

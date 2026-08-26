@@ -122,19 +122,19 @@ describe('serializeBinaryStl', () => {
 });
 
 describe('plates', () => {
-  const face: TileFaces = { qr: [[true]], code: [[false]], back: [[false]] };
+  const face: TileFaces = { qr: [[true]], back: [[false]] };
 
-  it('fits the bed at 44 mm pitch: 5 across, 4 down, 20 per file', () => {
-    // (250+4)/44 = 5 cols, (210+4)/44 = 4 rows.
-    expect(plateColumns(DEFAULT_TILE)).toBe(5);
-    expect(plateRows(DEFAULT_TILE)).toBe(4);
-    expect(plateCapacity(DEFAULT_TILE)).toBe(20);
+  it('fits the bed at 69 mm pitch: 3 across, 3 down, 9 per file', () => {
+    // (250+4)/69 = 3 cols, (210+4)/69 = 3 rows.
+    expect(plateColumns(DEFAULT_TILE)).toBe(3);
+    expect(plateRows(DEFAULT_TILE)).toBe(3);
+    expect(plateCapacity(DEFAULT_TILE)).toBe(9);
   });
 
   it('splits a deck into full plates plus a remainder', () => {
     const deck = Array.from({ length: 47 }, () => face);
     const plates = splitPlates(deck, DEFAULT_TILE);
-    expect(plates.map((p) => p.length)).toEqual([20, 20, 7]);
+    expect(plates.map((p) => p.length)).toEqual([9, 9, 9, 9, 9, 2]);
   });
 
   it('produces a non-empty mesh whose triangle count is box-aligned', () => {
