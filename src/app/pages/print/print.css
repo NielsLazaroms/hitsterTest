@@ -181,28 +181,16 @@
   color: #9a9a9a;
 }
 
-/* The back is top-anchored (not centred) so the year sits at the same height on
-   every card: artist is one fixed line at the top, the year locks just beneath
-   it, and the title fills whatever space is left below. */
+/* The back is top-anchored (not centred), so the year — the first element — sits
+   at the same height on every card. The artist and title flow beneath it and can
+   wrap freely without ever moving the year. */
 .card.back {
   justify-content: flex-start;
   text-align: center;
 }
 
-.back .ar {
-  max-width: 100%;
-  margin-top: 3mm;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  font-size: 6.2pt;
-  letter-spacing: 0.13em;
-  text-transform: uppercase;
-  color: #0a6b63;
-}
-
 .back .yr {
-  margin: 2mm 0 3mm;
+  margin-top: 3mm;
   font-family: 'Arial Narrow', Arial, sans-serif;
   font-size: 30pt;
   font-weight: 700;
@@ -210,9 +198,17 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* Fills the space under the year; clamps so a long title can't spill off the
-   card, without ever pushing the year. */
+.back .ar {
+  margin-top: 4mm;
+  font-size: 6.2pt;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: #0a6b63;
+}
+
+/* Clamped so a long title can't spill off the bottom of the card. */
 .back .ti {
+  margin-top: 1.5mm;
   display: -webkit-box;
   -webkit-line-clamp: 4;
   -webkit-box-orient: vertical;
