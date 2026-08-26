@@ -1,6 +1,6 @@
-/** One printed card: a QR id on the front, the answer on the back. */
+/** One printed card: a QR on the front, the answer on the back. */
 export interface Card {
-  /** Short opaque id encoded in the QR code, e.g. "a3f9". */
+  /** The raw 22-char Spotify track id (encoded in the QR), e.g. "4iV5W9uYEdYUVa79Axb7Rh". */
   id: string;
   /** Spotify track URI, e.g. "spotify:track:...". */
   uri: string;
@@ -9,7 +9,7 @@ export interface Card {
   year: number;
 }
 
-/** A card while it is still being reviewed in the deck builder. */
+/** A card while it is still being reviewed in the generator. */
 export interface DraftCard extends Omit<Card, 'year'> {
   year: number | null;
   album: string;

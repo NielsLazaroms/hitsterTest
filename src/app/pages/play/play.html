@@ -2,9 +2,6 @@
   <div class="bar">
     <span class="led" [class.hot]="player.status() === 'playing'" aria-hidden="true"></span>
     <h2 class="wordmark">Mixtape</h2>
-    <button class="iconbtn" type="button" routerLink="/share" aria-label="Share deck">
-      <app-icon name="share-2" />
-    </button>
     <button class="iconbtn" type="button" routerLink="/settings" aria-label="Settings">
       <app-icon name="settings" />
     </button>
@@ -45,12 +42,15 @@
     <!-- ----------------------------------------------------- manual ---- -->
     @case ('manual') {
       <div class="body center">
-        <p class="lede">The code is printed under the square on the front of the card.</p>
+        <p class="lede">
+          Type the code printed under the square on the front of the card, or paste a Spotify
+          track link.
+        </p>
         <input
           class="field code"
           autocomplete="off"
           spellcheck="false"
-          placeholder="a3f9"
+          placeholder="4iV5W9uYEdYUVa79Axb7Rh"
           [ngModel]="manualCode()"
           (ngModelChange)="manualCode.set($event)"
           (keydown.enter)="submitManual()"
@@ -117,12 +117,16 @@
 
         <div class="reveal">
           @if (revealed()) {
-            <div class="jcard">
-              <span class="tape-strip" aria-hidden="true"></span>
-              <p class="ar">{{ card()?.artist }}</p>
-              <p class="yr">{{ card()?.year }}</p>
-              <p class="ti">{{ card()?.title }}</p>
-            </div>
+            @if (card()?.title) {
+              <div class="jcard">
+                <span class="tape-strip" aria-hidden="true"></span>
+                <p class="ar">{{ card()?.artist }}</p>
+                <p class="yr">{{ card()?.year }}</p>
+                <p class="ti">{{ card()?.title }}</p>
+              </div>
+            } @else {
+              <p class="hint">The answer is on the back of the card.</p>
+            }
           } @else {
             <button class="revealbtn" type="button" (click)="revealed.set(true)">
               &#9656; Reveal the answer

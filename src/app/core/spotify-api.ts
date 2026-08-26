@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { SpotifyAuth } from './spotify-auth';
 import type { Probe } from './diagnostics';
-import type { SpotifyDevice } from './models';
+import type { Card, SpotifyDevice } from './models';
 
 const BASE = 'https://api.spotify.com/v1';
 
@@ -92,6 +92,27 @@ export class SpotifyApi {
   async devices(): Promise<SpotifyDevice[]> {
     const data = await this.request<{ devices: SpotifyDevice[] }>('/me/player/devices');
     return data?.devices ?? [];
+  }
+
+  /**
+   * Looks up one track by its id, so a scanned card (which carries only the id)
+   * can reconstruct the answer to reveal — the app stores nothing locally.
+   */
+  async track(id: string): Promise<Card> {
+    const data = await this.request<{
+      name: string;
+      artists: { name: string }[];
+      album?: { release_date: string };
+    }>(`/tracks/${encodeURIComponent(id)}`);
+
+    const year = Number.parseInt((data?.album?.release_date ?? '').slice(0, 4), 10);
+    return {
+      id,
+      uri: `spotify:track:${id}`,
+      title: data?.name ?? '',
+      artist: (data?.artists ?? []).map((a) => a.name).join(', '),
+      year: Number.isFinite(year) ? year : 0,
+    };
   }
 
   async play(uri: string, deviceId: string | null): Promise<void> {

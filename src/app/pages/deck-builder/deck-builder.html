@@ -1,28 +1,11 @@
 <div class="page">
   <div class="bar">
-    <button type="button" routerLink="/settings">Back</button>
-    <h2 class="title">Build deck</h2>
+    <button type="button" routerLink="/play">Back</button>
+    <h2 class="title">Make cards</h2>
     <span class="spacer"></span>
   </div>
 
   <div class="body">
-    @if (saved()) {
-      <div class="saved">
-        <div class="tick" aria-hidden="true">✓</div>
-        <h1>Deck saved</h1>
-        <p class="lede">
-          {{ deck.deckName() }}, {{ deck.count() }}
-          {{ deck.count() === 1 ? 'card' : 'cards' }} saved on this phone. What next?
-        </p>
-
-        <button class="btn" type="button" routerLink="/print">Print the cards</button>
-        <div class="row nextrow">
-          <button class="btn ghost" type="button" routerLink="/share">Share a copy</button>
-          <button class="btn ghost" type="button" routerLink="/play">Play now</button>
-        </div>
-        <button class="btn ghost sm keep" type="button" (click)="edit()">Keep editing</button>
-      </div>
-    } @else {
     @if (error()) {
       <p class="msg err">{{ error() }}</p>
       <button class="btn ghost sm" type="button" [disabled]="diagnosing()" (click)="diagnose()">
@@ -103,8 +86,7 @@
         </table>
       </div>
 
-      <button class="btn save" type="button" (click)="save()">Save {{ ready() }} cards</button>
-    }
+      <button class="btn save" type="button" (click)="make()">Make {{ ready() }} cards</button>
     }
   </div>
 </div>

@@ -21,11 +21,6 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/settings/settings').then((m) => m.Settings),
   },
   {
-    path: 'share',
-    canActivate: [connectedGuard],
-    loadComponent: () => import('./pages/share/share').then((m) => m.Share),
-  },
-  {
     path: 'deck',
     canActivate: [connectedGuard],
     loadComponent: () => import('./pages/deck-builder/deck-builder').then((m) => m.DeckBuilder),

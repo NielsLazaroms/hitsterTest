@@ -151,17 +151,19 @@ export class QrScanner {
 }
 
 /**
- * Pulls the card id out of whatever the camera read. Cards encode
- * `<app>/?t=a3f9`, but a hand-typed bare id works too.
+ * Extracts a Spotify track id from whatever the camera read or the player typed.
+ * A card's QR is the bare 22-char id, but a pasted `spotify:track:<id>` URI or an
+ * `open.spotify.com/track/<id>` link works too. Case is preserved on purpose —
+ * Spotify ids are case-sensitive.
  */
-export function cardIdFromScan(value: string): string {
-  try {
-    const url = new URL(value, document.baseURI);
-    const fromQuery = url.searchParams.get('t');
-    if (fromQuery) return fromQuery.toLowerCase();
-    const last = url.pathname.split('/').filter(Boolean).pop();
-    return (last ?? '').toLowerCase();
-  } catch {
-    return value.trim().toLowerCase();
-  }
+export function trackIdFromScan(value: string): string {
+  const raw = value.trim();
+
+  const uri = /spotify:track:([A-Za-z0-9]+)/.exec(raw);
+  if (uri) return uri[1];
+
+  const url = /open\.spotify\.com\/track\/([A-Za-z0-9]+)/.exec(raw);
+  if (url) return url[1];
+
+  return raw;
 }

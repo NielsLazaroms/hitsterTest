@@ -153,36 +153,31 @@
   justify-content: center;
   width: 65mm;
   height: 65mm;
-  padding: 6mm;
+  padding: 3mm;
   overflow: hidden;
   border: 0.2mm solid #cfcfcf;
 }
 
 /* The SVG itself is sized from styles.css; it arrives via [innerHTML],
-   so component style scoping never reaches it. */
+   so component style scoping never reaches it. A ~50.9 mm symbol on the 65 mm
+   card leaves ~7 mm of white each side as the quiet zone and ~14 mm below for
+   the code line — big, robust modules a phone reads easily. */
 .qr {
-  width: 34mm;
-  height: 34mm;
+  width: 50.9mm;
+  height: 50.9mm;
 }
 
 .foot {
   display: flex;
-  gap: 2.5mm;
-  align-items: baseline;
-  margin-top: 4.5mm;
+  justify-content: center;
+  margin-top: 2mm;
 }
 
-.deckname {
-  font-size: 5.4pt;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: #0a6b63;
-}
-
+/* The manual-entry fallback: the raw Spotify track id, one small mono line. */
 .pid {
   font-family: ui-monospace, 'Courier New', monospace;
-  font-size: 5.4pt;
-  letter-spacing: 0.1em;
+  font-size: 6pt;
+  letter-spacing: 0.02em;
   color: #9a9a9a;
 }
 

@@ -1,6 +1,6 @@
 <div class="page screenonly">
   <div class="bar">
-    <button class="iconbtn" type="button" routerLink="/settings" aria-label="Back to settings">
+    <button class="iconbtn" type="button" routerLink="/deck" aria-label="Back to make cards">
       <app-icon name="arrow-left" />
     </button>
     <h2>Print</h2>
@@ -11,7 +11,7 @@
     <!-- Plain-language summary of what will come out of the printer. The
          faithful, to-scale preview lives further down. -->
     <div class="summary">
-      <p class="summary-name">{{ deck.count() ? deckName() : 'No deck yet' }}</p>
+      <p class="summary-name">{{ deck.count() ? 'Your cards' : 'No cards yet' }}</p>
       @if (deck.count()) {
         <p class="summary-line">
           <b>{{ deck.count() }}</b> {{ deck.count() === 1 ? 'card' : 'cards' }} →
@@ -20,7 +20,7 @@
           <b>{{ sheets().length }}</b> {{ sheets().length === 1 ? 'page' : 'pages' }} in all
         </p>
       } @else {
-        <p class="summary-line">Build a deck first, then come back to print it.</p>
+        <p class="summary-line">Make cards from a playlist first, then come back to print.</p>
       }
     </div>
 
@@ -30,8 +30,9 @@
         <app-icon name="printer" /> Open the print dialog
       </button>
       <p class="dest">
-        Odd pages are the QR fronts, even pages the answers. Every QR points at
-        <code>{{ appUrl }}</code>.
+        Odd pages are the QR fronts, even pages the answers. Each QR holds the track's Spotify id —
+        scan it in the app (Play → Scan a card) to play the song. The code beneath it is the
+        manual-entry fallback.
       </p>
     </section>
 
@@ -93,8 +94,8 @@
             ? 'They arrive together in a single .zip.'
             : 'It downloads as a single .stl.'
         }}
-        The QR stands raised on the top; the title, year, artist and manual-entry code are engraved
-        into the underside, mirrored so they read once you turn the tile over. The QR is raised at a
+        The QR stands raised on the top; the title, year and artist are engraved into the
+        underside, mirrored so they read once you turn the tile over. The QR is raised at a
         single layer height, so one filament colour-change still marks it dark on a light tile — but
         the engraved text is the same colour as the tile, read by its shadow (paint or a second
         material in the recesses if you want it to stand out). Test-scan one, and check both faces,
@@ -125,7 +126,6 @@
             <div class="card">
               <div class="qr" [innerHTML]="card.qr"></div>
               <div class="foot">
-                <span class="deckname">{{ deckName() }}</span>
                 <span class="pid">{{ card.id }}</span>
               </div>
             </div>

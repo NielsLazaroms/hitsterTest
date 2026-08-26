@@ -1,7 +1,5 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
-import { BUNDLED_DECK_URL } from './config';
 import { SpotifyApi, SpotifyError } from './spotify-api';
-import { read, write } from './storage';
 import type { Card, DraftCard } from './models';
 
 /**
@@ -10,9 +8,6 @@ import type { Card, DraftCard } from './models';
  */
 const REISSUE =
   /remaster|anniversar|deluxe|greatest hits|best of|collection|essential|reissue|expanded|live at|live in|the hits|platinum|ultimate|soundtrack/i;
-
-/** Alphabet without look-alike characters, so a card id can be typed by hand. */
-const ALPHABET = 'abcdefghjkmnpqrstuvwxyz23456789';
 
 interface PlaylistPage {
   items: PlaylistEntry[];
@@ -35,109 +30,22 @@ interface SpotifyTrack {
   album?: { name: string; release_date: string; release_date_precision: string };
 }
 
+/**
+ * Holds the batch of cards being generated in the current session. The app is
+ * stateless — a card's QR carries the raw Spotify track id, and the answer is
+ * printed on the card back — so nothing is saved to storage or a backend. The
+ * generator fills this in memory; the print page reads it.
+ */
 @Injectable({ providedIn: 'root' })
 export class DeckService {
   private readonly api = inject(SpotifyApi);
 
-  readonly cards = signal<Card[]>(read<Card[]>('deck', []));
+  readonly cards = signal<Card[]>([]);
   readonly count = computed(() => this.cards().length);
 
-  readonly deckName = signal<string>(read<string>('deckName', 'MIXTAPE'));
-
-  /**
-   * Loads the deck shipped with the app, for a device that has never built one.
-   *
-   * The result is deliberately not written to storage: leaving it in memory
-   * means a later deploy with an updated deck.json reaches players who never
-   * edited their copy, while anyone who imports or builds their own deck
-   * overrides it permanently.
-   */
-  async loadBundled(): Promise<void> {
-    if (this.cards().length > 0) return;
-
-    try {
-      const response = await fetch(BUNDLED_DECK_URL, { cache: 'no-cache' });
-      if (!response.ok) return;
-
-      const parsed: unknown = await response.json();
-      if (!Array.isArray(parsed)) return;
-
-      const cards = parsed.filter(isCard);
-      if (cards.length) this.cards.set(cards);
-    } catch {
-      /* no deck shipped, or it is unreadable, so the app starts empty as before */
-    }
-  }
-
-  find(id: string): Card | undefined {
-    const needle = id.trim().toLowerCase();
-    return this.cards().find((card) => card.id === needle);
-  }
-
-  save(cards: Card[]): void {
+  /** Replaces the current batch (called by the generator before printing). */
+  set(cards: Card[]): void {
     this.cards.set(cards);
-    write('deck', cards);
-  }
-
-  setDeckName(name: string): void {
-    this.deckName.set(name);
-    write('deckName', name);
-  }
-
-  /**
-   * Uploads the current deck to the sharing backend and returns a short code
-   * another device can load it by. Only works on the deployed site: the
-   * /api/deck function does not exist under `ng serve`.
-   */
-  async share(): Promise<string> {
-    let response: Response;
-    try {
-      response = await fetch('/api/deck', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ name: this.deckName(), cards: this.cards() }),
-      });
-    } catch {
-      throw new Error('Sharing needs the deployed site. It is unavailable in local preview.');
-    }
-
-    const data: unknown = await response.json().catch(() => null);
-    const code = (data as { code?: string; error?: string } | null);
-    if (!response.ok || !code?.code) {
-      throw new Error(code?.error ?? 'Could not share the deck.');
-    }
-    return code.code;
-  }
-
-  /**
-   * Fetches a shared deck by code and replaces the local deck with it. Every
-   * card is re-checked because a stored deck is untrusted input.
-   */
-  async loadShared(code: string): Promise<number> {
-    const clean = code.trim().toLowerCase();
-    if (!/^[a-z0-9]{4}$/.test(clean)) {
-      throw new Error('A code is four characters, e.g. k7qf.');
-    }
-
-    let response: Response;
-    try {
-      response = await fetch(`/api/deck?code=${encodeURIComponent(clean)}`);
-    } catch {
-      throw new Error('Could not reach the deck server.');
-    }
-
-    const data: unknown = await response.json().catch(() => null);
-    if (!response.ok) {
-      throw new Error((data as { error?: string } | null)?.error ?? 'Could not load that code.');
-    }
-
-    const payload = data as { name?: unknown; cards?: unknown } | null;
-    const cards = Array.isArray(payload?.cards) ? payload.cards.filter(isCard) : [];
-    if (!cards.length) throw new Error('That code did not return a usable deck.');
-
-    this.save(cards);
-    if (typeof payload?.name === 'string' && payload.name) this.setDeckName(payload.name);
-    return cards.length;
   }
 
   /** Pulls a playlist and turns it into draft cards awaiting a year review. */
@@ -162,6 +70,9 @@ export class DeckService {
       `https://api.spotify.com/v1/playlists/${match[1]}/items?limit=50&fields=${encodeURIComponent(fields)}`;
 
     const drafts: DraftCard[] = [];
+    // A playlist can list the same track more than once; keep the first and skip
+    // the rest, so each unique track is one card.
+    const seenUris = new Set<string>();
 
     while (next && drafts.length < 300) {
       let page: PlaylistPage | null;
@@ -175,13 +86,15 @@ export class DeckService {
       for (const entry of page.items ?? []) {
         const track = entry.item ?? entry.track;
         if (!track?.uri || track.uri.startsWith('spotify:local')) continue;
+        if (seenUris.has(track.uri)) continue;
         // A playlist can hold podcast episodes, which carry no album and so no
         // release year to place on a timeline.
         if (!track.album) continue;
 
+        seenUris.add(track.uri);
         const year = Number.parseInt((track.album.release_date ?? '').slice(0, 4), 10);
         drafts.push({
-          id: cardId(track.uri),
+          id: trackId(track.uri),
           uri: track.uri,
           title: track.name,
           artist: track.artists.map((a) => a.name).join(', '),
@@ -195,8 +108,13 @@ export class DeckService {
       next = page.next;
     }
 
-    return dedupe(drafts);
+    return drafts;
   }
+}
+
+/** The bare Spotify id from a `spotify:track:<id>` URI — what the QR encodes. */
+export function trackId(uri: string): string {
+  return uri.slice(uri.lastIndexOf(':') + 1);
 }
 
 /**
@@ -228,42 +146,4 @@ function explainPlaylistError(error: unknown): Error {
     return new Error(`Spotify returned ${error.status}: ${error.message}`);
   }
   return error instanceof Error ? error : new Error('Could not read that playlist.');
-}
-
-/** Guards against a malformed deck.json quietly producing unplayable cards. */
-function isCard(value: unknown): value is Card {
-  const card = value as Partial<Card> | null;
-  return (
-    typeof card?.id === 'string' &&
-    typeof card.uri === 'string' &&
-    typeof card.title === 'string' &&
-    typeof card.artist === 'string' &&
-    typeof card.year === 'number'
-  );
-}
-
-/** Stable 4-character id derived from the track URI (FNV-1a). */
-export function cardId(seed: string): string {
-  let hash = 2166136261;
-  for (let i = 0; i < seed.length; i++) {
-    hash ^= seed.charCodeAt(i);
-    hash = Math.imul(hash, 16777619);
-  }
-
-  let n = hash >>> 0;
-  let out = '';
-  for (let i = 0; i < 4; i++) {
-    out += ALPHABET[n % ALPHABET.length];
-    n = Math.floor(n / ALPHABET.length);
-  }
-  return out;
-}
-
-function dedupe(drafts: DraftCard[]): DraftCard[] {
-  const seen = new Set<string>();
-  for (const draft of drafts) {
-    while (seen.has(draft.id)) draft.id = cardId(draft.id + '.');
-    seen.add(draft.id);
-  }
-  return drafts;
 }

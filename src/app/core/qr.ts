@@ -3,11 +3,14 @@ import qrcode from 'qrcode-generator';
 /**
  * A scalable SVG for the given payload.
  *
- * Error correction level M keeps the symbol small enough that a 34 mm printed
- * square stays well above the size a phone camera needs.
+ * Pinned to version 3 at error-correction level H: a 22-character Spotify track
+ * id fits v3-H (24-byte capacity) and always lands on the same 29×29 grid, so
+ * the printed module size is predictable (≈1.757 mm on a 50.9 mm symbol). H's
+ * redundancy tolerates the wear a printed card takes. The quiet zone comes from
+ * the card's own padding, so none is baked in here.
  */
 export function qrSvg(payload: string): string {
-  const qr = qrcode(0, 'M');
+  const qr = qrcode(3, 'H');
   qr.addData(payload);
   qr.make();
   return qr.createSvgTag({ cellSize: 4, margin: 0, scalable: true });
@@ -17,13 +20,12 @@ export function qrSvg(payload: string): string {
  * The QR as a boolean module grid, `matrix[row][col]` true where the cell is
  * dark. Row 0 is the top of the symbol in image space (Y down).
  *
- * Error correction level H is used here rather than M: a same-material 3D
- * print relies on shadow and a filament colour-change for contrast, which is
- * marginal, and the extra redundancy of H tolerates that far better than the
- * flat printed version needs to.
+ * Pinned to version 3 at level H, the same symbol the printed card uses: a
+ * same-material 3D print relies on shadow and a filament colour-change for
+ * contrast, which is marginal, and H's redundancy tolerates that.
  */
 export function qrMatrix(payload: string): boolean[][] {
-  const qr = qrcode(0, 'H');
+  const qr = qrcode(3, 'H');
   qr.addData(payload);
   qr.make();
   const n = qr.getModuleCount();

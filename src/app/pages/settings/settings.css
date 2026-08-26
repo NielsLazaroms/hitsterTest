@@ -38,17 +38,6 @@
   margin-bottom: 12px;
 }
 
-.deckcount {
-  margin: 0 0 14px;
-  font-size: 14px;
-  color: var(--dim);
-}
-
-.deckcount b {
-  color: var(--text);
-  font-weight: 700;
-}
-
 /* Appearance switch: a physical selector row. */
 .segmented {
   display: flex;
@@ -75,15 +64,6 @@
   color: #fff;
   background: var(--teal-fill);
   box-shadow: var(--shadow-sm);
-}
-
-/* The link out to the dedicated Share page. */
-.share-link {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  --icon-size: 16px;
 }
 
 .signout:hover {

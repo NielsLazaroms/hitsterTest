@@ -54,6 +54,15 @@ export class Player {
     this.runClock(0);
   }
 
+  /**
+   * Fills in the answer for the reveal once it has been looked up, without
+   * touching playback. Guarded by id so a slow lookup for a card the player has
+   * already moved past cannot overwrite the current one.
+   */
+  reveal(id: string, card: Card): void {
+    if (this.card()?.id === id) this.card.set(card);
+  }
+
   async restart(): Promise<void> {
     await this.silently(() => this.api.seekToStart());
     this.status.set('playing');

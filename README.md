@@ -36,47 +36,39 @@ at most five users can be allow-listed, and everyone playing needs Premium.
 
 ## Handing it to someone else
 
-A deployed copy can carry its own configuration so the recipient never sees the
-dashboard at all. Both settings live in `src/app/core/config.ts`. The client id is safe to
-commit: a PKCE client id is a public identifier that travels in every authorize
-URL, which is the whole point of the flow.
-
-The bundled deck is a weaker guarantee. A card's QR holds only an opaque id, so
-scanning one with a plain camera gives nothing away — but `deck.json` maps
-every id to its answer and is served publicly, so a curious player could read
-the whole deck from one URL. That was always true of the copy in the device's
-own storage; shipping the file makes it a step easier. For a party game among
-people you invited, that is a fair trade for removing the import step.
+A deployed copy can carry its own Spotify Client ID so the recipient never sees
+the dashboard. It lives in `src/app/core/config.ts` and is safe to commit: a
+PKCE client id is a public identifier that travels in every authorize URL, which
+is the whole point of the flow.
 
 - `BUILT_IN_CLIENT_ID` — set it and the setup screen collapses to a single
   "Connect Spotify" button. A client id entered by hand still overrides it.
-- `public/deck.json` — a deck exported from Settings, dropped in as an asset.
-  It loads on any device that has not built or imported a deck of its own, and
-  is deliberately not written to storage, so a later deploy can ship a corrected
-  deck to players who never edited theirs.
 
 This changes only the setup friction, not who may play: Development Mode still
 caps the app at five allow-listed Spotify accounts, each needing Premium.
 
 ## Using it
 
-- **Settings → Build deck** — paste a playlist you own. The builder flags any
-  track whose album looks like a remaster, compilation or live record, because
-  Spotify reports the release date of *that pressing*, not of the song. Fix the
-  highlighted years by hand; this is the step that decides whether the game
-  works.
-- **Settings → Print cards** — shows a scaled preview of every sheet, front and
-  back, then opens the print dialog. Print double-sided at **100% / actual
-  size** with duplex set to flip on the **long edge**. The back sheets are
-  already mirrored to match.
-- **Play** — scan a card, or type the four-character code printed under the QR.
+The app stores nothing — it is a stateless generator and player. A card's QR
+holds the track's raw Spotify id, so scanning it plays the song directly; the
+answer is printed on the card back.
 
-Each QR encodes `<app address>/?t=<card id>`, so a card also works when scanned
-with the plain phone camera: it opens the app and starts the song. Because the
-id is opaque, nothing about the track leaks.
+- **Make cards** (Settings → Make cards, or the Back button from Play) — paste a
+  playlist you own. It flags any track whose album looks like a remaster,
+  compilation or live record, because Spotify reports the release date of *that
+  pressing*, not of the song. Fix the highlighted years by hand; this is the
+  step that decides whether the game works. Then **Make cards** → Print.
+- **Print** — a scaled preview of every sheet, front and back, then the print
+  dialog. Print double-sided at **100% / actual size** with duplex set to flip
+  on the **long edge**. The back sheets are already mirrored to match. There is
+  also a **3D tiles (.stl)** export. The QR is version 3 (29×29) at
+  error-correction level H, ≈50.9 mm on a 65 mm card.
+- **Play** — scan a card, or paste a Spotify track id / link by hand. The song
+  plays anonymously; **Reveal** looks the answer up live from Spotify.
 
-When you deploy this somewhere permanent, the QR codes must be regenerated —
-they contain whatever address the app was served from when you printed them.
+Because the QR carries the Spotify id itself, a card is not tied to any domain
+and works no matter where the app is deployed — nothing to regenerate. It is
+read only by the app's own scanner, not a plain phone camera.
 
 ## Layout
 
@@ -85,16 +77,17 @@ src/app/core/         services with no UI
   spotify-auth.ts     Authorization Code + PKCE, token refresh
   spotify-api.ts      thin Web API wrapper, friendly error translation
   player.ts           playback state, clock, clip timer
-  deck.ts             playlist import, year heuristics, localStorage
+  deck.ts             playlist import + year heuristics (in-memory, no storage)
   scanner.ts          BarcodeDetector with a jsQR fallback
-  qr.ts               QR SVG generation for the print sheet
+  qr.ts               QR SVG / matrix generation for cards and tiles
 src/app/pages/        one folder per screen
 ```
 
-State lives in `localStorage` under the `mixtape.` prefix: tokens, the deck,
-the chosen device and the clip length.
+State lives in `localStorage` under the `mixtape.` prefix: tokens, the chosen
+device and the clip length. The cards themselves are never stored — a card's QR
+carries everything the game needs.
 
-## When the deck builder is refused
+## When making cards is refused
 
 Spotify removed `GET /playlists/{id}/tracks` in February 2026 and answers the
 removed path with a bare `403 Forbidden`, which reads exactly like a

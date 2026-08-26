@@ -61,9 +61,10 @@ export const DEFAULT_TILE: TileOptions = {
   // room to be large, and fewer tiles pack onto a plate. This is the main dial:
   // raise it for larger cards, which also gives the back more vertical budget.
   tileSize: 65,
-  // Thicker than a raised-text tile: engraving cuts the answer into the body, so
-  // this leaves ~1.6 mm of wall (baseThickness − engrave) over each channel.
-  baseThickness: 2.4,
+  // Total tile height is baseThickness + relief = 2.8 mm. Engraving cuts the
+  // answer into the body, leaving ~1.4 mm of wall (baseThickness − engrave) over
+  // each channel.
+  baseThickness: 2.2,
   relief: 0.6,
   // Depth of the engraved answer. Deeper reads better but eats into the wall
   // above; pair a deeper cut with a thicker baseThickness.

@@ -4,16 +4,10 @@
       <app-icon name="arrow-left" />
     </button>
     <h2 class="title">Settings</h2>
-    <button class="iconbtn" type="button" routerLink="/share" aria-label="Share deck">
-      <app-icon name="share-2" />
-    </button>
+    <span class="spacer"></span>
   </div>
 
   <div class="body">
-    @if (message()) {
-      <p class="msg ok">{{ message() }}</p>
-    }
-
     <section class="panel">
       <h3 class="sect">Appearance</h3>
       <div class="segmented" role="group" aria-label="Appearance">
@@ -74,35 +68,9 @@
     </section>
 
     <section class="panel">
-      <h3 class="sect">Deck</h3>
-
-      <p class="deckcount">
-        @if (deck.count()) {
-          <b>{{ deck.count() }}</b> cards in the deck.
-        } @else {
-          No cards yet. Build one from a playlist.
-        }
-      </p>
-
-      <div class="row gap-sm">
-        <button class="btn ghost sm" type="button" routerLink="/deck">Build deck</button>
-        <button class="btn ghost sm" type="button" routerLink="/print" [disabled]="!deck.count()">
-          Print cards
-        </button>
-      </div>
-
-      <div class="row gap-sm">
-        <button class="btn ghost sm" type="button" (click)="exportDeck()" [disabled]="!deck.count()">
-          Export
-        </button>
-        <button class="btn ghost sm" type="button" (click)="file.click()">Import</button>
-      </div>
-      <input #file type="file" accept="application/json" hidden (change)="importDeck($event)" />
-
-      <button class="btn ghost sm share-link last" type="button" routerLink="/share">
-        <app-icon name="share-2" />
-        Hand this deck to another phone
-      </button>
+      <h3 class="sect">Cards</h3>
+      <p class="note">Turn a Spotify playlist into printable QR cards or 3D tiles.</p>
+      <button class="btn ghost sm last" type="button" routerLink="/deck">Make cards</button>
     </section>
 
     <section class="panel">

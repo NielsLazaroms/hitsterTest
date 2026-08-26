@@ -2,7 +2,6 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { RouterLink } from '@angular/router';
 import { DeckService } from '../../core/deck';
-import { SpotifyAuth } from '../../core/spotify-auth';
 import { Icon } from '../../core/icon';
 import { qrSvg, qrMatrix } from '../../core/qr';
 import {
@@ -40,13 +39,8 @@ interface Sheet {
 })
 export class PrintSheet {
   private readonly sanitizer = inject(DomSanitizer);
-  private readonly auth = inject(SpotifyAuth);
 
   protected readonly deck = inject(DeckService);
-
-  readonly deckName = this.deck.deckName;
-  /** The address the QR codes point back to. */
-  readonly appUrl = this.auth.redirectUri;
 
   /**
    * Front and back sheets, ready for duplex printing.
@@ -111,10 +105,10 @@ export class PrintSheet {
 
   /**
    * Turns every card into an extruded tile (the QR raised on top, the answer
-   * and its manual-entry code engraved into the underside) and downloads the deck split
-   * into bed-sized plates, each a grid that fits a 250 × 210 mm bed. A single
-   * plate downloads as one STL; several are bundled into one ZIP so the browser
-   * is not asked to fire off a stack of downloads.
+   * engraved into the underside) and downloads the cards split into bed-sized
+   * plates, each a grid that fits a 250 × 210 mm bed. A single plate downloads
+   * as one STL; several are bundled into one ZIP so the browser is not asked to
+   * fire off a stack of downloads.
    *
    * Building is synchronous and can take a moment, so the button is disabled
    * across a paint that lets "Building…" show first.
@@ -130,29 +124,27 @@ export class PrintSheet {
       const innerMm = DEFAULT_TILE.tileSize - 2 * DEFAULT_TILE.margin;
       const backWrapPx = Math.floor(innerMm / DEFAULT_TILE.backCell);
 
-      // Song title on top, a big bold year centred, the band under it, then the
-      // manual-entry code last (the scanner fallback, moved off the top so the
-      // QR can fill it). The four grids share one cell size when extruded, so
-      // the pixel sizes below are only the physical size *ratio* — the year
-      // always reads largest. A tight gap keeps the block short so it doesn't
-      // overflow the tile and shrink every line uniformly.
+      // Song title on top, a big bold year centred, the band under it. The three
+      // grids share one cell size when extruded, so the pixel sizes below are
+      // only the physical size *ratio* — the year always reads largest. A tight
+      // gap keeps the block short so it doesn't overflow the tile and shrink
+      // every line uniformly.
       const back = (card: Card): boolean[][] =>
         stackGrids(
           [
             rasterText([card.title], { pixelsPerLine: 22, maxWidth: backWrapPx }),
             rasterText([String(card.year)], { pixelsPerLine: 54, weight: 700 }),
             rasterText([card.artist], { pixelsPerLine: 22, weight: 600, maxWidth: backWrapPx }),
-            rasterText([card.id.toUpperCase()], { pixelsPerLine: 16, weight: 700 }),
           ],
           12,
         );
 
       const tiles: TileFaces[] = this.deck.cards().map((card) => ({
-        qr: qrMatrix(`${this.auth.redirectUri}?t=${card.id}`),
+        qr: qrMatrix(card.id),
         back: back(card),
       }));
 
-      const slug = (this.deckName() || 'deck').toLowerCase().replace(/[^a-z0-9]+/g, '-');
+      const slug = 'mixtape';
       const plates = splitPlates(tiles, DEFAULT_TILE);
 
       if (plates.length === 1) {
@@ -171,7 +163,8 @@ export class PrintSheet {
   }
 
   private decorate(card: Card): PrintCard {
-    const target = `${this.auth.redirectUri}?t=${card.id}`;
-    return { ...card, qr: this.sanitizer.bypassSecurityTrustHtml(qrSvg(target)) };
+    // The QR carries the raw Spotify track id — self-contained, so scanning it
+    // plays the track on any device with nothing stored.
+    return { ...card, qr: this.sanitizer.bypassSecurityTrustHtml(qrSvg(card.id)) };
   }
 }
