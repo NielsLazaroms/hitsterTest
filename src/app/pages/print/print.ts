@@ -1,9 +1,17 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { RouterLink } from '@angular/router';
 import { DeckService } from '../../core/deck';
 import { SpotifyAuth } from '../../core/spotify-auth';
-import { qrSvg } from '../../core/qr';
+import { qrSvg, qrMatrix } from '../../core/qr';
+import {
+  DEFAULT_TILE,
+  deckMesh,
+  gridColumns,
+  serializeBinaryStl,
+  type TileFaces,
+} from '../../core/stl';
+import { downloadStl, rasterText } from '../../core/raster';
 import type { Card } from '../../core/models';
 
 const PER_PAGE = 12;
@@ -78,8 +86,40 @@ export class PrintSheet {
     return Math.floor(pageIndex / 2) + 1;
   }
 
+  /** How many tiles fit across the 3D print bed, for the on-screen note. */
+  readonly tileColumns = computed(() => gridColumns(this.deck.count(), DEFAULT_TILE));
+
+  /** Guards the button while a large deck's mesh is being built. */
+  readonly building = signal(false);
+
   print(): void {
     window.print();
+  }
+
+  /**
+   * Builds one STL of every card as an extruded tile — QR and its code raised
+   * on top, the answer raised underneath — and downloads it. The work is
+   * synchronous and can take a moment on a big deck, so the button is disabled
+   * across a paint that lets "Building…" show first.
+   */
+  async download3d(): Promise<void> {
+    if (this.building() || this.deck.count() === 0) return;
+    this.building.set(true);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    try {
+      const tiles: TileFaces[] = this.deck.cards().map((card) => ({
+        qr: qrMatrix(`${this.auth.redirectUri}?t=${card.id}`),
+        code: rasterText([card.id.toUpperCase()], { weight: 700 }),
+        back: rasterText([card.artist, String(card.year), card.title]),
+      }));
+
+      const buffer = serializeBinaryStl(deckMesh(tiles, DEFAULT_TILE));
+      const slug = (this.deckName() || 'deck').toLowerCase().replace(/[^a-z0-9]+/g, '-');
+      downloadStl(buffer, `${slug}-3d-tiles.stl`);
+    } finally {
+      this.building.set(false);
+    }
   }
 
   private decorate(card: Card): PrintCard {

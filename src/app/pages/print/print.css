@@ -10,6 +10,18 @@
 .info {
   margin: 0 0 22px;
 }
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.btn[disabled] {
+  cursor: default;
+  opacity: 0.55;
+  filter: none;
+}
 .info code {
   font-family: ui-monospace, monospace;
   color: var(--accent);
