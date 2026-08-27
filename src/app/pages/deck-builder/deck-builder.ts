@@ -70,6 +70,12 @@ export class DeckBuilder {
     );
   }
 
+  updateTitle(id: string, raw: string): void {
+    this.drafts.update((list) =>
+      list.map((draft) => (draft.id === id ? { ...draft, title: raw } : draft)),
+    );
+  }
+
   remove(id: string): void {
     this.drafts.update((list) => list.filter((draft) => draft.id !== id));
   }

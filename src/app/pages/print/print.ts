@@ -127,7 +127,7 @@ export class PrintSheet {
       // A one-line reference height, so the title area can be held to exactly two
       // lines whether the title wraps or not.
       const lineRef = rasterText(['Mg'], { pixelsPerLine: 22 }).length;
-      const titleRows = lineRef * 2 + Math.round(22 * 0.3);
+      const titleRows = lineRef * 2 + Math.round(22 * 0.18);
 
       // Centres a shorter grid inside a fixed-height band with blank rows.
       const padCenter = (grid: boolean[][], rows: number): boolean[][] => {
@@ -150,7 +150,7 @@ export class PrintSheet {
       // on every tile. The pixel sizes are only the physical size *ratio*.
       const twoLine = (text: string, weight = 400): boolean[][] =>
         padCenter(
-          rasterText([text], { pixelsPerLine: 22, weight, maxWidth: backWrapPx, maxLines: 2 }),
+          rasterText([text], { pixelsPerLine: 26, weight, maxWidth: backWrapPx, maxLines: 2 }),
           titleRows,
         );
 
@@ -158,7 +158,7 @@ export class PrintSheet {
         stackGrids(
           [
             twoLine(card.title),
-            rasterText([String(card.year)], { pixelsPerLine: 54, weight: 700 }),
+            rasterText([String(card.year)], { pixelsPerLine: 44, weight: 700 }),
             twoLine(card.artist, 600),
           ],
           10,

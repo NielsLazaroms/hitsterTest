@@ -123,22 +123,28 @@ export function trackId(uri: string): string {
  * Remaster" — and, for a year-guessing game, so a year baked into the title
  * cannot give the answer away.
  *
- * Only annotations in bracket groups or after a trailing dash are removed; an
- * inline year that is part of the real title (Prince's "1999", "Summer of '69")
- * has no such marker and is left untouched.
+ * Every bracket group is removed outright (feat. credits, "[Live]", remaster
+ * tags), as are ellipses. Trailing dash tails are only dropped when they look
+ * like an annotation, so an inline year that is part of the real title (Prince's
+ * "1999", "Summer of '69") is left untouched.
  */
 export function cleanTitle(name: string): string {
   const ANNOT =
     /remaster(ed)?|re-?master|\bversion\b|\bmix\b|\bedit\b|\bmono\b|\bstereo\b|\b(?:19|20)\d{2}\b/i;
   let t = name;
-  // Bracketed annotation groups, e.g. "(2011 Remaster)", "(Remastered)".
-  t = t.replace(/\s*[([][^)\]]*[)\]]/g, (seg) => (ANNOT.test(seg) ? '' : seg));
+  // Any bracketed group is dropped — "(feat. X)", "(Remastered)", "[Live]" —
+  // none of it belongs on the card face.
+  t = t.replace(/\s*[([][^)\]]*[)\]]/g, '');
   // Trailing " - annotation" tails, repeatedly (e.g. "- 2011 - Remaster").
   let prev = '';
   while (prev !== t) {
     prev = t;
     t = t.replace(/\s*[-–—]\s*[^-–—]*$/, (seg) => (ANNOT.test(seg) ? '' : seg));
   }
+  // Ellipses ("...", "…") are dropped wherever they appear.
+  t = t.replace(/\s*(?:\.{2,}|…)\s*/g, ' ');
+  // "&" reads as a comma on the card face ("Us & Them" -> "Us, Them").
+  t = t.replace(/\s*&\s*/g, ', ');
   return t.replace(/\s{2,}/g, ' ').trim() || name.trim();
 }
 

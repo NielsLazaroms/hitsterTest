@@ -58,8 +58,15 @@ input.flag {
   border-color: var(--warn);
 }
 
-.tt {
+input.tt {
+  width: 100%;
+  min-width: 160px;
+  padding: 6px 8px;
   font-size: 14px;
+  color: var(--text);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
 }
 
 .ta {

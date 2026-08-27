@@ -67,7 +67,12 @@
                   />
                 </td>
                 <td>
-                  <div class="tt">{{ draft.title }}</div>
+                  <input
+                    class="tt"
+                    type="text"
+                    [value]="draft.title"
+                    (input)="updateTitle(draft.id, $any($event.target).value)"
+                  />
                   <div class="ta">{{ draft.artist }}</div>
                   @if (draft.suspect) {
                     <div class="flagnote">

@@ -90,7 +90,7 @@ export function rasterText(lines: string[], opts: RasterOptions = {}): boolean[]
   if (!input.length) return [[false]];
 
   const pad = Math.round(px * 0.15);
-  const lineGap = Math.round(px * 0.3);
+  const lineGap = Math.round(px * 0.18);
   const font = `${weight} ${px}px ${family}`;
 
   // First pass: measure, and wrap long lines so the canvas never grows past the
