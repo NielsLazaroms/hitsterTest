@@ -2,7 +2,7 @@
   <div class="bar">
     <span class="led" [class.hot]="player.status() === 'playing'" aria-hidden="true"></span>
     <h2 class="wordmark">Mixtape</h2>
-    <button class="iconbtn" type="button" routerLink="/settings" aria-label="Settings">
+    <button class="iconbtn" type="button" routerLink="/settings" aria-label="Instellingen">
       <app-icon name="settings" />
     </button>
   </div>
@@ -17,14 +17,10 @@
             <path d="M3 8V5a2 2 0 0 1 2-2h3M16 3h3a2 2 0 0 1 2 2v3M21 16v3a2 2 0 0 1-2 2h-3M8 21H5a2 2 0 0 1-2-2v-3" />
             <path d="M7 12h10" />
           </svg>
-          <span>Scan a card</span>
+          <span>Scan een kaart</span>
         </button>
 
         <p class="hint">{{ hint() }}</p>
-
-        <button class="btn ghost sm narrow" type="button" (click)="openManual()">
-          Enter code by hand
-        </button>
       </div>
     }
 
@@ -34,29 +30,8 @@
         <video #video playsinline muted></video>
         <div class="reticle"><div></div></div>
         <div class="camfoot">
-          <button class="btn ghost" type="button" (click)="cancelScan()">Cancel</button>
+          <button class="btn ghost" type="button" (click)="cancelScan()">Annuleren</button>
         </div>
-      </div>
-    }
-
-    <!-- ----------------------------------------------------- manual ---- -->
-    @case ('manual') {
-      <div class="body center">
-        <p class="lede">
-          Type the code printed under the square on the front of the card, or paste a Spotify
-          track link.
-        </p>
-        <input
-          class="field code"
-          autocomplete="off"
-          spellcheck="false"
-          placeholder="4iV5W9uYEdYUVa79Axb7Rh"
-          [ngModel]="manualCode()"
-          (ngModelChange)="manualCode.set($event)"
-          (keydown.enter)="submitManual()"
-        />
-        <button class="btn narrow" type="button" (click)="submitManual()">Play</button>
-        <button class="btn ghost sm narrow back" type="button" (click)="toIdle()">Back</button>
       </div>
     }
 
@@ -65,10 +40,10 @@
       <div class="body now">
         <p class="status">
           @switch (player.status()) {
-            @case ('playing') { <span class="on">Now playing</span> }
-            @case ('paused') { Paused }
-            @case ('finished') { Time&rsquo;s up }
-            @default { Loading&hellip; }
+            @case ('playing') { <span class="on">Speelt nu</span> }
+            @case ('paused') { Gepauzeerd }
+            @case ('finished') { Tijd is om }
+            @default { Laden&hellip; }
           }
         </p>
 
@@ -81,7 +56,7 @@
 
           <div class="counter">
             <span class="readout">{{ player.clock() }}</span>
-            <span class="lab">Tape counter</span>
+            <span class="lab">Bandteller</span>
           </div>
 
           <span class="reel" [class.spinning]="player.status() === 'playing'" aria-hidden="true">
@@ -93,24 +68,24 @@
           <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
         </div>
 
-        <p class="cardtag">Card &middot; {{ card()?.id }}</p>
+        <p class="cardtag">Kaart &middot; {{ card()?.id }}</p>
 
         <div class="controls">
-          <button class="key" type="button" (click)="player.restart()" aria-label="Restart">
+          <button class="key" type="button" (click)="player.restart()" aria-label="Opnieuw">
             <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 5h2v14H6zM20 5 9 12l11 7z"/></svg>
-            <span>Restart</span>
+            <span>Opnieuw</span>
           </button>
           <button class="key" type="button" (click)="togglePause()">
             @if (player.status() === 'playing') {
               <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>
-              <span>Pause</span>
+              <span>Pauze</span>
             } @else {
               <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
-              <span>Resume</span>
+              <span>Hervatten</span>
             }
           </button>
           <button class="key lit wide" type="button" (click)="nextCard()">
-            <span>Next card</span>
+            <span>Volgende kaart</span>
             <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4 5l11 7L4 19zM16 5h2.5v14H16z"/></svg>
           </button>
         </div>

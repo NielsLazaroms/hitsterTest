@@ -159,22 +159,22 @@ function explainPlaylistError(error: unknown): Error {
       .filter(Boolean)
       .join('. ');
     return new Error(
-      'Spotify refused this playlist (403). Likely one of: ' +
-        '(1) your login is missing playlist permissions, so sign out in Settings and reconnect; ' +
-        '(2) your Spotify app has not enabled the Web API: in the developer dashboard, edit the app and tick "Web API" under "Which API/SDKs are you planning to use?"; ' +
-        '(3) your Spotify app is in Development Mode and this account is not added under User Management in the developer dashboard.' +
-        (detail ? ` [Spotify said: ${detail}]` : ''),
+      'Spotify weigerde deze afspeellijst (403). Waarschijnlijk een van: ' +
+        '(1) je login mist afspeellijst-rechten, dus meld je af in Instellingen en verbind opnieuw; ' +
+        '(2) je Spotify-app heeft de Web API niet ingeschakeld: bewerk in het developer dashboard de app en vink "Web API" aan onder "Which API/SDKs are you planning to use?"; ' +
+        '(3) je Spotify-app staat in Development Mode en dit account is niet toegevoegd onder User Management in het developer dashboard.' +
+        (detail ? ` [Spotify zei: ${detail}]` : ''),
     );
   }
   if (error instanceof SpotifyError && error.status === 404) {
     return new Error(
-      'Spotify could not find that playlist (404). Check the link, and note that ' +
-        'Spotify-owned editorial or algorithmic playlists (Discover Weekly, Daily Mix, etc.) ' +
-        'are not readable by third-party apps. Use a normal user playlist instead.',
+      'Spotify kon die afspeellijst niet vinden (404). Controleer de link, en let op dat ' +
+        'door Spotify beheerde redactionele of algoritmische afspeellijsten (Discover Weekly, Daily Mix, enz.) ' +
+        'niet leesbaar zijn voor apps van derden. Gebruik in plaats daarvan een normale gebruikersafspeellijst.',
     );
   }
   if (error instanceof SpotifyError) {
-    return new Error(`Spotify returned ${error.status}: ${error.message}`);
+    return new Error(`Spotify gaf ${error.status} terug: ${error.message}`);
   }
-  return error instanceof Error ? error : new Error('Could not read that playlist.');
+  return error instanceof Error ? error : new Error('Kon die afspeellijst niet lezen.');
 }

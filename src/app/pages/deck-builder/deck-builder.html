@@ -1,7 +1,7 @@
 <div class="page">
   <div class="bar">
-    <button type="button" routerLink="/play">Back</button>
-    <h2 class="title">Make cards</h2>
+    <button type="button" routerLink="/play">Terug</button>
+    <h2 class="title">Kaarten maken</h2>
     <span class="spacer"></span>
   </div>
 
@@ -9,7 +9,7 @@
     @if (error()) {
       <p class="msg err">{{ error() }}</p>
       <button class="btn ghost sm" type="button" [disabled]="diagnosing()" (click)="diagnose()">
-        {{ diagnosing() ? 'Checking…' : 'Work out which one it is' }}
+        {{ diagnosing() ? 'Bezig met controleren…' : 'Zoek uit welke het is' }}
       </button>
     }
     @if (report()) {
@@ -19,7 +19,7 @@
       <p class="msg ok">{{ notice() }}</p>
     }
 
-    <label for="playlist">Your Spotify playlist</label>
+    <label for="playlist">Jouw Spotify-afspeellijst</label>
     <input
       id="playlist"
       class="field"
@@ -31,25 +31,26 @@
     />
 
     <button class="btn" type="button" [disabled]="loading()" (click)="load()">
-      {{ loading() ? 'Loading…' : 'Load tracks' }}
+      {{ loading() ? 'Laden…' : 'Nummers laden' }}
     </button>
     <p class="note intro">
-      Use a playlist you own. Spotify only returns full track lists for your own playlists.
+      Gebruik een afspeellijst die van jou is. Spotify geeft alleen volledige tracklijsten terug
+      voor je eigen afspeellijsten.
     </p>
 
     @if (drafts().length) {
       <p class="msg warn">
-        Check every highlighted year. Spotify reports the date of <em>this pressing</em>, so
-        remasters and compilations come back decades late. Fixing them here is the difference
-        between a working game and an argument at the table.
+        Controleer elk gemarkeerd jaartal. Spotify rapporteert de datum van <em>deze persing</em>,
+        dus remasters en compilaties komen decennia te laat terug. Dat hier corrigeren is het
+        verschil tussen een werkend spel en ruzie aan tafel.
       </p>
 
       <div class="tablewrap">
         <table>
           <thead>
             <tr>
-              <th class="yearcol">Year</th>
-              <th>Track</th>
+              <th class="yearcol">Jaar</th>
+              <th>Nummer</th>
               <th class="dropcol"></th>
             </tr>
           </thead>
@@ -76,12 +77,12 @@
                   <div class="ta">{{ draft.artist }}</div>
                   @if (draft.suspect) {
                     <div class="flagnote">
-                      from "{{ draft.album }}", likely not the original release
+                      uit "{{ draft.album }}", waarschijnlijk niet de originele release
                     </div>
                   }
                 </td>
                 <td>
-                  <button class="drop" type="button" (click)="remove(draft.id)" aria-label="Remove">
+                  <button class="drop" type="button" (click)="remove(draft.id)" aria-label="Verwijderen">
                     ×
                   </button>
                 </td>
@@ -91,7 +92,7 @@
         </table>
       </div>
 
-      <button class="btn save" type="button" (click)="make()">Make {{ ready() }} cards</button>
+      <button class="btn save" type="button" (click)="make()">Maak {{ ready() }} kaarten</button>
     }
   </div>
 </div>

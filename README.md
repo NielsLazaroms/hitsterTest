@@ -1,124 +1,134 @@
 # Mixtape
 
-A song-timeline party game: printed cards with a QR code on the front and the
-answer on the back, and a phone app that plays the track without ever showing
-what it is.
+Een muziek-tijdlijn-gezelschapsspel: geprinte kaarten met een QR-code op de
+voorkant en het antwoord op de achterkant, en een telefoon-app die het nummer
+afspeelt zonder ooit te laten zien wat het is.
 
-Spotify does the playing. The app never streams audio itself — it drives
-whatever device your Spotify account is already signed in to (Spotify Connect),
-so the music comes out of the speaker while the phone screen shows nothing but
-a clock.
+Spotify verzorgt het afspelen. De app streamt zelf nooit audio — hij bestuurt
+het apparaat waarop je Spotify-account al is ingelogd (Spotify Connect), zodat
+de muziek uit de speaker komt terwijl het telefoonscherm niets laat zien behalve
+een klok.
 
-## Running it
+## Draaien
 
 ```bash
-npm install     # jsqr + qrcode-generator were added to package.json
+npm install     # jsqr + qrcode-generator zijn toegevoegd aan package.json
 npm start       # http://127.0.0.1:5200
 ```
 
-The dev server is pinned to `127.0.0.1:5200` in `angular.json`.
+De dev-server staat vast op `127.0.0.1:5200` in `angular.json`.
 
-> **Use `127.0.0.1`, never `localhost`.** Spotify rejects the literal string
-> `localhost` in a redirect URI. The app derives its redirect URI from the
-> address you loaded it at, so opening `http://localhost:5200` will produce a
-> redirect URI Spotify refuses.
+> **Gebruik `127.0.0.1`, nooit `localhost`.** Spotify weigert de letterlijke
+> string `localhost` in een redirect-URI. De app leidt zijn redirect-URI af van
+> het adres waarop je hem hebt geladen, dus `http://localhost:5200` openen
+> levert een redirect-URI op die Spotify weigert.
 
-## One-time Spotify setup
+## Eenmalige Spotify-instelling
 
-1. Create an app at <https://developer.spotify.com/dashboard>.
-2. Add `http://127.0.0.1:5200/` as a Redirect URI — exactly, trailing slash
-   included.
-3. Tick **Web API**, save, and copy the Client ID into the app's setup screen.
-4. Add every player's Spotify account email under **User Management**.
+1. Maak een app aan op <https://developer.spotify.com/dashboard>.
+2. Voeg `http://127.0.0.1:5200/` toe als Redirect URI — precies zo, inclusief de
+   afsluitende slash.
+3. Vink **Web API** aan, sla op, en kopieer de Client ID naar het instelscherm
+   van de app.
+4. Voeg het Spotify-account-e-mailadres van elke speler toe onder
+   **User Management**.
 
-Development Mode rules, as of 2026: the app owner must hold Spotify Premium,
-at most five users can be allow-listed, and everyone playing needs Premium.
+Regels van Development Mode, anno 2026: de eigenaar van de app moet Spotify
+Premium hebben, er kunnen maximaal vijf gebruikers op de allowlist staan, en
+iedereen die meespeelt heeft Premium nodig.
 
-## Handing it to someone else
+## Doorgeven aan iemand anders
 
-A deployed copy can carry its own Spotify Client ID so the recipient never sees
-the dashboard. It lives in `src/app/core/config.ts` and is safe to commit: a
-PKCE client id is a public identifier that travels in every authorize URL, which
-is the whole point of the flow.
+Een gedeployede kopie kan zijn eigen Spotify Client ID meedragen, zodat de
+ontvanger het dashboard nooit hoeft te zien. Die staat in
+`src/app/core/config.ts` en mag veilig gecommit worden: een PKCE-client-id is
+een publieke identifier die in elke authorize-URL meereist, wat precies de
+bedoeling van de flow is.
 
-- `BUILT_IN_CLIENT_ID` — set it and the setup screen collapses to a single
-  "Connect Spotify" button. A client id entered by hand still overrides it.
+- `BUILT_IN_CLIENT_ID` — stel dit in en het instelscherm krimpt tot één enkele
+  "Verbind met Spotify"-knop. Een handmatig ingevoerde client id heeft nog steeds
+  voorrang.
 
-This changes only the setup friction, not who may play: Development Mode still
-caps the app at five allow-listed Spotify accounts, each needing Premium.
+Dit verandert alleen de instel-drempel, niet wie er mag spelen: Development Mode
+beperkt de app nog steeds tot vijf Spotify-accounts op de allowlist, elk met
+Premium.
 
-## Using it
+## Gebruiken
 
-The app stores nothing — it is a stateless generator and player. A card's QR
-holds the track's raw Spotify id, so scanning it plays the song directly; the
-answer is printed on the card back.
+De app slaat niets op — het is een stateless generator en speler. De QR van een
+kaart bevat de kale Spotify-id van het nummer, dus scannen speelt het nummer
+direct af; het antwoord staat geprint op de achterkant van de kaart.
 
-- **Make cards** (Settings → Make cards, or the Back button from Play) — paste a
-  playlist you own. It flags any track whose album looks like a remaster,
-  compilation or live record, because Spotify reports the release date of *that
-  pressing*, not of the song. Fix the highlighted years by hand; this is the
-  step that decides whether the game works. Then **Make cards** → Print.
-- **Print** — a scaled preview of every sheet, front and back, then the print
-  dialog. Print double-sided at **100% / actual size** with duplex set to flip
-  on the **long edge**. The back sheets are already mirrored to match. There is
-  also a **3D tiles (.stl)** export. The QR is version 3 (29×29) at
-  error-correction level H, ≈50.9 mm on a 65 mm card.
-- **Play** — scan a card, or paste a Spotify track id / link by hand. The song
-  plays anonymously; **Reveal** looks the answer up live from Spotify.
+- **Kaarten maken** (Instellingen → Kaarten maken, of de Terug-knop vanuit Spelen) — plak
+  een afspeellijst die van jou is. De app markeert elk nummer waarvan het album
+  op een remaster, compilatie of live-opname lijkt, omdat Spotify de
+  releasedatum van *die persing* rapporteert, niet die van het nummer. Corrigeer
+  de gemarkeerde jaartallen met de hand; dit is de stap die bepaalt of het spel
+  werkt. Daarna **Kaarten maken** → Printen.
+- **Printen** — een geschaalde voorvertoning van elk vel, voor- en achterkant,
+  gevolgd door het printvenster. Print dubbelzijdig op **100% / werkelijke
+  grootte**, met duplex ingesteld om te draaien op de **lange rand**. De
+  achterkant-vellen zijn al gespiegeld zodat ze passen. Er is ook een
+  **3D-tegels (.stl)**-export. De QR is versie 3 (29×29) op foutcorrectieniveau
+  H, ≈50,9 mm op een kaart van 65 mm.
+- **Spelen** — scan een kaart. Het nummer speelt anoniem af.
 
-Because the QR carries the Spotify id itself, a card is not tied to any domain
-and works no matter where the app is deployed — nothing to regenerate. It is
-read only by the app's own scanner, not a plain phone camera.
+Doordat de QR de Spotify-id zelf bevat, is een kaart niet aan een domein
+gebonden en werkt hij ongeacht waar de app is gedeployed — niets om opnieuw te
+genereren. Hij wordt alleen gelezen door de eigen scanner van de app, niet door
+een gewone telefooncamera.
 
-## Layout
+## Indeling
 
 ```
-src/app/core/         services with no UI
-  spotify-auth.ts     Authorization Code + PKCE, token refresh
-  spotify-api.ts      thin Web API wrapper, friendly error translation
-  player.ts           playback state, clock, clip timer
-  deck.ts             playlist import + year heuristics (in-memory, no storage)
-  scanner.ts          BarcodeDetector with a jsQR fallback
-  qr.ts               QR SVG / matrix generation for cards and tiles
-src/app/pages/        one folder per screen
+src/app/core/         services zonder UI
+  spotify-auth.ts     Authorization Code + PKCE, token-refresh
+  spotify-api.ts      dunne Web API-wrapper, vriendelijke foutvertaling
+  player.ts           afspeelstatus, klok, clip-timer
+  deck.ts             afspeellijst-import + jaartal-heuristiek (in geheugen, geen opslag)
+  scanner.ts          BarcodeDetector met een jsQR-fallback
+  qr.ts               QR SVG / matrix-generatie voor kaarten en tegels
+src/app/pages/        één map per scherm
 ```
 
-State lives in `localStorage` under the `mixtape.` prefix: tokens, the chosen
-device and the clip length. The cards themselves are never stored — a card's QR
-carries everything the game needs.
+De status leeft in `localStorage` onder het voorvoegsel `mixtape.`: tokens, het
+gekozen apparaat en de cliplengte. De kaarten zelf worden nooit opgeslagen — de
+QR van een kaart bevat alles wat het spel nodig heeft.
 
-## When making cards is refused
+## Wanneer kaarten maken geweigerd wordt
 
-Spotify removed `GET /playlists/{id}/tracks` in February 2026 and answers the
-removed path with a bare `403 Forbidden`, which reads exactly like a
-permissions problem and is not one. The builder calls
-`GET /playlists/{id}/items` instead, and reads each entry's `item` — the same
-change renamed that nested object from `track`.
+Spotify verwijderde `GET /playlists/{id}/tracks` in februari 2026 en beantwoordt
+het verwijderde pad met een kale `403 Forbidden`, wat precies leest als een
+rechtenprobleem maar dat niet is. De builder roept in plaats daarvan
+`GET /playlists/{id}/items` aan en leest de `item` van elke entry — dezelfde
+wijziging hernoemde dat geneste object van `track`.
 
-Past that, a 403 has three unrelated causes and the message does not say
-which. The builder puts a **"Work out which one it is"** button under the
-error: it asks Spotify a handful of questions one at a time and reads the
-answer off the pattern.
+Daarnaast heeft een 403 drie ongerelateerde oorzaken en de melding zegt niet
+welke. De builder plaatst een **"Zoek uit welke het is"**-knop onder de fout:
+hij stelt Spotify een handvol vragen, één voor één, en leest het antwoord af aan
+het patroon.
 
-- *Every* call refused, including `/me` — the app is not allowed to call the
-  Web API for this account. Two dashboard settings do this and the probe cannot
-  separate them, so check both: tick **Web API** under "Which API/SDKs are you
-  planning to use?", and add the signed-in account under **User Management**.
-- `/me` fine, playlists refused — the token is missing the playlist scopes.
-  Disconnect and reconnect; a refreshed token keeps the scopes of the original
-  consent, so reconnecting is the only way to widen them.
-- Only the one playlist refused — Spotify-made lists (Top 50, Discover Weekly,
-  Daily Mix, decade and genre playlists) are closed to third-party apps. Copy
-  the tracks into a playlist of your own.
+- *Elke* aanroep geweigerd, inclusief `/me` — de app mag de Web API niet
+  aanroepen voor dit account. Twee dashboard-instellingen veroorzaken dit en de
+  probe kan ze niet onderscheiden, dus controleer beide: vink **Web API** aan
+  onder "Which API/SDKs are you planning to use?", en voeg het ingelogde account
+  toe onder **User Management**.
+- `/me` werkt, afspeellijsten geweigerd — het token mist de playlist-scopes.
+  Verbreek de verbinding en verbind opnieuw; een ververst token behoudt de
+  scopes van de oorspronkelijke toestemming, dus opnieuw verbinden is de enige
+  manier om ze te verbreden.
+- Alleen die ene afspeellijst geweigerd — door Spotify gemaakte lijsten (Top 50,
+  Discover Weekly, Daily Mix, decennium- en genre-afspeellijsten) zijn gesloten
+  voor apps van derden. Kopieer de nummers naar een eigen afspeellijst.
 
-Signing in successfully does not prove much on its own — a Development Mode app
-can hand out a token and then refuse every API call.
+Succesvol inloggen bewijst op zichzelf weinig — een Development Mode-app kan een
+token uitdelen en vervolgens elke API-aanroep weigeren.
 
-## Known limits
+## Bekende beperkingen
 
-- **Camera needs a secure context.** `http://127.0.0.1:5200` counts as secure,
-  so scanning works on the dev machine. A LAN address like `192.168.x.x` does
-  not — on a phone, either deploy over HTTPS or use the typed-code fallback.
-- **Premium only.** The Web API refuses playback for free accounts.
-- **Spotify must have an active device.** Open Spotify and play anything for a
-  second before the first scan, then pick the speaker in Settings.
+- **De camera vereist een beveiligde context.** `http://127.0.0.1:5200` telt als
+  beveiligd, dus scannen werkt op de dev-machine. Een LAN-adres zoals
+  `192.168.x.x` niet — op een telefoon moet je daarom via HTTPS deployen.
+- **Alleen Premium.** De Web API weigert afspelen voor gratis accounts.
+- **Spotify moet een actief apparaat hebben.** Open Spotify en speel een seconde
+  iets af vóór de eerste scan, en kies daarna de speaker in Instellingen.

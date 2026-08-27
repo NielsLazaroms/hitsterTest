@@ -18,9 +18,9 @@ import { read, remove } from '../../core/storage';
       <div class="body center">
         @if (error()) {
           <p class="msg err">{{ error() }}</p>
-          <button class="btn" style="max-width: 260px" (click)="toSetup()">Back to setup</button>
+          <button class="btn" style="max-width: 260px" (click)="toSetup()">Terug naar instellen</button>
         } @else {
-          <p class="lede">Connecting to Spotify…</p>
+          <p class="lede">Verbinden met Spotify…</p>
         }
       </div>
     </div>
@@ -46,8 +46,8 @@ export class Launch {
 
     if (params.get('error')) {
       this.error.set(
-        `Spotify refused the connection (${params.get('error')}). ` +
-          'The redirect address in the dashboard must match exactly.',
+        `Spotify weigerde de verbinding (${params.get('error')}). ` +
+          'Het redirect-adres in het dashboard moet exact overeenkomen.',
       );
       return;
     }
@@ -61,7 +61,7 @@ export class Launch {
         remove('next');
         await this.router.navigateByUrl(next || '/play', { replaceUrl: true });
       } catch (error) {
-        this.error.set(error instanceof Error ? error.message : 'Sign-in failed.');
+        this.error.set(error instanceof Error ? error.message : 'Inloggen mislukt.');
       }
       return;
     }

@@ -39,10 +39,10 @@ export class Diagnostics {
     const login = await this.checkLogin();
     if (!login.ok) {
       return [
-        'The stored Spotify login could not be renewed, so nothing could be asked of ' +
-          'Spotify at all. This is not about the playlist. Spotify said: ' +
-          `"${login.detail}". Do not disconnect yet. That erases the login this check ` +
-          'reads. Try again in a minute first; if it keeps failing, then reconnect in Settings.',
+        'De opgeslagen Spotify-login kon niet worden vernieuwd, dus er kon Spotify helemaal ' +
+          'niets gevraagd worden. Dit gaat niet over de afspeellijst. Spotify zei: ' +
+          `"${login.detail}". Koppel nog niet los. Dat wist de login die deze controle ` +
+          'leest. Probeer het eerst over een minuut opnieuw; blijft het mislukken, verbind dan opnieuw in Instellingen.',
         '',
         ...this.context(id),
       ].join('\n');
@@ -78,10 +78,10 @@ export class Diagnostics {
     try {
       const token = await this.auth.token();
       return token
-        ? { ok: true, detail: 'renewed' }
-        : { ok: false, detail: 'no access token was stored' };
+        ? { ok: true, detail: 'vernieuwd' }
+        : { ok: false, detail: 'er was geen access-token opgeslagen' };
     } catch (error) {
-      return { ok: false, detail: error instanceof Error ? error.message : 'unknown failure' };
+      return { ok: false, detail: error instanceof Error ? error.message : 'onbekende fout' };
     }
   }
 
@@ -117,56 +117,56 @@ function verdict(probes: Probe[], playlistId: string | null): string {
   const filtered = by('its items, as the builder asks for them');
 
   if (me?.status === 'network error')
-    return 'Cannot reach Spotify at all. Check the connection, or an ad blocker / VPN.';
+    return 'Kan Spotify helemaal niet bereiken. Controleer de verbinding, of een adblocker / VPN.';
 
   if (me?.status === 401)
     return (
-      'Spotify rejected the access token even after renewing it. Reconnect in Settings, and ' +
-      'check the Client ID there is the one from the app you are actually editing.'
+      'Spotify weigerde het access-token zelfs na vernieuwen. Verbind opnieuw in Instellingen, en ' +
+      'controleer of de Client ID daar die van de app is die je daadwerkelijk bewerkt.'
     );
 
   if (me?.status === 403)
     return (
-      'Every Spotify endpoint is refused, including the one that only says who you are. That ' +
-      'is not about the playlist. The app itself is not allowed to call the Web API for this ' +
-      'account. Two settings in the developer dashboard cause this and both are worth ' +
-      'checking: (a) edit the app and tick "Web API" under "Which API/SDKs are you planning ' +
-      'to use?"; (b) under User Management, add the Spotify account you are signed in as ' +
-      '(the owner counts, other players do not until you add them). Save, then disconnect ' +
-      'and reconnect in Settings.'
+      'Elk Spotify-endpoint wordt geweigerd, inclusief het endpoint dat alleen zegt wie je bent. ' +
+      'Dat gaat niet over de afspeellijst. De app zelf mag de Web API niet aanroepen voor dit ' +
+      'account. Twee instellingen in het developer dashboard veroorzaken dit en beide zijn het ' +
+      'controleren waard: (a) bewerk de app en vink "Web API" aan onder "Which API/SDKs are you ' +
+      'planning to use?"; (b) voeg onder User Management het Spotify-account toe waarmee je bent ' +
+      'ingelogd (de eigenaar telt mee, andere spelers niet totdat je ze toevoegt). Sla op, en ' +
+      'koppel daarna los en verbind opnieuw in Instellingen.'
     );
 
   if (me?.ok && mine?.status === 403)
     return (
-      'Reading who you are works, but reading your playlists is refused. The token is missing ' +
-      'the playlist scopes. Disconnect and reconnect in Settings: a renewed token keeps the ' +
-      'scopes of the original consent, so reconnecting is the only way to widen them.'
+      'Lezen wie je bent werkt, maar je afspeellijsten lezen wordt geweigerd. Het token mist ' +
+      'de afspeellijst-scopes. Koppel los en verbind opnieuw in Instellingen: een vernieuwd token ' +
+      'behoudt de scopes van de oorspronkelijke toestemming, dus opnieuw verbinden is de enige manier om ze te verbreden.'
     );
 
   if (items?.ok && filtered?.ok && !filtered.body.includes('spotify:'))
     return (
-      'The endpoint answers, but the field filter the builder uses returns nothing usable. ' +
-      'The nested key name is wrong for this account. Read the two "its items" lines below: ' +
-      'the unfiltered one shows what Spotify actually calls that object.'
+      'Het endpoint antwoordt, maar het veldfilter dat de builder gebruikt levert niets ' +
+      'bruikbaars op. De naam van de geneste sleutel klopt niet voor dit account. Lees de twee ' +
+      '"its items"-regels hieronder: de ongefilterde toont hoe Spotify dat object werkelijk noemt.'
     );
 
   if (items?.ok && removed && !removed.ok)
     return (
-      `Everything works on the current endpoint, and only the old one fails (${removed.status}). ` +
-      'Spotify removed /playlists/{id}/tracks in February 2026 and refuses it in a way that ' +
-      'reads like a permissions problem. The builder calls /playlists/{id}/items now, so ' +
-      'loading the playlist again should just work.'
+      `Alles werkt op het huidige endpoint, en alleen het oude faalt (${removed.status}). ` +
+      'Spotify verwijderde /playlists/{id}/tracks in februari 2026 en weigert het op een manier ' +
+      'die leest als een rechtenprobleem. De builder roept nu /playlists/{id}/items aan, dus ' +
+      'de afspeellijst opnieuw laden zou gewoon moeten werken.'
     );
 
   if (me?.ok && mine?.ok && items && !items.ok)
     return playlistId
-      ? `Your account and scopes are fine; it is this specific playlist (${playlistId}) that ` +
-          'Spotify will not hand over. Spotify-made lists (Top 50, Discover Weekly, Daily Mix, ' +
-          'decade and genre playlists) are closed to third-party apps. Copy the tracks into a ' +
-          'new playlist of your own and use that link.'
-      : 'That link did not contain a playlist id.';
+      ? `Je account en scopes zijn in orde; het is deze specifieke afspeellijst (${playlistId}) die ` +
+          'Spotify niet wil geven. Door Spotify gemaakte lijsten (Top 50, Discover Weekly, Daily Mix, ' +
+          'decennium- en genre-afspeellijsten) zijn gesloten voor apps van derden. Kopieer de nummers ' +
+          'naar een nieuwe eigen afspeellijst en gebruik die link.'
+      : 'Die link bevatte geen afspeellijst-id.';
 
-  if (probes.every((probe) => probe.ok)) return 'Everything answered. Try loading the deck again.';
+  if (probes.every((probe) => probe.ok)) return 'Alles antwoordde. Probeer de nummers opnieuw te laden.';
 
-  return 'Mixed results. The lines below say which call failed and what Spotify replied.';
+  return 'Gemengde resultaten. De regels hieronder tonen welke aanroep faalde en wat Spotify antwoordde.';
 }

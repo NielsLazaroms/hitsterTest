@@ -8,7 +8,6 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
-import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Icon } from '../../core/icon';
 import { Player } from '../../core/player';
@@ -16,11 +15,11 @@ import { SpotifyApi } from '../../core/spotify-api';
 import { isInAppBrowser } from '../../core/environment';
 import { QrScanner, trackIdFromScan, explainCameraError } from '../../core/scanner';
 
-type Mode = 'idle' | 'scanning' | 'manual' | 'playing';
+type Mode = 'idle' | 'scanning' | 'playing';
 
 @Component({
   selector: 'app-play',
-  imports: [FormsModule, RouterLink, Icon],
+  imports: [RouterLink, Icon],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './play.html',
   styleUrl: './play.css',
@@ -36,8 +35,7 @@ export class Play implements OnDestroy {
   private readonly scanner = new QrScanner();
 
   readonly mode = signal<Mode>('idle');
-  readonly hint = signal('Point at the code on the front of a card.');
-  readonly manualCode = signal('');
+  readonly hint = signal('Richt op de code op de voorkant van een kaart.');
 
   readonly inApp = isInAppBrowser();
   readonly card = computed(() => this.player.card());
@@ -77,7 +75,7 @@ export class Play implements OnDestroy {
     if (!element) {
       this.scanner.stop();
       this.mode.set('idle');
-      this.hint.set('The camera view did not open. Try again, or use "Enter code by hand".');
+      this.hint.set('De cameraweergave ging niet open. Probeer het opnieuw.');
       return;
     }
 
@@ -113,17 +111,6 @@ export class Play implements OnDestroy {
     this.mode.set('idle');
   }
 
-  // ------------------------------------------------------------- manual --
-
-  openManual(): void {
-    this.manualCode.set('');
-    this.mode.set('manual');
-  }
-
-  async submitManual(): Promise<void> {
-    await this.launch(trackIdFromScan(this.manualCode()));
-  }
-
   // ---------------------------------------------------------- playback --
 
   private async launch(rawId: string): Promise<void> {
@@ -156,17 +143,11 @@ export class Play implements OnDestroy {
   }
 
   async nextCard(): Promise<void> {
-    this.hint.set('Point at the code on the front of a card.');
+    this.hint.set('Richt op de code op de voorkant van een kaart.');
     // Open the camera straight away — no extra "Scan a card" tap. Acquire it
     // first so it stays inside this tap gesture, then stop the old song in the
     // background. If the camera can't open, startScan drops to the scan screen.
     await this.startScan();
     void this.player.clear();
-  }
-
-  /** Returns to the scan screen without opening the camera (manual-entry back). */
-  toIdle(): void {
-    this.hint.set('Point at the code on the front of a card.');
-    this.mode.set('idle');
   }
 }

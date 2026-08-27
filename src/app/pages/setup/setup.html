@@ -1,15 +1,15 @@
 <div class="page">
   <div class="body">
-    <h1>{{ builtIn ? 'Ready to play' : 'Set up once' }}</h1>
+    <h1>{{ builtIn ? 'Klaar om te spelen' : 'Eenmalig instellen' }}</h1>
     @if (!builtIn) {
-      <p class="lede">Spotify needs to know this app exists. Two minutes, then never again.</p>
+      <p class="lede">Spotify moet weten dat deze app bestaat. Twee minuten, daarna nooit meer.</p>
     }
 
     @if (inApp) {
       <p class="msg warn">
-        <b>Open this page in Safari or Chrome first.</b> You are in the browser built into a chat
-        app, which blocks the camera and loses the Spotify sign-in halfway through. Tap the
-        <b>⋯</b> or share button in the bar above and choose "Open in browser".
+        <b>Open deze pagina eerst in Safari of Chrome.</b> Je zit in de browser die in een chat-app
+        is ingebouwd, en die blokkeert de camera en verliest halverwege de Spotify-login. Tik op de
+        <b>⋯</b>- of deelknop in de balk hierboven en kies "Open in browser".
       </p>
     }
 
@@ -19,15 +19,16 @@
 
     @if (builtIn) {
       <p class="lede ready">
-        Everything is already configured. Sign in with Spotify and you can start playing.
+        Alles is al ingesteld. Log in met Spotify en je kunt beginnen met spelen.
       </p>
     } @else {
       <ol class="steps">
         <li>
           <span class="n">1</span>
-          Open <b>developer.spotify.com/dashboard</b> and click <b>Create app</b>. Name it anything.
+          Open <b>developer.spotify.com/dashboard</b> en klik op <b>Create app</b>. Geef het een
+          willekeurige naam.
         </li>
-        <li><span class="n">2</span> Paste this exact address into <b>Redirect URIs</b>:</li>
+        <li><span class="n">2</span> Plak dit exacte adres in <b>Redirect URIs</b>:</li>
       </ol>
 
       <div class="copybox">
@@ -35,14 +36,15 @@
         <button type="button" (click)="copy()">{{ copyLabel() }}</button>
       </div>
       <p class="note hint">
-        Character for character, trailing slash included. Spotify rejects the word
-        <b>localhost</b> outright. The loopback address is what works.
+        Teken voor teken, inclusief de afsluitende slash. Spotify weigert het woord
+        <b>localhost</b> ronduit. Het loopback-adres is wat werkt.
       </p>
 
       <ol class="steps">
         <li>
           <span class="n">3</span>
-          Tick <b>Web API</b>, save, then copy the app's <b>Client ID</b> into the box below.
+          Vink <b>Web API</b> aan, sla op, en kopieer daarna de <b>Client ID</b> van de app naar het
+          veld hieronder.
         </li>
       </ol>
 
@@ -58,17 +60,17 @@
       />
     }
 
-    <button class="btn" type="button" (click)="connect()">Connect Spotify</button>
+    <button class="btn" type="button" (click)="connect()">Verbind met Spotify</button>
 
     @if (builtIn) {
       <p class="note">
-        You need Spotify <b>Premium</b>, and your account must already have been added to this app
-        by whoever set it up. If sign-in is refused, that is the reason.
+        Je hebt Spotify <b>Premium</b> nodig, en je account moet al aan deze app zijn toegevoegd
+        door degene die hem heeft ingesteld. Wordt inloggen geweigerd, dan is dat de reden.
       </p>
     } @else {
       <p class="note">
-        Everyone who plays needs Spotify Premium, and each person must be added under
-        <b>User Management</b> in that same dashboard. Five people maximum.
+        Iedereen die meespeelt heeft Spotify Premium nodig, en elke persoon moet worden toegevoegd
+        onder <b>User Management</b> in datzelfde dashboard. Maximaal vijf personen.
       </p>
     }
   </div>

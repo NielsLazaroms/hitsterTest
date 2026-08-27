@@ -29,13 +29,13 @@ type BarcodeDetectorCtor = new (options: { formats: string[] }) => BarcodeDetect
 export function explainCameraError(error: unknown, inApp: boolean): string {
   if (inApp) {
     return (
-      'The browser built into a chat app will not open the camera. Tap the ⋯ or share button ' +
-      'and choose "Open in browser", then try again.'
+      'De browser die in een chat-app is ingebouwd, opent de camera niet. Tik op de ⋯- of ' +
+      'deelknop, kies "Open in browser" en probeer het opnieuw.'
     );
   }
 
   if (!window.isSecureContext) {
-    return 'The camera needs a https:// address. Open the hosted site rather than a local one.';
+    return 'De camera heeft een https://-adres nodig. Open de gehoste site in plaats van een lokale.';
   }
 
   const name = error instanceof DOMException ? error.name : '';
@@ -44,17 +44,17 @@ export function explainCameraError(error: unknown, inApp: boolean): string {
     case 'NotAllowedError':
     case 'SecurityError':
       return (
-        'Camera access was refused. Tap the icon at the left of the address bar, allow the ' +
-        'camera for this site, then reload.'
+        'Toegang tot de camera is geweigerd. Tik op het icoon links in de adresbalk, geef deze ' +
+        'site toegang tot de camera en herlaad de pagina.'
       );
     case 'NotFoundError':
     case 'OverconstrainedError':
-      return 'No camera found on this device. Use "Enter code by hand".';
+      return 'Geen camera gevonden op dit apparaat.';
     case 'NotReadableError':
     case 'AbortError':
-      return 'Something else is using the camera. Close other camera apps and try again.';
+      return 'Iets anders gebruikt de camera. Sluit andere camera-apps en probeer het opnieuw.';
     default:
-      return 'The camera could not be started. Use "Enter code by hand".';
+      return 'De camera kon niet worden gestart. Probeer het opnieuw.';
   }
 }
 

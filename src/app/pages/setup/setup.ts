@@ -23,23 +23,23 @@ export class Setup {
   readonly inApp = isInAppBrowser();
   readonly clientId = signal(this.auth.clientId());
   readonly error = signal('');
-  readonly copyLabel = signal('Copy');
+  readonly copyLabel = signal('Kopiëren');
 
   async copy(): Promise<void> {
     try {
       await navigator.clipboard.writeText(this.redirectUri);
-      this.copyLabel.set('Copied');
+      this.copyLabel.set('Gekopieerd');
     } catch {
-      this.copyLabel.set('Select it by hand');
+      this.copyLabel.set('Selecteer het met de hand');
     }
-    setTimeout(() => this.copyLabel.set('Copy'), 1600);
+    setTimeout(() => this.copyLabel.set('Kopiëren'), 1600);
   }
 
   async connect(): Promise<void> {
     const id = (this.builtIn ? this.auth.clientId() : this.clientId()).trim();
     if (!/^[a-f0-9]{20,}$/i.test(id)) {
       this.error.set(
-        'That does not look like a Client ID. It is a long string of letters and numbers.',
+        'Dit lijkt niet op een Client ID. Dat is een lange reeks letters en cijfers.',
       );
       return;
     }

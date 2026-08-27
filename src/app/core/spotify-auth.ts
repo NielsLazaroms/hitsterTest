@@ -99,7 +99,7 @@ export class SpotifyAuth {
 
   async refresh(): Promise<void> {
     const refreshToken = read<string>('refresh', '');
-    if (!refreshToken) throw new Error('Not connected to Spotify.');
+    if (!refreshToken) throw new Error('Niet verbonden met Spotify.');
 
     const data = await this.postToken({
       client_id: this.clientId(),
@@ -129,7 +129,7 @@ export class SpotifyAuth {
         body: new URLSearchParams(fields).toString(),
       });
     } catch {
-      throw new Error('Cannot reach Spotify. Check your connection and try again.');
+      throw new Error('Kan Spotify niet bereiken. Controleer je verbinding en probeer het opnieuw.');
     }
 
     const data = (await response.json()) as TokenResponse;
@@ -137,7 +137,7 @@ export class SpotifyAuth {
       throw new Error(
         data.error_description ??
           data.error ??
-          'Spotify rejected the sign-in. Check the redirect address matches exactly.',
+          'Spotify weigerde de login. Controleer of het redirect-adres exact overeenkomt.',
       );
     }
     return data;

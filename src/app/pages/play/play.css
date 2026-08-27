@@ -85,14 +85,6 @@
   text-align: center;
 }
 
-.code {
-  max-width: 220px;
-  font-family: var(--font-mono), monospace;
-  font-size: 22px;
-  letter-spacing: 0.2em;
-  text-align: center;
-}
-
 /* ------------------------------------------------------------- camera ---- */
 
 .camwrap {

@@ -1,9 +1,9 @@
 <div class="page screenonly">
   <div class="bar">
-    <button class="iconbtn" type="button" routerLink="/deck" aria-label="Back to make cards">
+    <button class="iconbtn" type="button" routerLink="/deck" aria-label="Terug naar kaarten maken">
       <app-icon name="arrow-left" />
     </button>
-    <h2>Print</h2>
+    <h2>Printen</h2>
     <span class="spacer"></span>
   </div>
 
@@ -11,95 +11,96 @@
     <!-- Plain-language summary of what will come out of the printer. The
          faithful, to-scale preview lives further down. -->
     <div class="summary">
-      <p class="summary-name">{{ deck.count() ? 'Your cards' : 'No cards yet' }}</p>
+      <p class="summary-name">{{ deck.count() ? 'Je kaarten' : 'Nog geen kaarten' }}</p>
       @if (deck.count()) {
         <p class="summary-line">
-          <b>{{ deck.count() }}</b> {{ deck.count() === 1 ? 'card' : 'cards' }} →
-          <b>{{ paperCount() }}</b> {{ paperCount() === 1 ? 'sheet' : 'sheets' }} of paper,
-          printed on both sides ·
-          <b>{{ sheets().length }}</b> {{ sheets().length === 1 ? 'page' : 'pages' }} in all
+          <b>{{ deck.count() }}</b> {{ deck.count() === 1 ? 'kaart' : 'kaarten' }} →
+          <b>{{ paperCount() }}</b> {{ paperCount() === 1 ? 'vel' : 'vellen' }} papier,
+          dubbelzijdig geprint ·
+          <b>{{ sheets().length }}</b> {{ sheets().length === 1 ? 'pagina' : "pagina's" }} in totaal
         </p>
       } @else {
-        <p class="summary-line">Make cards from a playlist first, then come back to print.</p>
+        <p class="summary-line">Maak eerst kaarten van een afspeellijst en kom dan terug om te printen.</p>
       }
     </div>
 
     <section class="out">
-      <p class="silk">Paper cards</p>
+      <p class="silk">Papieren kaarten</p>
       <button class="btn action" type="button" (click)="print()" [disabled]="!deck.count()">
-        <app-icon name="printer" /> Open the print dialog
+        <app-icon name="printer" /> Open het printvenster
       </button>
       <p class="dest">
-        Odd pages are the QR fronts, even pages the answers. Each QR holds the track's Spotify id —
-        scan it in the app (Play → Scan a card) to play the song. The code beneath it is the
-        manual-entry fallback.
+        Oneven pagina's zijn de QR-voorkanten, even pagina's de antwoorden. Elke QR bevat de
+        Spotify-id van het nummer — scan hem in de app om het nummer af te spelen. De code eronder
+        is diezelfde id in leesbare vorm.
       </p>
     </section>
 
     <div class="checklist">
-      <p class="silk flag">Get these two right</p>
+      <p class="silk flag">Zorg dat deze twee kloppen</p>
       <ul>
         <li>
-          <span class="k">Scale</span>
+          <span class="k">Schaal</span>
           <span class="v"
-            ><b>100%, actual size.</b> Never “fit to page”, or the QR shrinks past the point a phone
-            can read it.</span
+            ><b>100%, werkelijke grootte.</b> Nooit “passend maken”, anders krimpt de QR tot voorbij
+            het punt waarop een telefoon hem kan lezen.</span
           >
         </li>
         <li>
-          <span class="k">Two-sided</span>
+          <span class="k">Dubbelzijdig</span>
           <span class="v"
-            ><b>Flip on the long edge</b>, the way a book opens, not end over end. The backs are
-            already mirrored for that. A short-edge flip doesn’t just turn the answers upside down:
-            it lands each one on the <b>wrong card</b>, and you’d only find out mid-game, after the
-            paper is spent.</span
+            ><b>Draai op de lange rand</b>, zoals een boek opengaat, niet over de kop. De
+            achterkanten zijn daar al voor gespiegeld. Draaien op de korte rand zet de antwoorden
+            niet alleen ondersteboven: het laat elk antwoord op de <b>verkeerde kaart</b> belanden,
+            en je merkt het pas halverwege het spel, als het papier al op is.</span
           >
         </li>
       </ul>
 
       <details class="help">
-        <summary>My printer can’t print both sides by itself</summary>
+        <summary>Mijn printer kan niet zelf dubbelzijdig printen</summary>
         <p>
-          Print the odd pages first. In the print dialog set Pages to
+          Print eerst de oneven pagina's. Zet in het printvenster Pagina's op
           <code>1{{ paperCount() > 1 ? ', 3, 5…' : '' }}</code
-          >, or pick “Odd pages only” if your dialog offers it. Take that stack out, turn it over
-          about the <b>long edge</b> (the way you turn a page in a book, not end over end), and put
-          it back in the tray. Then print the even pages.
+          >, of kies “Alleen oneven pagina's” als je venster dat aanbiedt. Haal die stapel eruit,
+          draai hem om de <b>lange rand</b> (zoals je een bladzijde in een boek omslaat, niet over
+          de kop), en leg hem terug in de lade. Print daarna de even pagina's.
         </p>
         <p>
-          Which way up the paper goes back in differs per printer. Do one sheet first and hold it up
-          to the light: the four corner marks on the front and back should sit exactly on top of each
-          other. If they do not, turn the paper the other way and try once more.
+          Hoe het papier er weer in gaat verschilt per printer. Doe eerst één vel en houd het tegen
+          het licht: de vier hoekmarkeringen op de voor- en achterkant moeten precies op elkaar
+          liggen. Zo niet, draai het papier dan andersom en probeer het nog een keer.
         </p>
       </details>
     </div>
 
     <section class="out">
-      <p class="silk">3D tiles</p>
+      <p class="silk">3D-tegels</p>
       <button
         class="btn ghost action"
         type="button"
         (click)="download3d()"
         [disabled]="building() || deck.count() === 0"
       >
-        <app-icon name="box" /> {{ building() ? 'Building…' : 'Download 3D tiles (.stl)' }}
+        <app-icon name="box" /> {{ building() ? 'Bezig met bouwen…' : 'Download 3D-tegels (.stl)' }}
       </button>
       <p class="dest">
-        Every card becomes a {{ tileSize }}&nbsp;mm tile with a {{ tileGap }}&nbsp;mm gap, split
-        into <b>{{ fileCount() }}</b> {{ fileCount() === 1 ? 'plate' : 'plates' }} of up to
-        {{ plateCapacity }} tiles ({{ plateGrid }}), each sized for a
-        250&nbsp;×&nbsp;210&nbsp;mm bed, so no plate is wider than your printer.
+        Elke kaart wordt een tegel van {{ tileSize }}&nbsp;mm met een tussenruimte van
+        {{ tileGap }}&nbsp;mm, verdeeld over <b>{{ fileCount() }}</b>
+        {{ fileCount() === 1 ? 'plaat' : 'platen' }} van maximaal
+        {{ plateCapacity }} tegels ({{ plateGrid }}), elk op maat voor een bed van
+        250&nbsp;×&nbsp;210&nbsp;mm, zodat geen plaat breder is dan je printer.
         {{
           fileCount() > 1
-            ? 'They arrive together in a single .zip.'
-            : 'It downloads as a single .stl.'
+            ? 'Ze komen samen in één .zip.'
+            : 'Het downloadt als één .stl.'
         }}
-        The QR stands raised on the top; the title, year and artist are engraved into the
-        underside, mirrored so they read once you turn the tile over. The QR is raised at a
-        single layer height, so one filament colour-change still marks it dark on a light tile — but
-        the engraved text is the same colour as the tile, read by its shadow (paint or a second
-        material in the recesses if you want it to stand out). Test-scan one, and check both faces,
-        before printing a whole deck.
+        De QR staat verhoogd aan de bovenkant; de titel, het jaar en de artiest zijn in de
+        onderkant gegraveerd, gespiegeld zodat ze leesbaar zijn als je de tegel omdraait. De QR is
+        verhoogd op één laaghoogte, zodat één filament-kleurwissel hem donker markeert op een lichte
+        tegel — maar de gegraveerde tekst heeft dezelfde kleur als de tegel en wordt door de schaduw
+        gelezen (verf of een tweede materiaal in de uitsparingen als je hem wilt laten opvallen).
+        Scan er eerst één als test en controleer beide kanten voordat je een heel spel print.
       </p>
     </section>
   </div>
@@ -108,9 +109,9 @@
 <div class="sheets">
   @for (sheet of sheets(); track $index) {
     <p class="caption screenonly">
-      Paper {{ paperNumber($index) }} of {{ paperCount() }},
-      {{ sheet.side === 'front' ? 'front: QR codes' : 'back: answers, mirrored' }}
-      <span class="pageno">page {{ $index + 1 }}</span>
+      Vel {{ paperNumber($index) }} van {{ paperCount() }},
+      {{ sheet.side === 'front' ? 'voorkant: QR-codes' : 'achterkant: antwoorden, gespiegeld' }}
+      <span class="pageno">pagina {{ $index + 1 }}</span>
     </p>
     <div class="sheet">
       <span class="reg tl"></span>

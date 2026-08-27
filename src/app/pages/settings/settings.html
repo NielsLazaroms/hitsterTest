@@ -1,16 +1,16 @@
 <div class="page">
   <div class="bar">
-    <button class="iconbtn" type="button" routerLink="/play" aria-label="Back to play">
+    <button class="iconbtn" type="button" routerLink="/play" aria-label="Terug naar spelen">
       <app-icon name="arrow-left" />
     </button>
-    <h2 class="title">Settings</h2>
+    <h2 class="title">Instellingen</h2>
     <span class="spacer"></span>
   </div>
 
   <div class="body">
     <section class="panel">
-      <h3 class="sect">Appearance</h3>
-      <div class="segmented" role="group" aria-label="Appearance">
+      <h3 class="sect">Weergave</h3>
+      <div class="segmented" role="group" aria-label="Weergave">
         @for (option of themeOptions; track option.value) {
           <button
             type="button"
@@ -22,13 +22,13 @@
           </button>
         }
       </div>
-      <p class="note">System follows your phone's light or dark setting.</p>
+      <p class="note">Systeem volgt de licht- of donkerinstelling van je telefoon.</p>
     </section>
 
     <section class="panel">
-      <h3 class="sect">Sound</h3>
+      <h3 class="sect">Geluid</h3>
 
-      <label for="device">Speaker / device</label>
+      <label for="device">Speaker / apparaat</label>
       <select
         id="device"
         class="field"
@@ -36,11 +36,11 @@
         (ngModelChange)="onDeviceChange($event)"
       >
         @if (loadingDevices()) {
-          <option value="">Loading…</option>
+          <option value="">Laden…</option>
         } @else if (deviceError()) {
           <option value="">{{ deviceError() }}</option>
         } @else if (devices().length === 0) {
-          <option value="">Nothing found. Open Spotify and play something</option>
+          <option value="">Niets gevonden. Open Spotify en speel iets af</option>
         } @else {
           @for (device of devices(); track device.id) {
             <option [value]="device.id">{{ device.name }} ({{ device.type }})</option>
@@ -48,13 +48,13 @@
         }
       </select>
 
-      <button class="btn ghost sm" type="button" (click)="loadDevices()">Refresh device list</button>
+      <button class="btn ghost sm" type="button" (click)="loadDevices()">Apparaatlijst verversen</button>
       <p class="note">
-        Spotify only lists a device it has spoken to recently. If your speaker is missing, open
-        Spotify, play any song for a second, then refresh.
+        Spotify toont alleen een apparaat waarmee het recent contact had. Ontbreekt je speaker,
+        open dan Spotify, speel een seconde een nummer af en ververs daarna.
       </p>
 
-      <label for="clip">Clip length</label>
+      <label for="clip">Fragmentlengte</label>
       <select
         id="clip"
         class="field last"
@@ -68,15 +68,15 @@
     </section>
 
     <section class="panel">
-      <h3 class="sect">Cards</h3>
-      <p class="note">Turn a Spotify playlist into printable QR cards or 3D tiles.</p>
-      <button class="btn ghost sm last" type="button" routerLink="/deck">Make cards</button>
+      <h3 class="sect">Kaarten</h3>
+      <p class="note">Maak van een Spotify-afspeellijst printbare QR-kaarten of 3D-tegels.</p>
+      <button class="btn ghost sm last" type="button" routerLink="/deck">Kaarten maken</button>
     </section>
 
     <section class="panel">
       <h3 class="sect">Account</h3>
       <button class="btn ghost sm signout last" type="button" (click)="signOut()">
-        Disconnect Spotify
+        Spotify loskoppelen
       </button>
     </section>
   </div>

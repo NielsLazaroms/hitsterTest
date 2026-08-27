@@ -24,9 +24,9 @@ export class Settings {
   protected readonly theme = inject(Theme);
 
   readonly themeOptions: { value: ThemePref; label: string }[] = [
-    { value: 'light', label: 'Light' },
-    { value: 'dark', label: 'Dark' },
-    { value: 'system', label: 'System' },
+    { value: 'light', label: 'Licht' },
+    { value: 'dark', label: 'Donker' },
+    { value: 'system', label: 'Systeem' },
   ];
 
   readonly devices = signal<SpotifyDevice[]>([]);
@@ -34,10 +34,10 @@ export class Settings {
   readonly loadingDevices = signal(true);
 
   readonly clipOptions = [
-    { value: 0, label: 'Play until I stop it' },
-    { value: 15, label: 'Stop after 15 seconds' },
-    { value: 30, label: 'Stop after 30 seconds' },
-    { value: 45, label: 'Stop after 45 seconds' },
+    { value: 0, label: 'Spelen tot ik stop' },
+    { value: 15, label: 'Stoppen na 15 seconden' },
+    { value: 30, label: 'Stoppen na 30 seconden' },
+    { value: 45, label: 'Stoppen na 45 seconden' },
   ];
 
   constructor() {
@@ -55,7 +55,7 @@ export class Settings {
         if (active) this.player.setDevice(active.id);
       }
     } catch (error) {
-      this.deviceError.set(error instanceof Error ? error.message : 'Could not list devices.');
+      this.deviceError.set(error instanceof Error ? error.message : 'Kon apparaten niet ophalen.');
     } finally {
       this.loadingDevices.set(false);
     }

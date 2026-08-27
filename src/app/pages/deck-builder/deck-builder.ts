@@ -36,13 +36,13 @@ export class DeckBuilder {
     try {
       const drafts = await this.deck.fromPlaylist(this.playlistUrl());
       if (drafts.length === 0) {
-        this.error.set('No playable tracks found in that playlist.');
+        this.error.set('Geen afspeelbare nummers gevonden in die afspeellijst.');
         return;
       }
       this.drafts.set(drafts);
-      this.notice.set(`${drafts.length} tracks loaded. ${this.suspectCount()} need a second look.`);
+      this.notice.set(`${drafts.length} nummers geladen. ${this.suspectCount()} hebben een tweede blik nodig.`);
     } catch (error) {
-      this.error.set(error instanceof Error ? error.message : 'Could not read that playlist.');
+      this.error.set(error instanceof Error ? error.message : 'Kon die afspeellijst niet lezen.');
     } finally {
       this.loading.set(false);
     }
@@ -55,7 +55,7 @@ export class DeckBuilder {
     try {
       this.report.set(await this.diagnostics.run(this.playlistUrl()));
     } catch (error) {
-      this.report.set(error instanceof Error ? error.message : 'The check itself failed.');
+      this.report.set(error instanceof Error ? error.message : 'De controle zelf is mislukt.');
     } finally {
       this.diagnosing.set(false);
     }

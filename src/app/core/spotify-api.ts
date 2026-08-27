@@ -38,7 +38,7 @@ export class SpotifyApi {
         },
       });
     } catch {
-      throw new SpotifyError('Cannot reach Spotify. Check the connection and try again.', 0);
+      throw new SpotifyError('Kan Spotify niet bereiken. Controleer de verbinding en probeer het opnieuw.', 0);
     }
 
     if (response.status === 401 && allowRetry) {
@@ -54,7 +54,7 @@ export class SpotifyApi {
     if (!response.ok) {
       const err = body as ApiErrorBody | null;
       throw new SpotifyError(
-        err?.error?.message ?? `Spotify returned ${response.status}.`,
+        err?.error?.message ?? `Spotify gaf ${response.status} terug.`,
         response.status,
         err?.error?.reason,
       );
@@ -135,12 +135,12 @@ function translatePlaybackError(error: unknown): Error {
   if (error instanceof SpotifyError) {
     if (error.status === 404 || error.reason === 'NO_ACTIVE_DEVICE') {
       return new Error(
-        'No Spotify device found. Open Spotify, play anything for a second, then try again.',
+        'Geen Spotify-apparaat gevonden. Open Spotify, speel een seconde iets af en probeer het opnieuw.',
       );
     }
     if (error.status === 403) {
-      return new Error('Spotify refused playback. This needs a Premium account.');
+      return new Error('Spotify weigerde het afspelen. Hiervoor is een Premium-account nodig.');
     }
   }
-  return error instanceof Error ? error : new Error('Playback failed.');
+  return error instanceof Error ? error : new Error('Afspelen mislukt.');
 }
