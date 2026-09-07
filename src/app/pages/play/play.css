@@ -270,14 +270,6 @@
   50% { transform: scaleY(1); }
 }
 
-.cardtag {
-  font-family: var(--font-mono), monospace;
-  font-size: 12px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--dim);
-}
-
 /* Transport keys: physical deck buttons. Next is the lit coral one. */
 .controls {
   display: grid;

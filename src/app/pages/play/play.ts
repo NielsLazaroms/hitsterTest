@@ -3,7 +3,6 @@ import {
   Component,
   ElementRef,
   OnDestroy,
-  computed,
   inject,
   signal,
   viewChild,
@@ -39,7 +38,6 @@ export class Play implements OnDestroy {
   readonly hint = signal('Richt op de code op de voorkant van een kaart.');
 
   readonly inApp = isInAppBrowser();
-  readonly card = computed(() => this.player.card());
 
   /** Fragment length, tunable straight from the deck. Kept short for the bar;
       the long form lives in Settings, both bound to the same player signal. */
