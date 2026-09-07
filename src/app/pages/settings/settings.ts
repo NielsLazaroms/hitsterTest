@@ -33,6 +33,8 @@ export class Settings {
   readonly deviceError = signal('');
   readonly loadingDevices = signal(true);
 
+  /** Long form of the fragment length; the Play bar shows the same setting in
+      a short form, both bound to the shared player signal so they stay in sync. */
   readonly clipOptions = [
     { value: 0, label: 'Spelen tot ik stop' },
     { value: 15, label: 'Stoppen na 15 seconden' },

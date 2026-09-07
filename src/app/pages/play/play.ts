@@ -9,6 +9,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 import { Icon } from '../../core/icon';
 import { Player } from '../../core/player';
 import { SpotifyApi } from '../../core/spotify-api';
@@ -19,7 +20,7 @@ type Mode = 'idle' | 'scanning' | 'playing';
 
 @Component({
   selector: 'app-play',
-  imports: [RouterLink, Icon],
+  imports: [RouterLink, FormsModule, Icon],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './play.html',
   styleUrl: './play.css',
@@ -39,6 +40,15 @@ export class Play implements OnDestroy {
 
   readonly inApp = isInAppBrowser();
   readonly card = computed(() => this.player.card());
+
+  /** Fragment length, tunable straight from the deck. Kept short for the bar;
+      the long form lives in Settings, both bound to the same player signal. */
+  readonly clipOptions = [
+    { value: 0, label: 'Tot ik stop' },
+    { value: 15, label: '15 sec' },
+    { value: 30, label: '30 sec' },
+    { value: 45, label: '45 sec' },
+  ];
 
   constructor() {
     const pending = this.route.snapshot.queryParamMap.get('t');
@@ -135,6 +145,10 @@ export class Play implements OnDestroy {
     } catch {
       /* no length — the clock just runs to the clip limit or a manual stop */
     }
+  }
+
+  onClipChange(value: string): void {
+    this.player.setClipLength(Number(value));
   }
 
   async togglePause(): Promise<void> {

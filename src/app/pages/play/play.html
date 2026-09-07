@@ -2,6 +2,18 @@
   <div class="bar">
     <span class="led" [class.hot]="player.status() === 'playing'" aria-hidden="true"></span>
     <h2 class="wordmark">Mixtape</h2>
+    <select
+      class="clip"
+      aria-label="Fragmentlengte"
+      [ngModel]="player.clipLength()"
+      (ngModelChange)="onClipChange($event)"
+    >
+      <optgroup label="Fragmentlengte">
+        @for (option of clipOptions; track option.value) {
+          <option [value]="option.value">{{ option.label }}</option>
+        }
+      </optgroup>
+    </select>
     <button class="iconbtn" type="button" routerLink="/settings" aria-label="Instellingen">
       <app-icon name="settings" />
     </button>

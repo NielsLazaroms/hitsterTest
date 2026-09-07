@@ -256,6 +256,41 @@ select {
   transform: translateY(1px);
 }
 
+/* Fragment-length selector living in the header, styled as a small deck
+   switch: a mono pill matching the other bar controls. Short labels here; the
+   long form lives in Settings, both bound to the same clip length. */
+.bar .clip {
+  padding: 8px 28px 8px 13px;
+  font-family: var(--font-mono), monospace;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: var(--teal-deep);
+  background-color: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--shadow-sm);
+  appearance: none;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--teal) 50%),
+    linear-gradient(135deg, var(--teal) 50%, transparent 50%);
+  background-position:
+    right 14px center,
+    right 9px center;
+  background-size:
+    5px 5px,
+    5px 5px;
+  background-repeat: no-repeat;
+  transition:
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.bar .clip:hover,
+.bar .clip:focus {
+  outline: none;
+  border-color: var(--teal);
+}
+
 .body {
   flex: 1;
   padding: 22px 18px 44px;
