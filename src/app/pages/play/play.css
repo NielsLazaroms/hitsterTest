@@ -300,6 +300,17 @@
   box-shadow: 0 0 0 var(--line);
 }
 
+/* Once the fragment is over, resuming makes no sense — the key reads as off. */
+.key:disabled {
+  opacity: 0.4;
+  box-shadow: none;
+  cursor: default;
+}
+
+.key:disabled:active {
+  transform: none;
+}
+
 .key.wide {
   grid-column: 1 / -1;
 }

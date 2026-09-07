@@ -84,7 +84,12 @@
             <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 5h2v14H6zM20 5 9 12l11 7z"/></svg>
             <span>Opnieuw</span>
           </button>
-          <button class="key" type="button" (click)="togglePause()">
+          <button
+            class="key"
+            type="button"
+            (click)="togglePause()"
+            [disabled]="player.status() === 'finished'"
+          >
             @if (player.status() === 'playing') {
               <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>
               <span>Pauze</span>
