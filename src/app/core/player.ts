@@ -69,7 +69,11 @@ export class Player {
   }
 
   async restart(): Promise<void> {
+    // Seek to the top, then make sure playback is actually running: after a clip
+    // has finished (or the user paused) Spotify is paused, and seeking alone just
+    // moves the playhead — the song would never start again without a resume.
     await this.silently(() => this.api.seekToStart());
+    await this.silently(() => this.api.resume());
     this.status.set('playing');
     this.runClock(0);
   }
