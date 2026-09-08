@@ -43,7 +43,7 @@
         <section class="format">
           <p class="silk">3D-tegels</p>
           <button
-            class="btn ghost action"
+            class="btn action"
             type="button"
             (click)="download3d()"
             [disabled]="building() || deck.count() === 0"
@@ -51,23 +51,24 @@
             <app-icon name="box" /> {{ building() ? 'Bezig met bouwen…' : 'Download 3D-tegels' }}
           </button>
           <p class="dest">
-            Elke kaart wordt een tegel van {{ tileSize }}&nbsp;mm (tussenruimte
-            {{ tileGap }}&nbsp;mm), verdeeld over <b>{{ fileCount() }}</b>
-            {{ fileCount() === 1 ? 'plaat' : 'platen' }} van maximaal {{ plateCapacity }} tegels
-            ({{ plateGrid }}).
-            {{ fileCount() > 1 ? 'Ze komen samen in één .zip.' : 'Het downloadt als één .stl.' }}
+            De QR staat verhoogd aan de bovenkant, met titel, jaar en artiest in de onderkant
+            gegraveerd.
+            @if (fileCount() > 1) {
+              Je krijgt <b>{{ fileCount() }}</b> .stl-bestanden, samen in één .zip.
+            } @else {
+              Je krijgt <b>één</b> .stl-bestand.
+            }
           </p>
           <details class="help">
             <summary>Hoe de tegels werken</summary>
             <p>
-              Elke plaat is op maat voor een bed van 250&nbsp;×&nbsp;210&nbsp;mm, zodat geen plaat
-              breder is dan je printer. De QR staat verhoogd aan de bovenkant; de titel, het jaar en
-              de artiest zijn in de onderkant gegraveerd, gespiegeld zodat ze leesbaar zijn als je de
-              tegel omdraait. De QR is verhoogd op één laaghoogte, zodat één filament-kleurwissel hem
-              donker markeert op een lichte tegel — de gegraveerde tekst heeft dezelfde kleur en
-              wordt door de schaduw gelezen (verf of een tweede materiaal in de uitsparingen als je
-              hem wilt laten opvallen). Scan er eerst één als test en controleer beide kanten voordat
-              je een heel spel print.
+              De QR is verhoogd op één laaghoogte, zodat één filament-kleurwissel hem donker
+              markeert op een lichte tegel; de gegraveerde tekst heeft dezelfde kleur en wordt door
+              de schaduw gelezen (verf of een tweede materiaal in de uitsparingen als je hem wilt
+              laten opvallen). De achterkant is gespiegeld, zodat titel, jaar en artiest leesbaar
+              zijn als je de tegel omdraait. Grote decks worden over meerdere platen verdeeld, elk
+              smal genoeg voor een normale printer. Scan er eerst één als test en controleer beide
+              kanten voordat je een heel spel print.
             </p>
           </details>
         </section>

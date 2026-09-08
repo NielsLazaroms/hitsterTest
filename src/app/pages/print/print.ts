@@ -7,8 +7,6 @@ import { qrSvg, qrMatrix } from '../../core/qr';
 import {
   DEFAULT_TILE,
   deckMesh,
-  plateColumns,
-  plateRows,
   plateCapacity,
   splitPlates,
   serializeBinaryStl,
@@ -85,13 +83,7 @@ export class PrintSheet {
     return Math.floor(pageIndex / 2) + 1;
   }
 
-  /** Side of one printed tile, mm; the copy quotes it so it never drifts. */
-  readonly tileSize = DEFAULT_TILE.tileSize;
-  /** Gap left between tiles on the plate, mm. */
-  readonly tileGap = DEFAULT_TILE.gap;
-  /** Grid a single bed-sized file holds, e.g. "4 × 3". */
-  readonly plateGrid = `${plateColumns(DEFAULT_TILE)} × ${plateRows(DEFAULT_TILE)}`;
-  /** Most tiles in one file. */
+  /** Most tiles in one file; the deck is split into ceil(count / this) plates. */
   readonly plateCapacity = plateCapacity(DEFAULT_TILE);
   /** How many files the current deck will produce. */
   readonly fileCount = computed(() => Math.ceil(this.deck.count() / this.plateCapacity) || 0);
