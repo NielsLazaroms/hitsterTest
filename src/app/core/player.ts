@@ -39,9 +39,15 @@ export class Player {
   setClipLength(seconds: number): void {
     this.clipLength.set(seconds);
     write('clip', seconds);
-    // If a clip is already running, re-arm the stop timer against the new length
-    // so playback honours the change instead of stopping on the old threshold.
-    if (this.status() === 'playing') this.armStop(this.seconds());
+    if (this.status() === 'playing') {
+      // A clip is running: re-arm the stop timer against the new length so
+      // playback honours the change instead of stopping on the old threshold.
+      this.armStop(this.seconds());
+    } else if (this.status() === 'finished' && this.stopThreshold() > this.seconds()) {
+      // Playback already stopped at the old (shorter) threshold, but the new
+      // length reaches past where we are — let the player resume up to it.
+      this.status.set('paused');
+    }
   }
 
   async start(card: Card): Promise<void> {
@@ -123,15 +129,20 @@ export class Player {
     if (this.clipTimer) clearTimeout(this.clipTimer);
     this.clipTimer = null;
 
-    const clip = this.clipLength();
-    const clipSec = clip > 0 ? clip : Infinity;
-    const durSec = this.durationMs > 0 ? this.durationMs / 1000 : Infinity;
-    const stopAt = Math.min(clipSec, durSec);
-
+    const stopAt = this.stopThreshold();
     if (stopAt !== Infinity) {
       const delay = Math.max(0, stopAt - fromSeconds) * 1000;
       this.clipTimer = setTimeout(() => void this.pause('clip'), delay);
     }
+  }
+
+  /** Second at which playback should stop: the clip length or the track end,
+   *  whichever comes first. Infinity when neither bound is known. */
+  private stopThreshold(): number {
+    const clip = this.clipLength();
+    const clipSec = clip > 0 ? clip : Infinity;
+    const durSec = this.durationMs > 0 ? this.durationMs / 1000 : Infinity;
+    return Math.min(clipSec, durSec);
   }
 
   private stopTimers(): void {
