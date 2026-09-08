@@ -39,6 +39,9 @@ export class Player {
   setClipLength(seconds: number): void {
     this.clipLength.set(seconds);
     write('clip', seconds);
+    // If a clip is already running, re-arm the stop timer against the new length
+    // so playback honours the change instead of stopping on the old threshold.
+    if (this.status() === 'playing') this.armStop(this.seconds());
   }
 
   async start(card: Card): Promise<void> {
