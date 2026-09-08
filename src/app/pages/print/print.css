@@ -6,6 +6,12 @@
   min-height: auto;
 }
 
+/* The control screen fills the full width of the body (the `.body` padding is
+   its only inset). The sheet preview below sits outside `.controls`. */
+.controls {
+  width: 100%;
+}
+
 /* ---- summary: plain words for what the printer will produce ------------- */
 
 .summary {
@@ -31,10 +37,31 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* ---- output sections --------------------------------------------------- */
+/* ---- output formats: paper and 3D, side by side ------------------------ */
 
-.out {
-  margin-bottom: 22px;
+/* The two ways to make a physical card. Below 600px they stack (a phone can't
+   hold two action buttons abreast); from there up they sit as a pair. The grid
+   stretches both to the taller one's height, so the two panels always match. */
+.formats {
+  display: grid;
+  gap: 14px;
+  margin-bottom: 26px;
+}
+
+@media (min-width: 600px) {
+  .formats {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.format {
+  display: flex;
+  flex-direction: column;
+  padding: 18px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
 }
 
 /* A silkscreened section label, matching the machine's mono labelling. */
@@ -85,21 +112,26 @@
   margin-bottom: 10px;
   color: var(--warn);
 }
+/* One grid for the whole list so both rows share a label column and their text
+   lines up. The column is sized to its own content and the label never wraps,
+   so it can't grow into the value text — no overlap, whatever width the mono
+   font renders at, including the fallback shown before the webfont loads. */
 .checklist ul {
   list-style: none;
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  column-gap: 14px;
+  align-items: baseline;
 }
 .checklist li {
-  display: grid;
-  grid-template-columns: 66px 1fr;
-  gap: 10px;
-  align-items: baseline;
+  display: contents;
+}
+.checklist .k,
+.checklist .v {
   padding: 9px 0;
   font-size: 13.5px;
   line-height: 1.5;
   color: var(--dim);
-}
-.checklist li + li {
-  border-top: 1px solid color-mix(in srgb, var(--warn) 20%, var(--line));
 }
 .checklist .k {
   font-family: var(--font-mono), monospace;
@@ -107,7 +139,14 @@
   font-weight: 500;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+  white-space: nowrap;
   color: var(--warn);
+}
+/* Hairline between the two rows, drawn on the second row's cells since the list
+   items no longer generate their own boxes. */
+.checklist li:nth-of-type(2) .k,
+.checklist li:nth-of-type(2) .v {
+  border-top: 1px solid color-mix(in srgb, var(--warn) 20%, var(--line));
 }
 .checklist .v b {
   color: var(--text);
@@ -274,14 +313,20 @@
   }
 }
 
-/* Kept out of the way until the printer turns out not to duplex on its own. */
+/* Folded-away detail: the 3D how-it-works, and the manual-duplex fallback.
+   Neutral by default; inside the amber checklist it borrows the warm rule so
+   the block stays one piece. */
 .help {
   margin-top: 12px;
   padding-top: 12px;
   font-size: 13px;
   line-height: 1.6;
   color: var(--dim);
-  border-top: 1px solid color-mix(in srgb, var(--warn) 20%, var(--line));
+  border-top: 1px solid var(--line);
+}
+
+.checklist .help {
+  border-top-color: color-mix(in srgb, var(--warn) 20%, var(--line));
 }
 
 .help summary {
