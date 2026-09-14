@@ -10,12 +10,12 @@ export type PlayerStatus = 'idle' | 'playing' | 'paused' | 'finished';
  *  - `classic`: the song plays from the top until the clip length (or the
  *    listener) stops it.
  *  - `steps`: Songless-style. The song plays 0.1 s from the top and stops. Each
- *    next round replays from the top for longer, up the ladder below, until
+ *    "next step" replays from the top for longer, up the ladder below, until
  *    someone guesses it or the ladder runs out.
  */
 export type GameMode = 'classic' | 'steps';
 
-/** Seconds of the song revealed at each round, always counted from the top. */
+/** Seconds of the song revealed at each step, always counted from the top. */
 export const STEP_LENGTHS = [0.1, 0.5, 1, 2, 4, 8, 16, 30] as const;
 
 @Injectable({ providedIn: 'root' })
@@ -36,7 +36,7 @@ export class Player {
 
   readonly gameMode = signal<GameMode>(read<GameMode>('mode', 'classic'));
 
-  /** Index into STEP_LENGTHS of the round currently on the tape (steps mode). */
+  /** Index into STEP_LENGTHS of the step currently on the tape (steps mode). */
   readonly step = signal(0);
   readonly stepLength = computed(() => STEP_LENGTHS[this.step()]);
   readonly lastStep = computed(() => this.step() >= STEP_LENGTHS.length - 1);
@@ -51,8 +51,8 @@ export class Player {
   private startedAt = 0;
   /** Track length once known, so the clock stops when the song actually ends. */
   private durationMs = 0;
-  /** Bumped whenever a new round or card starts or the deck is cleared, so an
-      async sequence that belongs to an earlier one can tell it was overtaken. */
+  /** Bumped whenever a new round or card starts, so a wait that belongs to an
+      earlier one can tell it has been overtaken. */
   private run = 0;
   /** Estimated one-way delay to the device (steps mode), taken off the stop timer. */
   private latencyMs = 0;
@@ -91,65 +91,17 @@ export class Player {
     this.card.set(card);
     this.durationMs = 0;
     this.step.set(0);
-    if (this.gameMode() === 'steps') return this.startSteps(card);
-
-    if (!(await this.play(card))) return;
-    this.status.set('playing');
-    this.runClock(0);
-  }
-
-  /**
-   * Steps mode opens with a 0.1 s round, and a freshly scanned track is the
-   * worst case for that: Spotify reports "playing" as soon as the device takes
-   * the command, but the device still has to load and buffer the song, so a
-   * pause sent 0.1 s later lands before any sound and the round is silent.
-   *
-   * So the track is cued first: play it with the device muted (where Spotify
-   * lets us), wait for the device to actually be playing, pause, rewind and
-   * unmute. Round 1 then runs exactly like every later round, from a loaded
-   * and paused track, where resume-to-audio is quick and predictable.
-   */
-  private async startSteps(card: Card): Promise<void> {
-    const run = ++this.run;
-    const abandoned = () => run !== this.run || this.card() !== card;
-
-    // Mute for the cue, if this device lets an app set its volume. A failure
-    // here just means the cue is audible, which is no worse than before.
-    const volume = await this.api.volume().catch(() => null);
-    const muted =
-      volume !== null &&
-      (await this.api.setVolume(0).then(
-        () => true,
-        () => false,
-      ));
-    if (abandoned()) return this.unmute(muted, volume);
-
-    if (!(await this.play(card))) return this.unmute(muted, volume);
-
-    await this.whenPlaying(run);
-    await this.silently(() => this.api.pause());
-    await this.silently(() => this.api.seekToStart());
-    await this.unmute(muted, volume);
-    if (abandoned()) return;
-
-    await this.restart();
-  }
-
-  private async unmute(muted: boolean, volume: number | null): Promise<void> {
-    if (muted && volume !== null) await this.silently(() => this.api.setVolume(volume));
-  }
-
-  /** Sends the play command; on failure clears the card and reports why. */
-  private async play(card: Card): Promise<boolean> {
     try {
       await this.api.play(card.uri, this.deviceId() || null);
-      return true;
     } catch (error) {
       this.card.set(null);
       this.status.set('idle');
       this.error.set(error instanceof Error ? error.message : 'Playback failed.');
-      return false;
+      return;
     }
+    this.status.set('playing');
+    if (!(await this.settled())) return;
+    this.runClock(0);
   }
 
   /**
@@ -183,10 +135,13 @@ export class Player {
   }
 
   /**
-   * Steps mode: a round is a fraction of a second, so its clock must not start
-   * until the device is really playing. Waits for that, then keeps the request
-   * latency so the pause can be sent that much early and the fragment ends
-   * close to the intended length rather than a round-trip late.
+   * Steps mode: a round is a fraction of a second, but Spotify acknowledges a
+   * play command long before the device has loaded the track and made a sound.
+   * Timed from the acknowledgement, the pause for a 0.1 s round lands before
+   * any audio, and the first round is silent. So wait until the device reports
+   * it is playing, and remember the request latency: the pause is sent that
+   * much early, so the fragment ends close to the intended length rather than
+   * a round-trip late.
    *
    * Resolves false when the round was abandoned while waiting (next card, next
    * round, mode switch), so the caller must not start a clock for it.
@@ -195,31 +150,26 @@ export class Player {
     const run = ++this.run;
     this.latencyMs = 0;
     if (this.gameMode() !== 'steps') return true;
-    await this.whenPlaying(run);
-    return run === this.run && this.status() === 'playing';
-  }
 
-  /**
-   * Polls Spotify until the device reports it is playing, for at most a couple
-   * of seconds — a device that never confirms must not leave the deck stuck.
-   * Stops early when `run` has been overtaken.
-   */
-  private async whenPlaying(run: number): Promise<void> {
     const deadline = Date.now() + 2500;
-    while (Date.now() < deadline && run === this.run) {
+    while (Date.now() < deadline) {
       const sent = Date.now();
       let playing = false;
       try {
         playing = await this.api.isPlaying();
       } catch {
-        return;
+        break;
       }
+      if (run !== this.run || this.status() !== 'playing') return false;
       if (playing) {
         this.latencyMs = Math.round((Date.now() - sent) / 2);
-        return;
+        return true;
       }
       await new Promise((resolve) => setTimeout(resolve, 100));
+      if (run !== this.run || this.status() !== 'playing') return false;
     }
+    // Never confirmed: run the round anyway rather than leave the deck stuck.
+    return run === this.run && this.status() === 'playing';
   }
 
   async pause(reason: 'user' | 'clip' = 'user'): Promise<void> {
@@ -236,7 +186,6 @@ export class Player {
 
   /** Stops playback and clears the current card, back to the scan screen. */
   async clear(): Promise<void> {
-    this.run++;
     this.stopTimers();
     this.status.set('idle');
     this.card.set(null);
@@ -274,7 +223,7 @@ export class Player {
   }
 
   /** Second at which playback should stop: the clip length (classic) or the
-   *  current round length (steps), or the track end, whichever comes first.
+   *  current step length (steps), or the track end, whichever comes first.
    *  Infinity when no bound is known. */
   private stopThreshold(): number {
     const durSec = this.durationMs > 0 ? this.durationMs / 1000 : Infinity;
