@@ -53,9 +53,7 @@ export class Play implements OnDestroy {
   readonly steps = STEP_LENGTHS;
 
   /** The bar names the tape that is in the deck. */
-  readonly modeName = computed(() =>
-    this.player.gameMode() === 'steps' ? 'Hitsnip' : 'Klassiek',
-  );
+  readonly modeName = computed(() => (this.player.gameMode() === 'steps' ? 'Hitsnip' : 'Klassiek'));
 
   constructor() {
     // The mode is the route: /play/classic or /play/steps. Anything else goes
@@ -165,11 +163,6 @@ export class Play implements OnDestroy {
 
   onClipChange(value: string): void {
     this.player.setClipLength(Number(value));
-  }
-
-  /** "0,1 s", "0,5 s", "1 s" … in the machine's own notation. */
-  stepLabel(seconds: number): string {
-    return `${seconds.toLocaleString('nl-NL')} s`;
   }
 
   async togglePause(): Promise<void> {

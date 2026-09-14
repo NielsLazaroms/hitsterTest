@@ -82,9 +82,9 @@ pijl linksboven brengt je terug naar de plank.
 - **Klassiek** — het nummer speelt vanaf het begin tot de fragmentlengte
   (15/30/45 s, of tot je stopt) om is.
 - **Hitsnip** — zoals [Songless](https://songless.pro): het nummer speelt
-  eerst 0,1 s en stopt. **Volgende stap** speelt opnieuw vanaf het begin, maar
+  eerst 0,1 s en stopt. **Volgende ronde** speelt opnieuw vanaf het begin, maar
   langer: 0,5 s, 1 s, 2 s, 4 s, 8 s, 16 s, 30 s. **Opnieuw** herhaalt de
-  huidige stap. De ladder staat in `STEP_LENGTHS` in `player.ts`.
+  huidige ronde. De ladder staat in `STEP_LENGTHS` in `player.ts`.
 
   Let op: het afspelen loopt via Spotify Connect, dus elke stap is een
   play/pause-opdracht naar het apparaat. De kortste stappen komen daardoor

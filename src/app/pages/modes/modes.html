@@ -11,7 +11,7 @@
     <p class="lede">Twee manieren om een kaart te spelen. Wisselen kan altijd.</p>
 
     <!-- Each mode is one big deck key: name and what it does on the faceplate,
-         and below that its transport row, as the deck will show it. -->
+         and below that its transport row with the mode's own mark in the well. -->
     <button class="card" type="button" (click)="pick('classic')">
       <span class="face">
         <span class="name">Klassiek</span>
@@ -19,8 +19,8 @@
       </span>
       <span class="transport" aria-hidden="true">
         <span class="hub"></span>
-        <span class="counter">
-          <span class="readout">{{ counter() }}</span>
+        <span class="readout">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4v16l13-8z" /></svg>
         </span>
         <span class="hub"></span>
       </span>
@@ -30,14 +30,16 @@
       <span class="face">
         <span class="name">Hitsnip</span>
         <span class="what">
-          Eerst 0,1 seconde. Elke volgende stap speelt opnieuw vanaf het begin, iets langer, tot 30
+          Eerst 0,1 seconde. Elke volgende ronde speelt opnieuw vanaf het begin, iets langer, tot 30
           seconden.
         </span>
       </span>
       <span class="transport" aria-hidden="true">
         <span class="hub"></span>
-        <span class="counter">
-          <span class="readout">{{ firstStep }}</span>
+        <span class="readout stair">
+          @for (_ of steps; track $index) {
+            <i [class.now]="$first"></i>
+          }
         </span>
         <span class="hub"></span>
       </span>

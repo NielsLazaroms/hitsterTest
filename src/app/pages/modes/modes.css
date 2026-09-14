@@ -106,19 +106,13 @@
     0 0 0 1px var(--line);
 }
 
-/* The counter between the hubs. */
-.counter {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 7px;
-}
-
 .readout {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 4px;
   min-width: 104px;
+  height: 46px;
   padding: 6px 14px;
   font-family: var(--font-mono), monospace;
   font-size: 24px;
@@ -134,4 +128,53 @@
   transition:
     color 0.15s ease,
     text-shadow 0.15s ease;
+}
+
+/* Klassiek's mark: play, and keep playing. */
+.readout svg {
+  width: 26px;
+  height: 26px;
+}
+
+/* Hitsnip's mark: the staircase the deck shows, one bar per round, the first
+   one lit. It says "a little more each time" without a single number. */
+.readout.stair {
+  align-items: flex-end;
+  padding: 10px 14px;
+}
+
+.stair i {
+  width: 5px;
+  border-radius: 2px;
+  background: var(--line);
+}
+
+.stair i:nth-child(1) {
+  height: 18%;
+}
+.stair i:nth-child(2) {
+  height: 30%;
+}
+.stair i:nth-child(3) {
+  height: 42%;
+}
+.stair i:nth-child(4) {
+  height: 54%;
+}
+.stair i:nth-child(5) {
+  height: 66%;
+}
+.stair i:nth-child(6) {
+  height: 78%;
+}
+.stair i:nth-child(7) {
+  height: 90%;
+}
+.stair i:nth-child(8) {
+  height: 100%;
+}
+
+.stair i.now {
+  background: var(--teal-bright);
+  box-shadow: 0 0 8px var(--coral);
 }

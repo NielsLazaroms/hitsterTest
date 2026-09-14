@@ -61,7 +61,7 @@
             @case ('paused') { Gepauzeerd }
             @case ('finished') {
               @if (player.gameMode() === 'steps') {
-                Stap {{ player.step() + 1 }} van {{ steps.length }}
+                Ronde {{ player.step() + 1 }} van {{ steps.length }}
               } @else {
                 Tijd is om
               }
@@ -79,7 +79,13 @@
 
           <div class="counter">
             @if (player.gameMode() === 'steps') {
-              <span class="readout">{{ stepLabel(player.stepLength()) }}</span>
+              <!-- No clock in Hitsnip: the ladder, one bar per round, the
+                   current one lit. Nothing here says how long a round is. -->
+              <span class="readout stair" aria-hidden="true">
+                @for (_ of steps; track $index) {
+                  <i [class.done]="$index < player.step()" [class.now]="$index === player.step()"></i>
+                }
+              </span>
             } @else {
               <span class="readout">{{ player.clock() }}</span>
             }
@@ -89,28 +95,6 @@
             <span class="hub"></span>
           </span>
         </div>
-
-        @if (player.gameMode() === 'steps') {
-          <!-- The ladder: one rung per step, the current one lit. The sweep
-               under it fills over the length of the step while the tape runs. -->
-          <div class="ladder" [attr.aria-label]="'Stap ' + (player.step() + 1) + ' van ' + steps.length">
-            @for (length of steps; track $index) {
-              <span
-                class="rung"
-                [class.done]="$index < player.step()"
-                [class.now]="$index === player.step()"
-                aria-hidden="true"
-              >{{ length.toLocaleString('nl-NL') }}</span>
-            }
-          </div>
-          @if (player.status() === 'playing') {
-            <div class="sweep" aria-hidden="true">
-              <i [style.animation-duration.s]="player.stepLength()"></i>
-            </div>
-          } @else {
-            <div class="sweep" aria-hidden="true"><i class="full"></i></div>
-          }
-        }
 
         <div class="vu" [class.still]="player.status() !== 'playing'" aria-hidden="true">
           <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
@@ -128,7 +112,7 @@
               (click)="player.nextStep()"
               [disabled]="player.lastStep()"
             >
-              <span>Volgende stap</span>
+              <span>Volgende ronde</span>
               <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4 5l11 7L4 19zM16 5h2.5v14H16z"/></svg>
             </button>
             <button class="key wide" type="button" (click)="nextCard()">
