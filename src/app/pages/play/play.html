@@ -12,11 +12,9 @@
         [ngModel]="player.clipLength()"
         (ngModelChange)="onClipChange($event)"
       >
-        <optgroup label="Fragmentlengte">
-          @for (option of clipOptions; track option.value) {
-            <option [value]="option.value">{{ option.label }}</option>
-          }
-        </optgroup>
+        @for (option of clipOptions; track option.value) {
+          <option [value]="option.value">{{ option.label }}</option>
+        }
       </select>
     }
     <button class="iconbtn" type="button" routerLink="/settings" aria-label="Instellingen">
@@ -87,6 +85,7 @@
                   <i [class.done]="$index < player.step()" [class.now]="$index === player.step()"></i>
                 }
               </span>
+              <span class="stepnote">{{ stepLabel() }}</span>
             } @else {
               <span class="readout">{{ player.clock() }}</span>
             }

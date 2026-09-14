@@ -209,6 +209,13 @@ select {
   letter-spacing: -0.01em;
 }
 
+.bar h2 {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .bar .spacer {
   width: 56px;
 }
@@ -230,6 +237,7 @@ select {
 
 /* Square, icon-only header actions. */
 .bar .iconbtn {
+  flex: none;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -260,6 +268,7 @@ select {
    switch: a mono pill matching the other bar controls. Short labels here; the
    long form lives in Settings, both bound to the same clip length. */
 .bar .clip {
+  flex: none;
   padding: 8px 28px 8px 13px;
   font-family: var(--font-mono), monospace;
   font-size: 12px;

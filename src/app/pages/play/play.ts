@@ -45,14 +45,17 @@ export class Play implements OnDestroy {
   /** Fragment length, tunable straight from the deck. Kept short for the bar;
       the long form lives in Settings, both bound to the same player signal. */
   readonly clipOptions = [
-    { value: 0, label: 'Tot ik stop' },
-    { value: 15, label: '15 sec' },
-    { value: 30, label: '30 sec' },
-    { value: 45, label: '45 sec' },
+    { value: 0, label: 'Onbeperkt' },
+    { value: 15, label: '15 s' },
+    { value: 30, label: '30 s' },
+    { value: 45, label: '45 s' },
   ];
 
   /** The step ladder, for the rung display on the playing view. */
   readonly steps = STEP_LENGTHS;
+
+  /** How much of the song the current Hitsnip round plays, e.g. "0,5 s". */
+  readonly stepLabel = computed(() => `${this.player.stepLength().toLocaleString('nl-NL')} s`);
 
   /** The bar names the tape that is in the deck. */
   readonly modeName = computed(() => (this.player.gameMode() === 'steps' ? 'Hitsnip' : 'Klassiek'));
