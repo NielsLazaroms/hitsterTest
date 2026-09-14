@@ -86,10 +86,14 @@ pijl linksboven brengt je terug naar de plank.
   langer: 0,5 s, 1 s, 2 s, 4 s, 8 s, 16 s, 30 s. **Opnieuw** herhaalt de
   huidige ronde. De ladder staat in `STEP_LENGTHS` in `player.ts`.
 
-  Let op: het afspelen loopt via Spotify Connect, dus elke stap is een
-  play/pause-opdracht naar het apparaat. De kortste stappen komen daardoor
-  ongeveer, niet exact, op 0,1 s uit; de netwerkvertraging zit aan beide
-  kanten en valt grotendeels tegen elkaar weg.
+  Let op: het afspelen loopt via Spotify Connect, dus elke ronde is een
+  play/pause-opdracht naar het apparaat. Bij een verse scan wordt het nummer
+  eerst gedempt "geladen" (afspelen, wachten tot het apparaat echt speelt,
+  pauzeren, terugspoelen, volume terug) zodat ronde 1 van een geladen nummer
+  start; op apparaten die geen volumebediening via de API toestaan is dat
+  laden kort hoorbaar. De app wacht per ronde tot Spotify meldt dat het
+  apparaat speelt en trekt de netwerkvertraging van de stoptimer af, maar de
+  kortste rondes komen ongeveer, niet exact, op 0,1 s uit.
 
 Doordat de QR de Spotify-id zelf bevat, is een kaart niet aan een domein
 gebonden en werkt hij ongeacht waar de app is gedeployed — niets om opnieuw te

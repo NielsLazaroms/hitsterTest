@@ -109,6 +109,24 @@ export class SpotifyApi {
   }
 
   /**
+   * The active device's volume, or null when there is no active device or it
+   * does not let an app set its volume (many phones and some speakers).
+   */
+  async volume(): Promise<number | null> {
+    const data = await this.request<{
+      device?: { volume_percent?: number | null; supports_volume?: boolean };
+    }>('/me/player');
+    const device = data?.device;
+    if (!device || device.supports_volume === false) return null;
+    return typeof device.volume_percent === 'number' ? device.volume_percent : null;
+  }
+
+  async setVolume(percent: number): Promise<void> {
+    const clamped = Math.max(0, Math.min(100, Math.round(percent)));
+    await this.request(`/me/player/volume?volume_percent=${clamped}`, { method: 'PUT' });
+  }
+
+  /**
    * The track's length in ms, so the tape counter can stop when the song ends.
    * A scanned card carries only the id, and nothing is stored, so this is looked
    * up live.
