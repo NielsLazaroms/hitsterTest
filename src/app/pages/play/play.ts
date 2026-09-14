@@ -11,6 +11,7 @@ import {
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { Icon } from '../../core/icon';
+import { Nav } from '../../core/nav';
 import { Player, STEP_LENGTHS } from '../../core/player';
 import { SpotifyApi } from '../../core/spotify-api';
 import { isInAppBrowser } from '../../core/environment';
@@ -31,6 +32,7 @@ export class Play implements OnDestroy {
   private readonly route = inject(ActivatedRoute);
 
   protected readonly player = inject(Player);
+  protected readonly nav = inject(Nav);
 
   private readonly video = viewChild<ElementRef<HTMLVideoElement>>('video');
   private readonly scanner = new QrScanner();

@@ -51,6 +51,11 @@ export class Player {
   private startedAt = 0;
   /** Track length once known, so the clock stops when the song actually ends. */
   private durationMs = 0;
+  /** Bumped whenever a new round or card starts, so a wait that belongs to an
+      earlier one can tell it has been overtaken. */
+  private run = 0;
+  /** Estimated one-way delay to the device (steps mode), taken off the stop timer. */
+  private latencyMs = 0;
 
   setDevice(id: string): void {
     this.deviceId.set(id);
@@ -95,6 +100,7 @@ export class Player {
       return;
     }
     this.status.set('playing');
+    if (!(await this.settled())) return;
     this.runClock(0);
   }
 
@@ -116,6 +122,7 @@ export class Player {
     await this.silently(() => this.api.seekToStart());
     await this.silently(() => this.api.resume());
     this.status.set('playing');
+    if (!(await this.settled())) return;
     this.runClock(0);
   }
 
@@ -125,6 +132,44 @@ export class Player {
     this.stopTimers();
     this.step.update((s) => s + 1);
     await this.restart();
+  }
+
+  /**
+   * Steps mode: a round is a fraction of a second, but Spotify acknowledges a
+   * play command long before the device has loaded the track and made a sound.
+   * Timed from the acknowledgement, the pause for a 0.1 s round lands before
+   * any audio, and the first round is silent. So wait until the device reports
+   * it is playing, and remember the request latency: the pause is sent that
+   * much early, so the fragment ends close to the intended length rather than
+   * a round-trip late.
+   *
+   * Resolves false when the round was abandoned while waiting (next card, next
+   * round, mode switch), so the caller must not start a clock for it.
+   */
+  private async settled(): Promise<boolean> {
+    const run = ++this.run;
+    this.latencyMs = 0;
+    if (this.gameMode() !== 'steps') return true;
+
+    const deadline = Date.now() + 2500;
+    while (Date.now() < deadline) {
+      const sent = Date.now();
+      let playing = false;
+      try {
+        playing = await this.api.isPlaying();
+      } catch {
+        break;
+      }
+      if (run !== this.run || this.status() !== 'playing') return false;
+      if (playing) {
+        this.latencyMs = Math.round((Date.now() - sent) / 2);
+        return true;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      if (run !== this.run || this.status() !== 'playing') return false;
+    }
+    // Never confirmed: run the round anyway rather than leave the deck stuck.
+    return run === this.run && this.status() === 'playing';
   }
 
   async pause(reason: 'user' | 'clip' = 'user'): Promise<void> {
@@ -172,7 +217,7 @@ export class Player {
 
     const stopAt = this.stopThreshold();
     if (stopAt !== Infinity) {
-      const delay = Math.max(0, stopAt - fromSeconds) * 1000;
+      const delay = Math.max(0, (stopAt - fromSeconds) * 1000 - this.latencyMs);
       this.clipTimer = setTimeout(() => void this.pause('clip'), delay);
     }
   }

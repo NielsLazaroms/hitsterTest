@@ -1,20 +1,22 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { Icon } from '../../core/icon';
+import { Nav } from '../../core/nav';
 import { DeckService } from '../../core/deck';
 import { Diagnostics } from '../../core/diagnostics';
 import type { Card, DraftCard } from '../../core/models';
 
 @Component({
   selector: 'app-deck-builder',
-  imports: [FormsModule, RouterLink, Icon],
+  imports: [FormsModule, Icon],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './deck-builder.html',
   styleUrl: './deck-builder.css',
 })
 export class DeckBuilder {
   protected readonly deck = inject(DeckService);
+  protected readonly nav = inject(Nav);
   private readonly diagnostics = inject(Diagnostics);
   private readonly router = inject(Router);
 

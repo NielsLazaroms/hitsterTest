@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { Icon } from '../../core/icon';
+import { Nav } from '../../core/nav';
 import { Player } from '../../core/player';
 import { SpotifyApi } from '../../core/spotify-api';
 import { SpotifyAuth } from '../../core/spotify-auth';
@@ -21,6 +22,7 @@ export class Settings {
   private readonly router = inject(Router);
 
   protected readonly player = inject(Player);
+  protected readonly nav = inject(Nav);
   protected readonly theme = inject(Theme);
 
   readonly themeOptions: { value: ThemePref; label: string }[] = [

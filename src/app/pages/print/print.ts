@@ -1,8 +1,8 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
-import { RouterLink } from '@angular/router';
 import { DeckService } from '../../core/deck';
 import { Icon } from '../../core/icon';
+import { Nav } from '../../core/nav';
 import { qrSvg, qrMatrix } from '../../core/qr';
 import {
   DEFAULT_TILE,
@@ -30,7 +30,7 @@ interface Sheet {
 
 @Component({
   selector: 'app-print',
-  imports: [RouterLink, Icon],
+  imports: [Icon],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './print.html',
   styleUrl: './print.css',
@@ -39,6 +39,7 @@ export class PrintSheet {
   private readonly sanitizer = inject(DomSanitizer);
 
   protected readonly deck = inject(DeckService);
+  protected readonly nav = inject(Nav);
 
   /**
    * Front and back sheets, ready for duplex printing.

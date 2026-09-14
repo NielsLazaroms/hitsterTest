@@ -1,6 +1,6 @@
 <div class="page">
   <div class="bar">
-    <button class="iconbtn" type="button" routerLink="/play" aria-label="Terug naar tape kiezen">
+    <button class="iconbtn" type="button" (click)="nav.back('/play')" aria-label="Terug">
       <app-icon name="arrow-left" />
     </button>
     <span class="led" [class.hot]="player.status() === 'playing'" aria-hidden="true"></span>
@@ -56,17 +56,18 @@
     @case ('playing') {
       <div class="body now">
         <p class="status">
-          @switch (player.status()) {
-            @case ('playing') { <span class="on">Speelt nu</span> }
-            @case ('paused') { Gepauzeerd }
-            @case ('finished') {
-              @if (player.gameMode() === 'steps') {
-                Ronde {{ player.step() + 1 }} van {{ steps.length }}
-              } @else {
-                Tijd is om
-              }
+          @if (player.gameMode() === 'steps' && player.status() !== 'idle') {
+            <!-- Hitsnip always says which round this is; it lights while it plays. -->
+            <span [class.on]="player.status() === 'playing'">
+              Ronde {{ player.step() + 1 }} van {{ steps.length }}
+            </span>
+          } @else {
+            @switch (player.status()) {
+              @case ('playing') { <span class="on">Speelt nu</span> }
+              @case ('paused') { Gepauzeerd }
+              @case ('finished') { Tijd is om }
+              @default { Laden&hellip; }
             }
-            @default { Laden&hellip; }
           }
         </p>
 

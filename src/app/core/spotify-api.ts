@@ -38,7 +38,10 @@ export class SpotifyApi {
         },
       });
     } catch {
-      throw new SpotifyError('Kan Spotify niet bereiken. Controleer de verbinding en probeer het opnieuw.', 0);
+      throw new SpotifyError(
+        'Kan Spotify niet bereiken. Controleer de verbinding en probeer het opnieuw.',
+        0,
+      );
     }
 
     if (response.status === 401 && allowRetry) {
@@ -95,14 +98,23 @@ export class SpotifyApi {
   }
 
   /**
+   * Whether the device is actually producing audio right now. A play command
+   * is acknowledged well before the device has loaded the track, so a timed
+   * fragment has to wait for this before its clock starts. Spotify answers 204
+   * when there is no active device, which reads as "not playing".
+   */
+  async isPlaying(): Promise<boolean> {
+    const data = await this.request<{ is_playing?: boolean }>('/me/player');
+    return data?.is_playing === true;
+  }
+
+  /**
    * The track's length in ms, so the tape counter can stop when the song ends.
    * A scanned card carries only the id, and nothing is stored, so this is looked
    * up live.
    */
   async trackLengthMs(id: string): Promise<number> {
-    const data = await this.request<{ duration_ms?: number }>(
-      `/tracks/${encodeURIComponent(id)}`,
-    );
+    const data = await this.request<{ duration_ms?: number }>(`/tracks/${encodeURIComponent(id)}`);
     return data?.duration_ms ?? 0;
   }
 
