@@ -3,6 +3,7 @@ import {
   Component,
   ElementRef,
   OnDestroy,
+  computed,
   inject,
   signal,
   viewChild,
@@ -10,7 +11,7 @@ import {
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { Icon } from '../../core/icon';
-import { Player } from '../../core/player';
+import { Player, STEP_LENGTHS } from '../../core/player';
 import { SpotifyApi } from '../../core/spotify-api';
 import { isInAppBrowser } from '../../core/environment';
 import { QrScanner, trackIdFromScan, explainCameraError } from '../../core/scanner';
@@ -48,7 +49,24 @@ export class Play implements OnDestroy {
     { value: 45, label: '45 sec' },
   ];
 
+  /** The step ladder, for the rung display on the playing view. */
+  readonly steps = STEP_LENGTHS;
+
+  /** The bar names the tape that is in the deck. */
+  readonly modeName = computed(() =>
+    this.player.gameMode() === 'steps' ? 'Hitsnip' : 'Klassiek',
+  );
+
   constructor() {
+    // The mode is the route: /play/classic or /play/steps. Anything else goes
+    // back to the shelf to pick one.
+    const mode = this.route.snapshot.paramMap.get('mode');
+    if (mode !== 'classic' && mode !== 'steps') {
+      void this.router.navigate(['/play'], { replaceUrl: true });
+      return;
+    }
+    this.player.setGameMode(mode);
+
     const pending = this.route.snapshot.queryParamMap.get('t');
     if (pending) {
       void this.router.navigate([], { replaceUrl: true, queryParams: {} });
@@ -147,6 +165,11 @@ export class Play implements OnDestroy {
 
   onClipChange(value: string): void {
     this.player.setClipLength(Number(value));
+  }
+
+  /** "0,1 s", "0,5 s", "1 s" … in the machine's own notation. */
+  stepLabel(seconds: number): string {
+    return `${seconds.toLocaleString('nl-NL')} s`;
   }
 
   async togglePause(): Promise<void> {

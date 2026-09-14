@@ -1,19 +1,24 @@
 <div class="page">
   <div class="bar">
+    <button class="iconbtn" type="button" routerLink="/play" aria-label="Terug naar tape kiezen">
+      <app-icon name="arrow-left" />
+    </button>
     <span class="led" [class.hot]="player.status() === 'playing'" aria-hidden="true"></span>
-    <h2 class="wordmark">Mixtape</h2>
-    <select
-      class="clip"
-      aria-label="Fragmentlengte"
-      [ngModel]="player.clipLength()"
-      (ngModelChange)="onClipChange($event)"
-    >
-      <optgroup label="Fragmentlengte">
-        @for (option of clipOptions; track option.value) {
-          <option [value]="option.value">{{ option.label }}</option>
-        }
-      </optgroup>
-    </select>
+    <h2 class="wordmark">{{ modeName() }}</h2>
+    @if (player.gameMode() === 'classic') {
+      <select
+        class="clip"
+        aria-label="Fragmentlengte"
+        [ngModel]="player.clipLength()"
+        (ngModelChange)="onClipChange($event)"
+      >
+        <optgroup label="Fragmentlengte">
+          @for (option of clipOptions; track option.value) {
+            <option [value]="option.value">{{ option.label }}</option>
+          }
+        </optgroup>
+      </select>
+    }
     <button class="iconbtn" type="button" routerLink="/settings" aria-label="Instellingen">
       <app-icon name="settings" />
     </button>
@@ -54,7 +59,13 @@
           @switch (player.status()) {
             @case ('playing') { <span class="on">Speelt nu</span> }
             @case ('paused') { Gepauzeerd }
-            @case ('finished') { Tijd is om }
+            @case ('finished') {
+              @if (player.gameMode() === 'steps') {
+                Stap {{ player.step() + 1 }} van {{ steps.length }}
+              } @else {
+                Tijd is om
+              }
+            }
             @default { Laden&hellip; }
           }
         </p>
@@ -67,7 +78,11 @@
           </span>
 
           <div class="counter">
-            <span class="readout">{{ player.clock() }}</span>
+            @if (player.gameMode() === 'steps') {
+              <span class="readout">{{ stepLabel(player.stepLength()) }}</span>
+            } @else {
+              <span class="readout">{{ player.clock() }}</span>
+            }
           </div>
 
           <span class="reel" [class.spinning]="player.status() === 'playing'" aria-hidden="true">
@@ -75,34 +90,77 @@
           </span>
         </div>
 
+        @if (player.gameMode() === 'steps') {
+          <!-- The ladder: one rung per step, the current one lit. The sweep
+               under it fills over the length of the step while the tape runs. -->
+          <div class="ladder" [attr.aria-label]="'Stap ' + (player.step() + 1) + ' van ' + steps.length">
+            @for (length of steps; track $index) {
+              <span
+                class="rung"
+                [class.done]="$index < player.step()"
+                [class.now]="$index === player.step()"
+                aria-hidden="true"
+              >{{ length.toLocaleString('nl-NL') }}</span>
+            }
+          </div>
+          @if (player.status() === 'playing') {
+            <div class="sweep" aria-hidden="true">
+              <i [style.animation-duration.s]="player.stepLength()"></i>
+            </div>
+          } @else {
+            <div class="sweep" aria-hidden="true"><i class="full"></i></div>
+          }
+        }
+
         <div class="vu" [class.still]="player.status() !== 'playing'" aria-hidden="true">
           <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
         </div>
 
-        <div class="controls">
-          <button class="key" type="button" (click)="player.restart()" aria-label="Opnieuw">
-            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 5h2v14H6zM20 5 9 12l11 7z"/></svg>
-            <span>Opnieuw</span>
-          </button>
-          <button
-            class="key"
-            type="button"
-            (click)="togglePause()"
-            [disabled]="player.status() === 'finished'"
-          >
-            @if (player.status() === 'playing') {
-              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>
-              <span>Pauze</span>
-            } @else {
-              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
-              <span>Hervatten</span>
-            }
-          </button>
-          <button class="key lit wide" type="button" (click)="nextCard()">
-            <span>Volgende kaart</span>
-            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4 5l11 7L4 19zM16 5h2.5v14H16z"/></svg>
-          </button>
-        </div>
+        @if (player.gameMode() === 'steps') {
+          <div class="controls">
+            <button class="key" type="button" (click)="player.restart()" aria-label="Opnieuw">
+              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 5h2v14H6zM20 5 9 12l11 7z"/></svg>
+              <span>Opnieuw</span>
+            </button>
+            <button
+              class="key lit"
+              type="button"
+              (click)="player.nextStep()"
+              [disabled]="player.lastStep()"
+            >
+              <span>Volgende stap</span>
+              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4 5l11 7L4 19zM16 5h2.5v14H16z"/></svg>
+            </button>
+            <button class="key wide" type="button" (click)="nextCard()">
+              <span>Volgende kaart</span>
+            </button>
+          </div>
+        } @else {
+          <div class="controls">
+            <button class="key" type="button" (click)="player.restart()" aria-label="Opnieuw">
+              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 5h2v14H6zM20 5 9 12l11 7z"/></svg>
+              <span>Opnieuw</span>
+            </button>
+            <button
+              class="key"
+              type="button"
+              (click)="togglePause()"
+              [disabled]="player.status() === 'finished'"
+            >
+              @if (player.status() === 'playing') {
+                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>
+                <span>Pauze</span>
+              } @else {
+                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+                <span>Hervatten</span>
+              }
+            </button>
+            <button class="key lit wide" type="button" (click)="nextCard()">
+              <span>Volgende kaart</span>
+              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4 5l11 7L4 19zM16 5h2.5v14H16z"/></svg>
+            </button>
+          </div>
+        }
       </div>
     }
   }

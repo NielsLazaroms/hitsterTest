@@ -11,7 +11,14 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/setup/setup').then((m) => m.Setup),
   },
   {
+    // The shelf: pick a game mode, then go one level deeper to play it.
     path: 'play',
+    canActivate: [connectedGuard],
+    loadComponent: () => import('./pages/modes/modes').then((m) => m.Modes),
+  },
+  {
+    // The deck for one mode: /play/classic or /play/steps.
+    path: 'play/:mode',
     canActivate: [connectedGuard],
     loadComponent: () => import('./pages/play/play').then((m) => m.Play),
   },

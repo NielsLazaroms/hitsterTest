@@ -328,3 +328,77 @@
   box-shadow: 0 0 0 color-mix(in srgb, var(--coral-deep) 65%, #000);
 }
 
+
+/* ----------------------------------------------------------- game mode ---- */
+
+/* The ladder: one rung per step, printed in the machine numerals. Past rungs
+   are filled, the current one is lit, the rest are still to come. */
+.ladder {
+  display: flex;
+  gap: 5px;
+  justify-content: center;
+  width: 100%;
+  max-width: 340px;
+  margin-top: 18px;
+}
+
+.rung {
+  flex: 1;
+  padding: 6px 0;
+  font-family: var(--font-mono), monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-align: center;
+  color: var(--dim);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.rung.done {
+  color: var(--teal-deep);
+  background: color-mix(in srgb, var(--teal) 16%, var(--panel));
+  border-color: color-mix(in srgb, var(--teal) 40%, var(--line));
+}
+
+.rung.now {
+  color: #fff;
+  background: var(--teal-fill);
+  border-color: var(--teal-fill);
+  box-shadow: 0 0 14px -4px var(--coral);
+}
+
+/* The sweep: a thin track that fills over the length of the step. */
+.sweep {
+  width: 100%;
+  max-width: 340px;
+  height: 4px;
+  margin-top: 10px;
+  overflow: hidden;
+  background: var(--panel-2);
+  border-radius: 2px;
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+
+.sweep i {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, var(--teal), var(--coral));
+  transform-origin: left;
+  transform: scaleX(0);
+  animation: sweep linear forwards;
+}
+
+.sweep i.full {
+  transform: scaleX(1);
+  animation: none;
+  opacity: 0.5;
+}
+
+@keyframes sweep {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}

@@ -5,6 +5,19 @@ import type { Card } from './models';
 
 export type PlayerStatus = 'idle' | 'playing' | 'paused' | 'finished';
 
+/**
+ * Two ways to play a card:
+ *  - `classic`: the song plays from the top until the clip length (or the
+ *    listener) stops it.
+ *  - `steps`: Songless-style. The song plays 0.1 s from the top and stops. Each
+ *    "next step" replays from the top for longer, up the ladder below, until
+ *    someone guesses it or the ladder runs out.
+ */
+export type GameMode = 'classic' | 'steps';
+
+/** Seconds of the song revealed at each step, always counted from the top. */
+export const STEP_LENGTHS = [0.1, 0.5, 1, 2, 4, 8, 16, 30] as const;
+
 @Injectable({ providedIn: 'root' })
 export class Player {
   private readonly api = inject(SpotifyApi);
@@ -17,8 +30,16 @@ export class Player {
   /** Device the music comes out of; empty means "whatever Spotify is using". */
   readonly deviceId = signal<string>(read<string>('device', ''));
 
-  /** Seconds before playback stops on its own; 0 means play until stopped. */
+  /** Seconds before playback stops on its own; 0 means play until stopped.
+      Classic mode only — steps mode has its own ladder. */
   readonly clipLength = signal<number>(read<number>('clip', 0));
+
+  readonly gameMode = signal<GameMode>(read<GameMode>('mode', 'classic'));
+
+  /** Index into STEP_LENGTHS of the step currently on the tape (steps mode). */
+  readonly step = signal(0);
+  readonly stepLength = computed(() => STEP_LENGTHS[this.step()]);
+  readonly lastStep = computed(() => this.step() >= STEP_LENGTHS.length - 1);
 
   readonly clock = computed(() => {
     const total = this.seconds();
@@ -36,9 +57,19 @@ export class Player {
     write('device', id);
   }
 
+  setGameMode(mode: GameMode): void {
+    if (mode === this.gameMode()) return;
+    this.gameMode.set(mode);
+    write('mode', mode);
+    // The stop rules differ per mode, so a card mid-play under the old rules
+    // is dropped rather than left running against a timer it never asked for.
+    if (this.status() !== 'idle') void this.clear();
+  }
+
   setClipLength(seconds: number): void {
     this.clipLength.set(seconds);
     write('clip', seconds);
+    if (this.gameMode() !== 'classic') return;
     if (this.status() === 'playing') {
       // A clip is running: re-arm the stop timer against the new length so
       // playback honours the change instead of stopping on the old threshold.
@@ -54,6 +85,7 @@ export class Player {
     this.error.set('');
     this.card.set(card);
     this.durationMs = 0;
+    this.step.set(0);
     try {
       await this.api.play(card.uri, this.deviceId() || null);
     } catch (error) {
@@ -87,6 +119,14 @@ export class Player {
     this.runClock(0);
   }
 
+  /** Steps mode: climb one rung of the ladder and replay from the top. */
+  async nextStep(): Promise<void> {
+    if (this.lastStep()) return;
+    this.stopTimers();
+    this.step.update((s) => s + 1);
+    await this.restart();
+  }
+
   async pause(reason: 'user' | 'clip' = 'user'): Promise<void> {
     this.stopTimers();
     this.status.set(reason === 'clip' ? 'finished' : 'paused');
@@ -105,6 +145,7 @@ export class Player {
     this.status.set('idle');
     this.card.set(null);
     this.seconds.set(0);
+    this.step.set(0);
     await this.silently(() => this.api.pause());
   }
 
@@ -136,12 +177,14 @@ export class Player {
     }
   }
 
-  /** Second at which playback should stop: the clip length or the track end,
-   *  whichever comes first. Infinity when neither bound is known. */
+  /** Second at which playback should stop: the clip length (classic) or the
+   *  current step length (steps), or the track end, whichever comes first.
+   *  Infinity when no bound is known. */
   private stopThreshold(): number {
+    const durSec = this.durationMs > 0 ? this.durationMs / 1000 : Infinity;
+    if (this.gameMode() === 'steps') return Math.min(this.stepLength(), durSec);
     const clip = this.clipLength();
     const clipSec = clip > 0 ? clip : Infinity;
-    const durSec = this.durationMs > 0 ? this.durationMs / 1000 : Infinity;
     return Math.min(clipSec, durSec);
   }
 

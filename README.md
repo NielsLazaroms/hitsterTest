@@ -73,6 +73,24 @@ direct af; het antwoord staat geprint op de achterkant van de kaart.
   H, ≈50,9 mm op een kaart van 65 mm.
 - **Spelen** — scan een kaart. Het nummer speelt anoniem af.
 
+### Spelmodi
+
+Na het inloggen kom je op de tapeplank (`/play`): kies een tape en je gaat een
+laag dieper, naar de deck voor die modus (`/play/classic` of `/play/steps`). De
+pijl linksboven brengt je terug naar de plank.
+
+- **Klassiek** — het nummer speelt vanaf het begin tot de fragmentlengte
+  (15/30/45 s, of tot je stopt) om is.
+- **Hitsnip** — zoals [Songless](https://songless.pro): het nummer speelt
+  eerst 0,1 s en stopt. **Volgende stap** speelt opnieuw vanaf het begin, maar
+  langer: 0,5 s, 1 s, 2 s, 4 s, 8 s, 16 s, 30 s. **Opnieuw** herhaalt de
+  huidige stap. De ladder staat in `STEP_LENGTHS` in `player.ts`.
+
+  Let op: het afspelen loopt via Spotify Connect, dus elke stap is een
+  play/pause-opdracht naar het apparaat. De kortste stappen komen daardoor
+  ongeveer, niet exact, op 0,1 s uit; de netwerkvertraging zit aan beide
+  kanten en valt grotendeels tegen elkaar weg.
+
 Doordat de QR de Spotify-id zelf bevat, is een kaart niet aan een domein
 gebonden en werkt hij ongeacht waar de app is gedeployed — niets om opnieuw te
 genereren. Hij wordt alleen gelezen door de eigen scanner van de app, niet door

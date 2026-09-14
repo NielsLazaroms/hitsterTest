@@ -2,13 +2,14 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 import { ActivatedRoute, Router } from '@angular/router';
 import { SpotifyAuth } from '../../core/spotify-auth';
 import { read, remove } from '../../core/storage';
+import type { GameMode } from '../../core/player';
 
 /**
  * The entry point every route eventually falls back to.
  *
  * It has three jobs: finish the Spotify sign-in when we arrive with ?code=,
  * forward a scanned card id from ?t= into the play screen, and otherwise decide
- * between setup and play.
+ * between setup and the mode shelf.
  */
 @Component({
   selector: 'app-launch',
@@ -71,10 +72,14 @@ export class Launch {
       return;
     }
 
+    // A card link skips the shelf and plays straight away, in the mode that
+    // was last used; without a card the shelf is where the player starts.
     const card = params.get('t');
-    await this.router.navigate(['/play'], {
-      replaceUrl: true,
-      queryParams: card ? { t: card } : {},
-    });
+    if (card) {
+      const mode = read<GameMode>('mode', 'classic');
+      await this.router.navigate(['/play', mode], { replaceUrl: true, queryParams: { t: card } });
+      return;
+    }
+    await this.router.navigate(['/play'], { replaceUrl: true });
   }
 }

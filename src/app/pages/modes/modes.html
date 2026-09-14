@@ -1,0 +1,46 @@
+<div class="page">
+  <div class="bar">
+    <h2 class="wordmark">Mixtape</h2>
+    <button class="iconbtn" type="button" routerLink="/settings" aria-label="Instellingen">
+      <app-icon name="settings" />
+    </button>
+  </div>
+
+  <div class="body shelf">
+    <h1>Kies een spelmodus</h1>
+    <p class="lede">Twee manieren om een kaart te spelen. Wisselen kan altijd.</p>
+
+    <!-- Each mode is one big deck key: name and what it does on the faceplate,
+         and below that its transport row, as the deck will show it. -->
+    <button class="card" type="button" (click)="pick('classic')">
+      <span class="face">
+        <span class="name">Klassiek</span>
+        <span class="what">Het nummer speelt vanaf het begin tot de fragmentlengte om is.</span>
+      </span>
+      <span class="transport" aria-hidden="true">
+        <span class="hub"></span>
+        <span class="counter">
+          <span class="readout">{{ counter() }}</span>
+        </span>
+        <span class="hub"></span>
+      </span>
+    </button>
+
+    <button class="card" type="button" (click)="pick('steps')">
+      <span class="face">
+        <span class="name">Hitsnip</span>
+        <span class="what">
+          Eerst 0,1 seconde. Elke volgende stap speelt opnieuw vanaf het begin, iets langer, tot 30
+          seconden.
+        </span>
+      </span>
+      <span class="transport" aria-hidden="true">
+        <span class="hub"></span>
+        <span class="counter">
+          <span class="readout">{{ firstStep }}</span>
+        </span>
+        <span class="hub"></span>
+      </span>
+    </button>
+  </div>
+</div>

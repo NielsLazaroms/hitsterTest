@@ -1,6 +1,6 @@
 <div class="page">
   <div class="bar">
-    <button class="iconbtn" type="button" routerLink="/play" aria-label="Terug naar spelen">
+    <button class="iconbtn" type="button" [routerLink]="'/play/' + player.gameMode()" aria-label="Terug naar spelen">
       <app-icon name="arrow-left" />
     </button>
     <h2 class="title">Instellingen</h2>
