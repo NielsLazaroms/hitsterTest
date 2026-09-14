@@ -56,6 +56,9 @@ export class Player {
   private run = 0;
   /** Estimated one-way delay to the device (steps mode), taken off the stop timer. */
   private latencyMs = 0;
+  /** How far into the song the device already was when the clock started
+      (steps mode), so the stop timer counts from the top of the song. */
+  private offsetMs = 0;
 
   setDevice(id: string): void {
     this.deviceId.set(id);
@@ -136,12 +139,18 @@ export class Player {
 
   /**
    * Steps mode: a round is a fraction of a second, but Spotify acknowledges a
-   * play command long before the device has loaded the track and made a sound.
-   * Timed from the acknowledgement, the pause for a 0.1 s round lands before
-   * any audio, and the first round is silent. So wait until the device reports
-   * it is playing, and remember the request latency: the pause is sent that
-   * much early, so the fragment ends close to the intended length rather than
-   * a round-trip late.
+   * play command long before the device has loaded the track and made a sound,
+   * and its "is playing" flag flips just as early. Timed from either, the pause
+   * for a 0.1 s round lands before any audio, and a freshly scanned card plays
+   * nothing. The one signal that means sound is actually coming out is the
+   * track position moving, so this polls the position and only starts the
+   * round once two readings show it advancing. (Two, because right after a
+   * rewind the device may still report where the previous round stopped.)
+   *
+   * It also keeps what it learned: how far in the song already was when the
+   * clock started, and the request latency, so the stop timer can be set for
+   * the intended length from the top of the song and the pause sent one leg
+   * early. A short round therefore ends as soon as it is confirmed audible.
    *
    * Resolves false when the round was abandoned while waiting (next card, next
    * round, mode switch), so the caller must not start a clock for it.
@@ -149,27 +158,34 @@ export class Player {
   private async settled(): Promise<boolean> {
     const run = ++this.run;
     this.latencyMs = 0;
+    this.offsetMs = 0;
     if (this.gameMode() !== 'steps') return true;
 
-    const deadline = Date.now() + 2500;
+    const abandoned = () => run !== this.run || this.status() !== 'playing';
+    const deadline = Date.now() + 3000;
+    let previous = -1;
     while (Date.now() < deadline) {
       const sent = Date.now();
-      let playing = false;
+      let state: { playing: boolean; progressMs: number } | null;
       try {
-        playing = await this.api.isPlaying();
+        state = await this.api.playbackState();
       } catch {
         break;
       }
-      if (run !== this.run || this.status() !== 'playing') return false;
-      if (playing) {
+      if (abandoned()) return false;
+      const progress = state?.playing ? state.progressMs : 0;
+      if (progress > 0 && previous >= 0 && progress > previous) {
         this.latencyMs = Math.round((Date.now() - sent) / 2);
+        // The reading is one leg old by the time it arrives.
+        this.offsetMs = progress + this.latencyMs;
         return true;
       }
+      previous = progress;
       await new Promise((resolve) => setTimeout(resolve, 100));
-      if (run !== this.run || this.status() !== 'playing') return false;
+      if (abandoned()) return false;
     }
     // Never confirmed: run the round anyway rather than leave the deck stuck.
-    return run === this.run && this.status() === 'playing';
+    return !abandoned();
   }
 
   async pause(reason: 'user' | 'clip' = 'user'): Promise<void> {
@@ -217,7 +233,7 @@ export class Player {
 
     const stopAt = this.stopThreshold();
     if (stopAt !== Infinity) {
-      const delay = Math.max(0, (stopAt - fromSeconds) * 1000 - this.latencyMs);
+      const delay = Math.max(0, (stopAt - fromSeconds) * 1000 - this.offsetMs - this.latencyMs);
       this.clipTimer = setTimeout(() => void this.pause('clip'), delay);
     }
   }

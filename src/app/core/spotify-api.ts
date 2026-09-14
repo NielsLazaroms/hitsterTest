@@ -98,14 +98,18 @@ export class SpotifyApi {
   }
 
   /**
-   * Whether the device is actually producing audio right now. A play command
-   * is acknowledged well before the device has loaded the track, so a timed
-   * fragment has to wait for this before its clock starts. Spotify answers 204
-   * when there is no active device, which reads as "not playing".
+   * What the device is doing right now: whether it says it is playing, and how
+   * far into the track it is. A play command is acknowledged well before the
+   * device has loaded the track, and `is_playing` flips true just as early, so
+   * a timed fragment must watch the position: only an advancing position means
+   * audio is actually coming out. Null when there is no active device (204).
    */
-  async isPlaying(): Promise<boolean> {
-    const data = await this.request<{ is_playing?: boolean }>('/me/player');
-    return data?.is_playing === true;
+  async playbackState(): Promise<{ playing: boolean; progressMs: number } | null> {
+    const data = await this.request<{ is_playing?: boolean; progress_ms?: number | null }>(
+      '/me/player',
+    );
+    if (!data) return null;
+    return { playing: data.is_playing === true, progressMs: data.progress_ms ?? 0 };
   }
 
   /**
