@@ -152,3 +152,12 @@ token uitdelen en vervolgens elke API-aanroep weigeren.
 - **Alleen Premium.** De Web API weigert afspelen voor gratis accounts.
 - **Spotify moet een actief apparaat hebben.** Open Spotify en speel een seconde
   iets af vóór de eerste scan, en kies daarna de speaker in Instellingen.
+- **iOS zet Spotify snel in slaapstand.** Staat de Spotify-app op een iPhone op
+  de achtergrond en op pauze, dan wordt hij na korte tijd door iOS onderbroken
+  en reageert hij niet meer op Connect-opdrachten. Tussen rondes en na een
+  fragment is de app altijd op pauze, dus dit raakt beide spelmodi. De app
+  probeert het apparaat dan te wekken met een volledige play-opdracht op het
+  gekozen apparaat (dat werkt zolang het nog in de apparaatlijst staat) en
+  toont anders op het speelscherm wat je moet doen: Spotify even openen en
+  daarna op Opnieuw drukken. Speel bij voorkeur via een speaker, een
+  Connect-apparaat of een laptop; die vallen niet in slaap.

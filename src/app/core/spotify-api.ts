@@ -122,12 +122,18 @@ export class SpotifyApi {
     return data?.duration_ms ?? 0;
   }
 
-  async play(uri: string, deviceId: string | null): Promise<void> {
+  /**
+   * Starts the track on the device, optionally from a position into it. Also
+   * the way to wake a device that has gone quiet: a bare resume is refused
+   * once Spotify no longer counts it as active, while a play aimed at its id
+   * transfers playback back to it, as long as it is still listed.
+   */
+  async play(uri: string, deviceId: string | null, positionMs = 0): Promise<void> {
     const query = deviceId ? `?device_id=${encodeURIComponent(deviceId)}` : '';
     try {
       await this.request(`/me/player/play${query}`, {
         method: 'PUT',
-        body: JSON.stringify({ uris: [uri] }),
+        body: JSON.stringify({ uris: [uri], position_ms: Math.max(0, Math.round(positionMs)) }),
       });
     } catch (error) {
       throw translatePlaybackError(error);

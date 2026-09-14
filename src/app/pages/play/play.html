@@ -100,6 +100,12 @@
           <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
         </div>
 
+        <!-- Spotify went quiet and could not be woken: say what to do, right
+             above the key that will try again. -->
+        @if (player.error()) {
+          <p class="msg err trouble" role="alert">{{ player.error() }}</p>
+        }
+
         @if (player.gameMode() === 'steps') {
           <div class="controls">
             <button class="key" type="button" (click)="player.restart()" aria-label="Opnieuw">

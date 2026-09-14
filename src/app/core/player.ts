@@ -103,7 +103,7 @@ export class Player {
       return;
     }
     this.status.set('playing');
-    if (!(await this.settled())) return;
+    if (!(await this.settled(0))) return;
     this.runClock(0);
   }
 
@@ -123,10 +123,44 @@ export class Player {
     // has finished (or the user paused) Spotify is paused, and seeking alone just
     // moves the playhead — the song would never start again without a resume.
     await this.silently(() => this.api.seekToStart());
-    await this.silently(() => this.api.resume());
     this.status.set('playing');
-    if (!(await this.settled())) return;
+    if (!(await this.wake(0))) return;
+    if (!(await this.settled(0))) return;
     this.runClock(0);
+  }
+
+  /**
+   * Resume playback, and if the device has gone quiet, start the track there
+   * again from the given position. On iOS in particular, Spotify is suspended
+   * within a short while of being paused in the background, and from then on a
+   * bare resume is refused or silently ignored, while a play aimed at the
+   * device's id still reaches it as long as it is listed. Errors are shown, not
+   * swallowed: a dead key with no explanation is the one thing to avoid.
+   */
+  private async wake(positionMs: number): Promise<boolean> {
+    this.error.set('');
+    try {
+      await this.api.resume();
+      return true;
+    } catch {
+      return this.recover(positionMs);
+    }
+  }
+
+  /** The last resort: a full play on the saved device. False, with the reason
+      on show, when even that is refused. */
+  private async recover(positionMs: number): Promise<boolean> {
+    const card = this.card();
+    if (!card) return false;
+    try {
+      await this.api.play(card.uri, this.deviceId() || null, positionMs);
+      return true;
+    } catch (error) {
+      this.error.set(error instanceof Error ? error.message : 'Afspelen mislukt.');
+      this.stopTimers();
+      this.status.set('paused');
+      return false;
+    }
   }
 
   /** Steps mode: climb one rung of the ladder and replay from the top. */
@@ -152,27 +186,48 @@ export class Player {
    * the intended length from the top of the song and the pause sent one leg
    * early. A short round therefore ends as soon as it is confirmed audible.
    *
+   * A device that accepted the command but never starts (a suspended Spotify
+   * app answers commands it does not act on) gets one full play aimed at it
+   * before the round is run regardless.
+   *
+   * Classic mode does not need the precision, but it needs the same rescue: it
+   * checks once, a moment after resuming, that the device really plays.
+   *
    * Resolves false when the round was abandoned while waiting (next card, next
    * round, mode switch), so the caller must not start a clock for it.
    */
-  private async settled(): Promise<boolean> {
+  private async settled(positionMs: number): Promise<boolean> {
     const run = ++this.run;
     this.latencyMs = 0;
     this.offsetMs = 0;
-    if (this.gameMode() !== 'steps') return true;
-
     const abandoned = () => run !== this.run || this.status() !== 'playing';
+
+    if (this.gameMode() !== 'steps') {
+      void this.verify(run, positionMs);
+      return true;
+    }
+
+    for (let attempt = 0; attempt < 2; attempt++) {
+      if (await this.advancing(run)) return true;
+      if (abandoned()) return false;
+      if (attempt === 0 && !(await this.recover(positionMs))) return false;
+    }
+    // Never confirmed: run the round anyway rather than leave the deck stuck.
+    return !abandoned();
+  }
+
+  /** Polls the position for up to three seconds; true once it is moving. */
+  private async advancing(run: number): Promise<boolean> {
     const deadline = Date.now() + 3000;
     let previous = -1;
-    while (Date.now() < deadline) {
+    while (Date.now() < deadline && run === this.run && this.status() === 'playing') {
       const sent = Date.now();
       let state: { playing: boolean; progressMs: number } | null;
       try {
         state = await this.api.playbackState();
       } catch {
-        break;
+        return false;
       }
-      if (abandoned()) return false;
       const progress = state?.playing ? state.progressMs : 0;
       if (progress > 0 && previous >= 0 && progress > previous) {
         this.latencyMs = Math.round((Date.now() - sent) / 2);
@@ -182,10 +237,23 @@ export class Player {
       }
       previous = progress;
       await new Promise((resolve) => setTimeout(resolve, 100));
-      if (abandoned()) return false;
     }
-    // Never confirmed: run the round anyway rather than leave the deck stuck.
-    return !abandoned();
+    return false;
+  }
+
+  /** Classic mode: a moment after resuming, make sure the device is really
+      playing, and wake it with a full play if it is not. */
+  private async verify(run: number, positionMs: number): Promise<void> {
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+    if (run !== this.run || this.status() !== 'playing') return;
+    let state: { playing: boolean; progressMs: number } | null = null;
+    try {
+      state = await this.api.playbackState();
+    } catch {
+      return;
+    }
+    if (run !== this.run || this.status() !== 'playing') return;
+    if (!state?.playing) await this.recover(positionMs + 1500);
   }
 
   async pause(reason: 'user' | 'clip' = 'user'): Promise<void> {
@@ -195,13 +263,17 @@ export class Player {
   }
 
   async resume(): Promise<void> {
+    const positionMs = this.seconds() * 1000;
     this.status.set('playing');
-    await this.silently(() => this.api.resume());
+    if (!(await this.wake(positionMs))) return;
+    if (!(await this.settled(positionMs))) return;
     this.runClock(this.seconds());
   }
 
   /** Stops playback and clears the current card, back to the scan screen. */
   async clear(): Promise<void> {
+    this.run++;
+    this.error.set('');
     this.stopTimers();
     this.status.set('idle');
     this.card.set(null);

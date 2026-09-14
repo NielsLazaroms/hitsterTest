@@ -376,3 +376,11 @@
   background: var(--teal-bright);
   box-shadow: 0 0 8px var(--coral);
 }
+
+/* A transport problem shown on the deck itself, sized to the key row below. */
+.trouble {
+  width: 100%;
+  max-width: 340px;
+  margin: 18px 0 -10px;
+  text-align: center;
+}
