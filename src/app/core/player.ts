@@ -1,8 +1,27 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { SpotifyApi } from './spotify-api';
+import { LOCAL_DEVICE, SpotifySdk } from './spotify-sdk';
 import { log } from './debug';
 import { read, write } from './storage';
 import type { Card } from './models';
+
+/**
+ * Moves everyone to the in-app player once.
+ *
+ * A saved device id survives upgrades, and on a phone that saved id is the
+ * phone's own Spotify app — the one configuration that cannot work, since
+ * scanning puts it in the background where the OS suspends it. Defaulting
+ * only when nothing is stored would leave exactly the players who hit the
+ * bug still pointing at it. Anyone who wants a laptop or a speaker picks it
+ * again in Settings, and that choice then sticks.
+ */
+function migratedDevice(): string {
+  const saved = read<string>('device', '');
+  if (read<number>('deviceSchema', 1) >= 2) return saved;
+  write('deviceSchema', 2);
+  write('device', LOCAL_DEVICE);
+  return LOCAL_DEVICE;
+}
 
 export type PlayerStatus = 'idle' | 'playing' | 'paused' | 'finished';
 
@@ -22,14 +41,17 @@ export const STEP_LENGTHS = [0.1, 0.5, 1, 2, 4, 8, 16, 30] as const;
 @Injectable({ providedIn: 'root' })
 export class Player {
   private readonly api = inject(SpotifyApi);
+  private readonly sdk = inject(SpotifySdk);
 
   readonly status = signal<PlayerStatus>('idle');
   readonly card = signal<Card | null>(null);
   readonly seconds = signal(0);
   readonly error = signal('');
 
-  /** Device the music comes out of; empty means "whatever Spotify is using". */
-  readonly deviceId = signal<string>(read<string>('device', ''));
+  /** Device the music comes out of: a Spotify device id, the `LOCAL_DEVICE`
+      sentinel for the player in this page, or empty for "whatever Spotify is
+      using". */
+  readonly deviceId = signal<string>(migratedDevice());
 
   /** Seconds before playback stops on its own; 0 means play until stopped.
       Classic mode only — steps mode has its own ladder. */
@@ -90,6 +112,26 @@ export class Player {
     }
   }
 
+  /**
+   * The device id to aim a play at, resolved afresh every time: the in-app
+   * player is handed a new id on every page load, and may be handed another
+   * one after going briefly not-ready, so the sentinel is stored instead.
+   *
+   * Throws rather than falling back to "last active". That fallback is what
+   * sends the music back to the suspended phone app, where it is accepted
+   * with a 204 and never heard.
+   */
+  private async target(): Promise<string | null> {
+    const saved = this.deviceId();
+    if (saved !== LOCAL_DEVICE) return saved || null;
+
+    const id = await this.sdk.waitForDevice();
+    if (id) return id;
+    throw new Error(
+      this.sdk.error() || 'De speler in de app is nog niet klaar. Probeer het zo opnieuw.',
+    );
+  }
+
   async start(card: Card): Promise<void> {
     log('player', 'start', {
       card: card.id,
@@ -102,7 +144,7 @@ export class Player {
     this.durationMs = 0;
     this.step.set(0);
     try {
-      await this.api.play(card.uri, this.deviceId() || null);
+      await this.api.play(card.uri, await this.target());
     } catch (error) {
       log('player', 'start-failed', {
         why: error instanceof Error ? error.message : String(error),
@@ -179,7 +221,7 @@ export class Player {
     }
     log('player', 'recover', { card: card.id, positionMs });
     try {
-      await this.api.play(card.uri, this.deviceId() || null, positionMs);
+      await this.api.play(card.uri, await this.target(), positionMs);
       return true;
     } catch (error) {
       log('player', 'recover-failed', {

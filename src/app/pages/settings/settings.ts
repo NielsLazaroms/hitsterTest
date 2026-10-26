@@ -6,6 +6,7 @@ import { Nav } from '../../core/nav';
 import { Player } from '../../core/player';
 import { SpotifyApi } from '../../core/spotify-api';
 import { SpotifyAuth } from '../../core/spotify-auth';
+import { LOCAL_DEVICE, SpotifySdk } from '../../core/spotify-sdk';
 import { Theme, type ThemePref } from '../../core/theme';
 import type { SpotifyDevice } from '../../core/models';
 
@@ -19,7 +20,11 @@ import type { SpotifyDevice } from '../../core/models';
 export class Settings {
   private readonly api = inject(SpotifyApi);
   private readonly auth = inject(SpotifyAuth);
+  private readonly sdk = inject(SpotifySdk);
   private readonly router = inject(Router);
+
+  /** The fixed "play here" option, which is not a device id (see spotify-sdk). */
+  protected readonly localDevice = LOCAL_DEVICE;
 
   protected readonly player = inject(Player);
   protected readonly nav = inject(Nav);
@@ -53,7 +58,11 @@ export class Settings {
     this.deviceError.set('');
     try {
       const found = await this.api.devices();
-      this.devices.set(found);
+      // The in-app player has its own fixed entry in the list. Leaving it here
+      // too would let someone store its device id, which Spotify replaces on
+      // every page load, so the choice would silently rot.
+      const local = this.sdk.deviceId();
+      this.devices.set(found.filter((device) => device.id !== local));
       if (!this.player.deviceId()) {
         const active = found.find((d) => d.is_active) ?? found[0];
         if (active) this.player.setDevice(active.id);

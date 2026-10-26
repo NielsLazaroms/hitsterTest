@@ -14,6 +14,7 @@ import { Icon } from '../../core/icon';
 import { Nav } from '../../core/nav';
 import { Player, STEP_LENGTHS } from '../../core/player';
 import { SpotifyApi } from '../../core/spotify-api';
+import { SpotifySdk } from '../../core/spotify-sdk';
 import { isInAppBrowser } from '../../core/environment';
 import { DebugPanel } from '../../core/debug-panel';
 import { isDebugEnabled, log } from '../../core/debug';
@@ -30,6 +31,7 @@ type Mode = 'idle' | 'scanning' | 'playing';
 })
 export class Play implements OnDestroy {
   private readonly api = inject(SpotifyApi);
+  private readonly sdk = inject(SpotifySdk);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
 
@@ -72,6 +74,12 @@ export class Play implements OnDestroy {
     }
     this.player.setGameMode(mode);
 
+    // Start the in-app player now, not on the first scan: it takes a moment to
+    // register with Spotify, and that wait would otherwise land between the tap
+    // and the music. Loading it here rather than at boot keeps the script off
+    // the screens that never play anything.
+    void this.sdk.load();
+
     const pending = this.route.snapshot.queryParamMap.get('t');
     log('play', 'open', {
       mode,
@@ -95,6 +103,12 @@ export class Play implements OnDestroy {
 
   async startScan(): Promise<void> {
     if (this.mode() === 'scanning') return;
+
+    // First thing in the tap, and deliberately not awaited: a mobile browser
+    // only unblocks audio for a gesture, the play command arrives much later
+    // over the network, and awaiting here would push the camera prompt out of
+    // the same gesture.
+    void this.sdk.activate();
 
     try {
       // Ask for the camera first: the permission prompt then belongs to the

@@ -35,12 +35,13 @@
         [ngModel]="player.deviceId()"
         (ngModelChange)="onDeviceChange($event)"
       >
+        <!-- Always first, and always available: it is this page, so it needs
+             no Spotify app to be awake anywhere. -->
+        <option [value]="localDevice">Hier, in de app</option>
         @if (loadingDevices()) {
           <option value="">Laden…</option>
         } @else if (deviceError()) {
           <option value="">{{ deviceError() }}</option>
-        } @else if (devices().length === 0) {
-          <option value="">Niets gevonden. Open Spotify en speel iets af</option>
         } @else {
           @for (device of devices(); track device.id) {
             <option [value]="device.id">{{ device.name }} ({{ device.type }})</option>
@@ -50,8 +51,9 @@
 
       <button class="btn ghost sm" type="button" (click)="loadDevices()">Apparaatlijst verversen</button>
       <p class="note">
-        Spotify toont alleen een apparaat waarmee het recent contact had. Ontbreekt je speaker,
-        open dan Spotify, speel een seconde een nummer af en ververs daarna.
+        "Hier, in de app" speelt het geluid af op dit toestel, zonder dat de Spotify-app open hoeft
+        te staan. Kies een ander apparaat om via een laptop of speaker te spelen; Spotify toont
+        alleen apparaten waarmee het recent contact had.
       </p>
 
       <label for="clip">Fragmentlengte</label>
