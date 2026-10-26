@@ -30,9 +30,25 @@ const PLAYER_NAME = 'Mixtape (in de app)';
  */
 export const LOCAL_DEVICE = 'local';
 
+interface SdkTrack {
+  uri: string;
+  /** Set when Spotify swapped the track for the one licensed in this market;
+      the uri we asked for is then here rather than in `uri`. */
+  linked_from?: { uri?: string | null } | null;
+}
+
 interface SdkState {
   paused: boolean;
   position: number;
+  track_window?: { current_track?: SdkTrack | null } | null;
+}
+
+/** What the page's own player is doing, read locally and without a round trip. */
+export interface LocalState {
+  playing: boolean;
+  progressMs: number;
+  /** Both forms of the current track, so a relinked one still matches. */
+  uris: string[];
 }
 
 interface ReadyPayload {
@@ -148,10 +164,15 @@ export class SpotifySdk {
   // Local transport. Unlike the Web API these take effect in milliseconds and
   // report the truth, which is what makes a fraction-of-a-second round possible.
 
-  async state(): Promise<{ playing: boolean; progressMs: number } | null> {
+  async state(): Promise<LocalState | null> {
     const state = await this.player?.getCurrentState();
     if (!state) return null;
-    return { playing: !state.paused, progressMs: state.position };
+    const track = state.track_window?.current_track;
+    return {
+      playing: !state.paused,
+      progressMs: state.position,
+      uris: [track?.uri, track?.linked_from?.uri].filter((uri): uri is string => !!uri),
+    };
   }
 
   async pause(): Promise<void> {

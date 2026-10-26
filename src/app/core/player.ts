@@ -38,6 +38,12 @@ export type GameMode = 'classic' | 'steps';
 /** Seconds of the song revealed at each step, always counted from the top. */
 export const STEP_LENGTHS = [0.1, 0.5, 1, 2, 4, 8, 16, 30] as const;
 
+/** How long to wait for the in-app player to actually make a sound. Generous
+    for a fresh card, whose track still has to be fetched; short for a resume
+    or a replay, where it is already loaded. */
+const START_CONFIRM_MS = 5000;
+const RESUME_CONFIRM_MS = 1500;
+
 @Injectable({ providedIn: 'root' })
 export class Player {
   private readonly api = inject(SpotifyApi);
@@ -132,6 +138,39 @@ export class Player {
     );
   }
 
+  /**
+   * Whether playback runs in this page.
+   *
+   * Decided by the saved choice alone, never by whether the SDK happens to be
+   * ready at this instant: a momentary `not_ready` mid-round would otherwise
+   * send a pause to the Connect API, which aims at the last active device —
+   * quite possibly the suspended phone app this whole path exists to avoid.
+   * The SDK calls do nothing without a player, and a missing state makes
+   * confirmation fail with a message, which is the honest outcome.
+   */
+  private local(): boolean {
+    return this.deviceId() === LOCAL_DEVICE;
+  }
+
+  private async sendPause(): Promise<void> {
+    return this.local() ? this.sdk.pause() : this.api.pause();
+  }
+
+  /**
+   * The in-app player failed where the Connect path would have re-sent a play
+   * to wake a sleeping device. There is no second device here to wake, so the
+   * only useful thing is to say so and leave the key to try again.
+   */
+  private localFault(what: string, error?: unknown): void {
+    log('player', 'local-fault', {
+      what,
+      why: error instanceof Error ? error.message : error === undefined ? '-' : String(error),
+    });
+    this.error.set('De speler in de app reageert niet. Tik op Opnieuw.');
+    this.stopTimers();
+    this.status.set('paused');
+  }
+
   async start(card: Card): Promise<void> {
     log('player', 'start', {
       card: card.id,
@@ -155,7 +194,7 @@ export class Player {
       return;
     }
     this.status.set('playing');
-    if (!(await this.settled(0))) {
+    if (!(await this.settled(0, card.uri, START_CONFIRM_MS))) {
       log('player', 'start-abandoned', { card: card.id });
       return;
     }
@@ -178,14 +217,28 @@ export class Player {
   }
 
   async restart(): Promise<void> {
-    log('player', 'restart', { card: this.card()?.id ?? '-', step: this.step() });
+    const card = this.card();
+    if (!card) return;
+    log('player', 'restart', { card: card.id, step: this.step() });
+
     // Seek to the top, then make sure playback is actually running: after a clip
     // has finished (or the user paused) Spotify is paused, and seeking alone just
     // moves the playhead — the song would never start again without a resume.
-    await this.silently(() => this.api.seekToStart());
+    if (this.local()) {
+      // Not swallowed: in the page there is no second device that might have
+      // taken the seek instead, so a refusal here is the whole story.
+      try {
+        await this.sdk.seek(0);
+      } catch (error) {
+        return this.localFault('seek', error);
+      }
+    } else {
+      await this.silently(() => this.api.seekToStart());
+    }
+
     this.status.set('playing');
     if (!(await this.wake(0))) return;
-    if (!(await this.settled(0))) return;
+    if (!(await this.settled(0, card.uri, RESUME_CONFIRM_MS))) return;
     this.runClock(0);
   }
 
@@ -199,6 +252,19 @@ export class Player {
    */
   private async wake(positionMs: number): Promise<boolean> {
     this.error.set('');
+
+    // Nothing to wake in the page: the player is right here, and a refusal is
+    // a real fault rather than a sleeping device to be prodded with a play.
+    if (this.local()) {
+      try {
+        await this.sdk.resume();
+        return true;
+      } catch (error) {
+        this.localFault('resume', error);
+        return false;
+      }
+    }
+
     try {
       await this.api.resume();
       return true;
@@ -211,7 +277,8 @@ export class Player {
   }
 
   /** The last resort: a full play on the saved device. False, with the reason
-      on show, when even that is refused. */
+      on show, when even that is refused. Connect path only — in the page there
+      is no sleeping device that a second play would wake. */
   private async recover(positionMs: number): Promise<boolean> {
     const card = this.card();
     if (!card) {
@@ -268,11 +335,26 @@ export class Player {
    * Resolves false when the round was abandoned while waiting (next card, next
    * round, mode switch), so the caller must not start a clock for it.
    */
-  private async settled(positionMs: number): Promise<boolean> {
+  private async settled(positionMs: number, uri: string, timeoutMs: number): Promise<boolean> {
     const run = ++this.run;
     this.latencyMs = 0;
     this.offsetMs = 0;
     const abandoned = () => run !== this.run || this.status() !== 'playing';
+
+    // The page's own player reports the truth, locally and at once, so there
+    // is nothing to compensate for and no sleeping device to rescue. Confirm
+    // it in both modes — it costs tens of milliseconds — so the clock starts
+    // when the audio does rather than when the command was acknowledged.
+    // Everything below this point is the Connect path.
+    if (this.local()) {
+      if (await this.confirmLocal(uri, positionMs, run, timeoutMs)) return true;
+      if (abandoned()) {
+        log('player', 'settled-abandoned', { run, local: true });
+        return false;
+      }
+      this.localFault('confirm');
+      return false;
+    }
 
     if (this.gameMode() !== 'steps') {
       void this.verify(run, positionMs);
@@ -294,7 +376,92 @@ export class Player {
     return !abandoned();
   }
 
-  /** Polls the position for up to three seconds; true once it is moving. */
+  /**
+   * Waits until this page's own player is genuinely sounding the track, and
+   * records how far into the song that happened.
+   *
+   * A local reading costs nothing, so this polls every 25 ms and lands within
+   * a few tens of milliseconds of the first audio. That is what finally makes
+   * a 0.1 s round deliverable: over Connect the confirmation alone took longer
+   * than the round, so `armStop` clamped to zero and the first rungs of the
+   * ladder were indistinguishable.
+   *
+   * Three things keep the reading honest:
+   *
+   *  - It must be our track. Spotify may substitute the recording licensed in
+   *    this market, so the uri asked for can arrive as `linked_from` instead;
+   *    both are matched. A reading that matches neither but is clearly playing
+   *    is accepted anyway and noted, since refusing it would stall the deck
+   *    over a detail that did not stop the music.
+   *  - It must be near where playback was meant to begin. Right after a seek
+   *    the player can still report the previous round's position, and
+   *    confirming on that would cut the next round short.
+   *  - It must be moving, not merely non-zero.
+   */
+  private async confirmLocal(
+    uri: string,
+    fromMs: number,
+    run: number,
+    timeoutMs: number,
+  ): Promise<boolean> {
+    const startedAt = Date.now();
+    const deadline = startedAt + timeoutMs;
+    const highest = fromMs + 1500;
+    let previous = -1;
+    let sawStart = false;
+    let mismatched = false;
+    let polls = 0;
+
+    while (Date.now() < deadline && run === this.run && this.status() === 'playing') {
+      const state = await this.sdk.state();
+      polls++;
+
+      const usable =
+        state !== null &&
+        state.playing &&
+        state.progressMs >= fromMs &&
+        state.progressMs <= highest;
+
+      if (!usable) {
+        previous = -1;
+      } else {
+        if (!state.uris.includes(uri) && !mismatched) {
+          mismatched = true;
+          log('player', 'uri-mismatch', { want: uri, got: state.uris.join(',') });
+        }
+        // Having seen the playhead near the start is what proves the seek
+        // landed. After a moment, accept movement alone rather than stall.
+        if (state.progressMs <= fromMs + 300) sawStart = true;
+        const settledEnough = sawStart || Date.now() - startedAt > 600;
+
+        if (previous >= 0 && state.progressMs > previous && settledEnough) {
+          this.latencyMs = 0;
+          this.offsetMs = state.progressMs;
+          log('player', 'confirm-local', {
+            run,
+            polls,
+            confirmMs: Date.now() - startedAt,
+            offsetMs: this.offsetMs,
+            sawStart,
+          });
+          return true;
+        }
+        previous = state.progressMs;
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, 25));
+    }
+
+    log('player', 'confirm-local-timeout', {
+      run,
+      polls,
+      waitedMs: Date.now() - startedAt,
+    });
+    return false;
+  }
+
+  /** Polls the position for up to three seconds; true once it is moving.
+      Connect path only — the in-app player uses `confirmLocal`. */
   private async advancing(run: number): Promise<boolean> {
     const deadline = Date.now() + 3000;
     const startedAt = Date.now();
@@ -355,15 +522,33 @@ export class Player {
     log('player', 'pause', { reason, atSeconds: this.seconds() });
     this.stopTimers();
     this.status.set(reason === 'clip' ? 'finished' : 'paused');
-    await this.silently(() => this.api.pause());
+    await this.silently(() => this.sendPause());
+    if (reason === 'clip' && this.local()) void this.measureClip();
+  }
+
+  /**
+   * How much of the song was actually audible, measured rather than assumed.
+   * Only the in-app player can answer this, and it is the number to hold a
+   * round length against when checking whether the ladder really works.
+   */
+  private async measureClip(): Promise<void> {
+    const state = await this.sdk.state();
+    if (!state) return;
+    const target = this.stopThreshold();
+    log('player', 'clip-stopped', {
+      targetMs: target === Infinity ? '-' : Math.round(target * 1000),
+      reachedMs: state.progressMs,
+    });
   }
 
   async resume(): Promise<void> {
+    const card = this.card();
+    if (!card) return;
     const positionMs = this.seconds() * 1000;
     log('player', 'resume', { positionMs });
     this.status.set('playing');
     if (!(await this.wake(positionMs))) return;
-    if (!(await this.settled(positionMs))) return;
+    if (!(await this.settled(positionMs, card.uri, RESUME_CONFIRM_MS))) return;
     this.runClock(this.seconds());
   }
 
@@ -379,7 +564,7 @@ export class Player {
     this.card.set(null);
     this.seconds.set(0);
     this.step.set(0);
-    await this.silently(() => this.api.pause());
+    await this.silently(() => this.sendPause());
   }
 
   private runClock(fromSeconds: number): void {
