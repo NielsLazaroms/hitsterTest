@@ -1,5 +1,6 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { SpotifyApi } from './spotify-api';
+import { log } from './debug';
 import { read, write } from './storage';
 import type { Card } from './models';
 
@@ -90,6 +91,12 @@ export class Player {
   }
 
   async start(card: Card): Promise<void> {
+    log('player', 'start', {
+      card: card.id,
+      mode: this.gameMode(),
+      device: this.deviceId() || 'last-active',
+      clip: this.clipLength(),
+    });
     this.error.set('');
     this.card.set(card);
     this.durationMs = 0;
@@ -97,13 +104,19 @@ export class Player {
     try {
       await this.api.play(card.uri, this.deviceId() || null);
     } catch (error) {
+      log('player', 'start-failed', {
+        why: error instanceof Error ? error.message : String(error),
+      });
       this.card.set(null);
       this.status.set('idle');
       this.error.set(error instanceof Error ? error.message : 'Playback failed.');
       return;
     }
     this.status.set('playing');
-    if (!(await this.settled(0))) return;
+    if (!(await this.settled(0))) {
+      log('player', 'start-abandoned', { card: card.id });
+      return;
+    }
     this.runClock(0);
   }
 
@@ -113,12 +126,17 @@ export class Player {
    * stop it" leaves the tape counter running after the audio has finished.
    */
   setDuration(id: string, durationMs: number): void {
-    if (this.card()?.id !== id) return;
+    if (this.card()?.id !== id) {
+      log('player', 'duration-stale', { id, current: this.card()?.id ?? '-' });
+      return;
+    }
+    log('player', 'duration', { id, durationMs });
     this.durationMs = durationMs;
     if (this.status() === 'playing') this.armStop(this.seconds());
   }
 
   async restart(): Promise<void> {
+    log('player', 'restart', { card: this.card()?.id ?? '-', step: this.step() });
     // Seek to the top, then make sure playback is actually running: after a clip
     // has finished (or the user paused) Spotify is paused, and seeking alone just
     // moves the playhead — the song would never start again without a resume.
@@ -142,7 +160,10 @@ export class Player {
     try {
       await this.api.resume();
       return true;
-    } catch {
+    } catch (error) {
+      log('player', 'wake-refused', {
+        why: error instanceof Error ? error.message : String(error),
+      });
       return this.recover(positionMs);
     }
   }
@@ -151,11 +172,19 @@ export class Player {
       on show, when even that is refused. */
   private async recover(positionMs: number): Promise<boolean> {
     const card = this.card();
-    if (!card) return false;
+    if (!card) {
+      // Reached when clear() nulled the card while a play was still in flight.
+      log('player', 'recover-no-card', { positionMs });
+      return false;
+    }
+    log('player', 'recover', { card: card.id, positionMs });
     try {
       await this.api.play(card.uri, this.deviceId() || null, positionMs);
       return true;
     } catch (error) {
+      log('player', 'recover-failed', {
+        why: error instanceof Error ? error.message : String(error),
+      });
       this.error.set(error instanceof Error ? error.message : 'Afspelen mislukt.');
       this.stopTimers();
       this.status.set('paused');
@@ -166,6 +195,7 @@ export class Player {
   /** Steps mode: climb one rung of the ladder and replay from the top. */
   async nextStep(): Promise<void> {
     if (this.lastStep()) return;
+    log('player', 'nextStep', { from: this.step(), to: this.step() + 1 });
     this.stopTimers();
     this.step.update((s) => s + 1);
     await this.restart();
@@ -209,35 +239,55 @@ export class Player {
 
     for (let attempt = 0; attempt < 2; attempt++) {
       if (await this.advancing(run)) return true;
-      if (abandoned()) return false;
+      if (abandoned()) {
+        log('player', 'settled-abandoned', { run, attempt });
+        return false;
+      }
       if (attempt === 0 && !(await this.recover(positionMs))) return false;
     }
     // Never confirmed: run the round anyway rather than leave the deck stuck.
+    // Nothing is shown to the player here, so a device that accepts commands
+    // and stays silent reaches the round with no message at all.
+    log('player', 'settled-unconfirmed', { run, silent: true });
     return !abandoned();
   }
 
   /** Polls the position for up to three seconds; true once it is moving. */
   private async advancing(run: number): Promise<boolean> {
     const deadline = Date.now() + 3000;
+    const startedAt = Date.now();
     let previous = -1;
+    let polls = 0;
     while (Date.now() < deadline && run === this.run && this.status() === 'playing') {
       const sent = Date.now();
       let state: { playing: boolean; progressMs: number } | null;
       try {
         state = await this.api.playbackState();
       } catch {
+        log('player', 'advancing-error', { run, polls });
         return false;
       }
+      polls++;
       const progress = state?.playing ? state.progressMs : 0;
       if (progress > 0 && previous >= 0 && progress > previous) {
         this.latencyMs = Math.round((Date.now() - sent) / 2);
         // The reading is one leg old by the time it arrives.
         this.offsetMs = progress + this.latencyMs;
+        // offsetMs is how deep into the song confirmation landed. A round
+        // shorter than this cannot be delivered: armStop will clamp to 0.
+        log('player', 'advancing-ok', {
+          run,
+          polls,
+          confirmMs: Date.now() - startedAt,
+          offsetMs: this.offsetMs,
+          latencyMs: this.latencyMs,
+        });
         return true;
       }
       previous = progress;
       await new Promise((resolve) => setTimeout(resolve, 100));
     }
+    log('player', 'advancing-timeout', { run, polls, waitedMs: Date.now() - startedAt });
     return false;
   }
 
@@ -253,10 +303,14 @@ export class Player {
       return;
     }
     if (run !== this.run || this.status() !== 'playing') return;
+    // Only `is_playing` is checked here, never the position, so a device that
+    // reports itself as playing but makes no sound passes this test.
+    log('player', 'verify', { run, playing: state?.playing ?? false, progressMs: state?.progressMs });
     if (!state?.playing) await this.recover(positionMs + 1500);
   }
 
   async pause(reason: 'user' | 'clip' = 'user'): Promise<void> {
+    log('player', 'pause', { reason, atSeconds: this.seconds() });
     this.stopTimers();
     this.status.set(reason === 'clip' ? 'finished' : 'paused');
     await this.silently(() => this.api.pause());
@@ -264,6 +318,7 @@ export class Player {
 
   async resume(): Promise<void> {
     const positionMs = this.seconds() * 1000;
+    log('player', 'resume', { positionMs });
     this.status.set('playing');
     if (!(await this.wake(positionMs))) return;
     if (!(await this.settled(positionMs))) return;
@@ -272,6 +327,9 @@ export class Player {
 
   /** Stops playback and clears the current card, back to the scan screen. */
   async clear(): Promise<void> {
+    // Sends a pause. If a scan has already started the next card, this pause
+    // can overtake that play and silence the song that just began.
+    log('player', 'clear', { card: this.card()?.id ?? '-', status: this.status() });
     this.run++;
     this.error.set('');
     this.stopTimers();
@@ -304,10 +362,26 @@ export class Player {
     this.clipTimer = null;
 
     const stopAt = this.stopThreshold();
-    if (stopAt !== Infinity) {
-      const delay = Math.max(0, (stopAt - fromSeconds) * 1000 - this.offsetMs - this.latencyMs);
-      this.clipTimer = setTimeout(() => void this.pause('clip'), delay);
+    if (stopAt === Infinity) {
+      log('player', 'armStop', { stopAt: 'never' });
+      return;
     }
+
+    const raw = (stopAt - fromSeconds) * 1000 - this.offsetMs - this.latencyMs;
+    const delay = Math.max(0, raw);
+    // `raw` below zero means the round is shorter than the time confirmation
+    // took, so the pause is sent the instant the clock starts: audible as the
+    // song stopping with nothing played.
+    log('player', 'armStop', {
+      stopAt,
+      fromSeconds,
+      offsetMs: this.offsetMs,
+      latencyMs: this.latencyMs,
+      raw,
+      delay,
+      immediate: raw <= 0,
+    });
+    this.clipTimer = setTimeout(() => void this.pause('clip'), delay);
   }
 
   /** Second at which playback should stop: the clip length (classic) or the
@@ -332,8 +406,12 @@ export class Player {
   private async silently(action: () => Promise<void>): Promise<void> {
     try {
       await action();
-    } catch {
-      /* ignore */
+    } catch (error) {
+      // Swallowed on purpose, but a pause or seek that never landed explains
+      // a lot of odd playback, so the log still gets it.
+      log('player', 'swallowed', {
+        why: error instanceof Error ? error.message : String(error),
+      });
     }
   }
 }

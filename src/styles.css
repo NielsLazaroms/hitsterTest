@@ -180,6 +180,10 @@ select {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  /* Space for the debug overlay, which is fixed to the bottom of the viewport
+     and would otherwise cover whatever sits there — on the Play screen that is
+     "Annuleren" during a scan. Zero unless the panel sets it. */
+  padding-bottom: var(--debug-pad, 0);
 }
 
 @supports (min-height: 100dvh) {
