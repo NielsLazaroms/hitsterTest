@@ -15,10 +15,21 @@ jobs:
     runs-on: ubuntu-latest
     name: Build and Deploy Job
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v7
         with:
           submodules: true
           lfs: false
+
+      # The app is built here rather than by Oryx. Angular 22 refuses to run on
+      # Node older than ^22.22.3 || ^24.15.0 || >=26, and Oryx picks its own
+      # Node version, so leaving the build to it risks a version it rejects.
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run build
+
       - name: Build And Deploy
         id: builddeploy
         uses: Azure/static-web-apps-deploy@v1
@@ -27,10 +38,12 @@ jobs:
           repo_token: ${{ secrets.GITHUB_TOKEN }} # Used for Github integrations (i.e. PR comments)
           action: "upload"
           ###### Repository/Build Configurations - These values can be configured to match your app requirements. ######
-          # For more information regarding Static Web App workflow configurations, please visit: https://aka.ms/swaworkflowconfig
-          app_location: "/" # App source code path
+          # With skip_app_build, app_location is the folder that gets uploaded,
+          # so it points at the build output and output_location stays empty.
+          app_location: "dist/hitsterTest/browser"
           api_location: "" # Api source code path - optional
-          output_location: "dist/hitsterTest/browser" # Built app content directory - optional
+          output_location: ""
+          skip_app_build: true
           ###### End of Repository/Build Configurations ######
 
   close_pull_request_job:
