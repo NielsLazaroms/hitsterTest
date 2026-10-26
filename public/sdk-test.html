@@ -271,6 +271,39 @@
     }
   });
 
+  // --- the screen-lock question -------------------------------------------
+  //
+  // `player_state_changed` only fires on changes, so a frozen tab and a
+  // paused one look identical after the fact: both just stop logging. A
+  // heartbeat makes the gap itself visible — the wall clock either kept
+  // ticking across the lock or it did not — and the lifecycle events say
+  // which of the two happened and exactly when.
+
+  setInterval(function () {
+    if (!player) return;
+    player.getCurrentState().then(function (state) {
+      var clock = new Date().toLocaleTimeString('nl-NL');
+      if (!state) {
+        log('beat ' + clock + ' state=null (this device is not playing)');
+        return;
+      }
+      log('beat ' + clock + ' paused=' + state.paused + ' pos=' + state.position);
+      document.getElementById('s-seen').textContent = clock;
+    });
+  }, 1000);
+
+  document.addEventListener('visibilitychange', function () {
+    log('visibility=' + document.visibilityState);
+  });
+
+  // Chrome's page lifecycle: `freeze` is precisely what a locked screen or a
+  // backgrounded tab can trigger, and it is the event that would explain the
+  // SDK device vanishing from the Connect list.
+  document.addEventListener('freeze', function () { log('FREEZE — tab frozen by the browser'); });
+  document.addEventListener('resume', function () { log('RESUME — tab thawed'); });
+  window.addEventListener('pagehide', function (e) { log('pagehide persisted=' + e.persisted); });
+  window.addEventListener('pageshow', function (e) { log('pageshow persisted=' + e.persisted); });
+
   document.getElementById('start').disabled = true;
   log('waiting for SDK script…');
 })();
