@@ -40,6 +40,14 @@ interface SdkTrack {
 interface SdkState {
   paused: boolean;
   position: number;
+  /**
+   * True while the track is still being fetched. Crucial, because the SDK
+   * reports `paused: false` at a standing position throughout that window,
+   * and `getCurrentState()` interpolates the position from the last event —
+   * so a poll during a load sees a position that appears to be moving when
+   * nothing is audible yet.
+   */
+  loading?: boolean;
   track_window?: { current_track?: SdkTrack | null } | null;
 }
 
@@ -47,6 +55,9 @@ interface SdkState {
 export interface LocalState {
   playing: boolean;
   progressMs: number;
+  /** True while the track is still being fetched, when `progressMs` means
+      nothing: it is interpolated from a standing event. */
+  loading: boolean;
   /** Both forms of the current track, so a relinked one still matches. */
   uris: string[];
 }
@@ -171,6 +182,7 @@ export class SpotifySdk {
     return {
       playing: !state.paused,
       progressMs: state.position,
+      loading: state.loading === true,
       uris: [track?.uri, track?.linked_from?.uri].filter((uri): uri is string => !!uri),
     };
   }
@@ -262,6 +274,7 @@ export class SpotifySdk {
       }
       log('sdk', 'state', {
         paused: state.paused,
+        loading: state.loading === true,
         position: state.position,
         uri: state.track_window?.current_track?.uri ?? '-',
       });

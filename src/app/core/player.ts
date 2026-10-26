@@ -455,6 +455,7 @@ export class Player {
     let sawStart = false;
     let mismatched = false;
     let polls = 0;
+    let loadingPolls = 0;
 
     while (Date.now() < deadline && run === this.run && this.status() === 'playing') {
       const state = await this.sdk.state();
@@ -467,10 +468,16 @@ export class Player {
       // only once it is clear no better reading is coming.
       const ours = state?.uris.includes(uri) ?? false;
       const relinkGrace = Date.now() - startedAt >= MISMATCH_GRACE_MS;
+      if (state?.loading) loadingPolls++;
 
       if (
         state === null ||
         !state.playing ||
+        // While the track is being fetched the SDK already says it is not
+        // paused, and the position is interpolated from a standing event — so
+        // it looks like playback that has just begun. Confirming there sets
+        // the round going before any sound, and it ends that much short.
+        state.loading ||
         !(ours || relinkGrace) ||
         state.progressMs < fromMs ||
         state.progressMs > highest
@@ -493,6 +500,9 @@ export class Player {
           log('player', 'confirm-local', {
             run,
             polls,
+            // How many polls were spent waiting out the load. On a scan this
+            // is the gap that used to be mistaken for playback.
+            loadingPolls,
             confirmMs: Date.now() - startedAt,
             offsetMs: this.offsetMs,
             sawStart,
