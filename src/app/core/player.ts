@@ -44,6 +44,28 @@ export const STEP_LENGTHS = [0.1, 0.5, 1, 2, 4, 8, 16, 30] as const;
 const START_CONFIRM_MS = 5000;
 const RESUME_CONFIRM_MS = 1500;
 
+/**
+ * Milliseconds to wait before stopping, given where the song was when it was
+ * last sampled and how long ago that was.
+ *
+ * Pulled out of `armStop` because it must be *idempotent*: the stop is armed
+ * again when the track length arrives and whenever the clip length changes,
+ * and both can happen inside the first second. Counting from a display clock
+ * that only advances in whole seconds made a re-arm read the elapsed time as
+ * zero and hand the round its full length a second time — on a 0.1 s round,
+ * the difference between stopping and playing on.
+ *
+ * Zero means the moment has already passed, so stop now.
+ */
+export function stopDelayMs(
+  stopAtSeconds: number,
+  offsetMs: number,
+  sinceSampleMs: number,
+  latencyMs: number,
+): number {
+  return Math.max(0, stopAtSeconds * 1000 - offsetMs - sinceSampleMs - latencyMs);
+}
+
 @Injectable({ providedIn: 'root' })
 export class Player {
   private readonly api = inject(SpotifyApi);
@@ -85,9 +107,16 @@ export class Player {
   private run = 0;
   /** Estimated one-way delay to the device (steps mode), taken off the stop timer. */
   private latencyMs = 0;
-  /** How far into the song the device already was when the clock started
-      (steps mode), so the stop timer counts from the top of the song. */
+  /** How far into the song playback was when it was last sampled, so the stop
+      timer can count from the top of the song rather than from the command. */
   private offsetMs = 0;
+  /** When `offsetMs` was sampled. The stop timer is derived from these two and
+      never from the display clock: that one counts whole seconds, so re-arming
+      inside the first second (which the track-length lookup does) would read
+      the elapsed time as zero and hand the round its full length a second
+      time. On a 0.1 s round that is the difference between stopping and
+      playing on. */
+  private offsetAt = 0;
 
   setDevice(id: string): void {
     this.deviceId.set(id);
@@ -110,7 +139,7 @@ export class Player {
     if (this.status() === 'playing') {
       // A clip is running: re-arm the stop timer against the new length so
       // playback honours the change instead of stopping on the old threshold.
-      this.armStop(this.seconds());
+      this.armStop();
     } else if (this.status() === 'finished' && this.stopThreshold() > this.seconds()) {
       // Playback already stopped at the old (shorter) threshold, but the new
       // length reaches past where we are — let the player resume up to it.
@@ -213,7 +242,7 @@ export class Player {
     }
     log('player', 'duration', { id, durationMs });
     this.durationMs = durationMs;
-    if (this.status() === 'playing') this.armStop(this.seconds());
+    if (this.status() === 'playing') this.armStop();
   }
 
   async restart(): Promise<void> {
@@ -338,7 +367,11 @@ export class Player {
   private async settled(positionMs: number, uri: string, timeoutMs: number): Promise<boolean> {
     const run = ++this.run;
     this.latencyMs = 0;
-    this.offsetMs = 0;
+    // Where the song is assumed to be until something confirms otherwise: on a
+    // resume that is the position being resumed from, not zero, or the round
+    // would be granted its whole length again from that point.
+    this.offsetMs = positionMs;
+    this.offsetAt = Date.now();
     const abandoned = () => run !== this.run || this.status() !== 'playing';
 
     // The page's own player reports the truth, locally and at once, so there
@@ -437,6 +470,7 @@ export class Player {
         if (previous >= 0 && state.progressMs > previous && settledEnough) {
           this.latencyMs = 0;
           this.offsetMs = state.progressMs;
+          this.offsetAt = Date.now();
           log('player', 'confirm-local', {
             run,
             polls,
@@ -482,6 +516,7 @@ export class Player {
         this.latencyMs = Math.round((Date.now() - sent) / 2);
         // The reading is one leg old by the time it arrives.
         this.offsetMs = progress + this.latencyMs;
+        this.offsetAt = Date.now();
         // offsetMs is how deep into the song confirmation landed. A round
         // shorter than this cannot be delivered: armStop will clamp to 0.
         log('player', 'advancing-ok', {
@@ -576,15 +611,20 @@ export class Player {
       this.seconds.set(Math.floor((Date.now() - this.startedAt) / 1000));
     }, 250);
 
-    this.armStop(fromSeconds);
+    this.armStop();
   }
 
   /**
    * Schedules the single stop timer at the earliest of the clip length and the
-   * track's own end. Re-armable, so it updates when the duration arrives after
-   * playback has already started.
+   * track's own end.
+   *
+   * Re-armable, and it has to be idempotent: the track-length lookup arms it a
+   * second time a moment after playback starts, and a clip-length change can
+   * do so at any point. The deadline is therefore derived from where the song
+   * actually was and how long ago that was measured, so arming again lands on
+   * the same instant rather than granting a fresh round.
    */
-  private armStop(fromSeconds: number): void {
+  private armStop(): void {
     if (this.clipTimer) clearTimeout(this.clipTimer);
     this.clipTimer = null;
 
@@ -594,19 +634,15 @@ export class Player {
       return;
     }
 
-    const raw = (stopAt - fromSeconds) * 1000 - this.offsetMs - this.latencyMs;
-    const delay = Math.max(0, raw);
-    // `raw` below zero means the round is shorter than the time confirmation
-    // took, so the pause is sent the instant the clock starts: audible as the
-    // song stopping with nothing played.
+    const sinceSample = this.offsetAt ? Date.now() - this.offsetAt : 0;
+    const delay = stopDelayMs(stopAt, this.offsetMs, sinceSample, this.latencyMs);
     log('player', 'armStop', {
       stopAt,
-      fromSeconds,
       offsetMs: this.offsetMs,
+      sinceSample,
       latencyMs: this.latencyMs,
-      raw,
       delay,
-      immediate: raw <= 0,
+      immediate: delay === 0,
     });
     this.clipTimer = setTimeout(() => void this.pause('clip'), delay);
   }
