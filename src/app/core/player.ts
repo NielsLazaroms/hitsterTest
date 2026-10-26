@@ -1,7 +1,6 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { SpotifyApi } from './spotify-api';
 import { LOCAL_DEVICE, SpotifySdk } from './spotify-sdk';
-import { log } from './debug';
 import { read, write } from './storage';
 import type { Card } from './models';
 
@@ -201,23 +200,13 @@ export class Player {
    * to wake a sleeping device. There is no second device here to wake, so the
    * only useful thing is to say so and leave the key to try again.
    */
-  private localFault(what: string, error?: unknown): void {
-    log('player', 'local-fault', {
-      what,
-      why: error instanceof Error ? error.message : error === undefined ? '-' : String(error),
-    });
+  private localFault(): void {
     this.error.set('De speler in de app reageert niet. Tik op Opnieuw.');
     this.stopTimers();
     this.status.set('paused');
   }
 
   async start(card: Card): Promise<void> {
-    log('player', 'start', {
-      card: card.id,
-      mode: this.gameMode(),
-      device: this.deviceId() || 'last-active',
-      clip: this.clipLength(),
-    });
     this.error.set('');
     this.card.set(card);
     this.durationMs = 0;
@@ -225,9 +214,6 @@ export class Player {
     try {
       await this.api.play(card.uri, await this.target());
     } catch (error) {
-      log('player', 'start-failed', {
-        why: error instanceof Error ? error.message : String(error),
-      });
       this.card.set(null);
       this.status.set('idle');
       this.error.set(error instanceof Error ? error.message : 'Playback failed.');
@@ -235,7 +221,6 @@ export class Player {
     }
     this.status.set('playing');
     if (!(await this.settled(0, card.uri, START_CONFIRM_MS))) {
-      log('player', 'start-abandoned', { card: card.id });
       return;
     }
     this.runClock(0);
@@ -248,10 +233,8 @@ export class Player {
    */
   setDuration(id: string, durationMs: number): void {
     if (this.card()?.id !== id) {
-      log('player', 'duration-stale', { id, current: this.card()?.id ?? '-' });
       return;
     }
-    log('player', 'duration', { id, durationMs });
     this.durationMs = durationMs;
     if (this.status() === 'playing') this.armStop();
   }
@@ -259,7 +242,6 @@ export class Player {
   async restart(): Promise<void> {
     const card = this.card();
     if (!card) return;
-    log('player', 'restart', { card: card.id, step: this.step() });
 
     // Seek to the top, then make sure playback is actually running: after a clip
     // has finished (or the user paused) Spotify is paused, and seeking alone just
@@ -269,8 +251,8 @@ export class Player {
       // taken the seek instead, so a refusal here is the whole story.
       try {
         await this.sdk.seek(0);
-      } catch (error) {
-        return this.localFault('seek', error);
+      } catch {
+        return this.localFault();
       }
     } else {
       await this.silently(() => this.api.seekToStart());
@@ -299,8 +281,8 @@ export class Player {
       try {
         await this.sdk.resume();
         return true;
-      } catch (error) {
-        this.localFault('resume', error);
+      } catch {
+        this.localFault();
         return false;
       }
     }
@@ -308,10 +290,7 @@ export class Player {
     try {
       await this.api.resume();
       return true;
-    } catch (error) {
-      log('player', 'wake-refused', {
-        why: error instanceof Error ? error.message : String(error),
-      });
+    } catch {
       return this.recover(positionMs);
     }
   }
@@ -323,17 +302,12 @@ export class Player {
     const card = this.card();
     if (!card) {
       // Reached when clear() nulled the card while a play was still in flight.
-      log('player', 'recover-no-card', { positionMs });
       return false;
     }
-    log('player', 'recover', { card: card.id, positionMs });
     try {
       await this.api.play(card.uri, await this.target(), positionMs);
       return true;
     } catch (error) {
-      log('player', 'recover-failed', {
-        why: error instanceof Error ? error.message : String(error),
-      });
       this.error.set(error instanceof Error ? error.message : 'Afspelen mislukt.');
       this.stopTimers();
       this.status.set('paused');
@@ -344,7 +318,6 @@ export class Player {
   /** Steps mode: climb one rung of the ladder and replay from the top. */
   async nextStep(): Promise<void> {
     if (this.lastStep()) return;
-    log('player', 'nextStep', { from: this.step(), to: this.step() + 1 });
     this.stopTimers();
     this.step.update((s) => s + 1);
     await this.restart();
@@ -393,10 +366,9 @@ export class Player {
     if (this.local()) {
       if (await this.confirmLocal(uri, positionMs, run, timeoutMs)) return true;
       if (abandoned()) {
-        log('player', 'settled-abandoned', { run, local: true });
         return false;
       }
-      this.localFault('confirm');
+      this.localFault();
       return false;
     }
 
@@ -408,7 +380,6 @@ export class Player {
     for (let attempt = 0; attempt < 2; attempt++) {
       if (await this.advancing(run)) return true;
       if (abandoned()) {
-        log('player', 'settled-abandoned', { run, attempt });
         return false;
       }
       if (attempt === 0 && !(await this.recover(positionMs))) return false;
@@ -416,7 +387,6 @@ export class Player {
     // Never confirmed: run the round anyway rather than leave the deck stuck.
     // Nothing is shown to the player here, so a device that accepts commands
     // and stays silent reaches the round with no message at all.
-    log('player', 'settled-unconfirmed', { run, silent: true });
     return !abandoned();
   }
 
@@ -453,13 +423,9 @@ export class Player {
     const highest = fromMs + 1500;
     let previous = -1;
     let sawStart = false;
-    let mismatched = false;
-    let polls = 0;
-    let loadingPolls = 0;
 
     while (Date.now() < deadline && run === this.run && this.status() === 'playing') {
       const state = await this.sdk.state();
-      polls++;
 
       // A track Spotify relinked for this market reports a different uri, so a
       // mismatch cannot simply be refused. But accepting one straight away
@@ -468,7 +434,6 @@ export class Player {
       // only once it is clear no better reading is coming.
       const ours = state?.uris.includes(uri) ?? false;
       const relinkGrace = Date.now() - startedAt >= MISMATCH_GRACE_MS;
-      if (state?.loading) loadingPolls++;
 
       if (
         state === null ||
@@ -484,10 +449,6 @@ export class Player {
       ) {
         previous = -1;
       } else {
-        if (!ours && !mismatched) {
-          mismatched = true;
-          log('player', 'uri-mismatch', { want: uri, got: state.uris.join(',') });
-        }
         // Having seen the playhead near the start is what proves the seek
         // landed. After a moment, accept movement alone rather than stall.
         if (state.progressMs <= fromMs + 300) sawStart = true;
@@ -497,16 +458,6 @@ export class Player {
           this.latencyMs = 0;
           this.offsetMs = state.progressMs;
           this.offsetAt = Date.now();
-          log('player', 'confirm-local', {
-            run,
-            polls,
-            // How many polls were spent waiting out the load. On a scan this
-            // is the gap that used to be mistaken for playback.
-            loadingPolls,
-            confirmMs: Date.now() - startedAt,
-            offsetMs: this.offsetMs,
-            sawStart,
-          });
           return true;
         }
         previous = state.progressMs;
@@ -515,11 +466,6 @@ export class Player {
       await new Promise((resolve) => setTimeout(resolve, 25));
     }
 
-    log('player', 'confirm-local-timeout', {
-      run,
-      polls,
-      waitedMs: Date.now() - startedAt,
-    });
     return false;
   }
 
@@ -527,19 +473,15 @@ export class Player {
       Connect path only — the in-app player uses `confirmLocal`. */
   private async advancing(run: number): Promise<boolean> {
     const deadline = Date.now() + 3000;
-    const startedAt = Date.now();
     let previous = -1;
-    let polls = 0;
     while (Date.now() < deadline && run === this.run && this.status() === 'playing') {
       const sent = Date.now();
       let state: { playing: boolean; progressMs: number } | null;
       try {
         state = await this.api.playbackState();
       } catch {
-        log('player', 'advancing-error', { run, polls });
         return false;
       }
-      polls++;
       const progress = state?.playing ? state.progressMs : 0;
       if (progress > 0 && previous >= 0 && progress > previous) {
         this.latencyMs = Math.round((Date.now() - sent) / 2);
@@ -548,19 +490,11 @@ export class Player {
         this.offsetAt = Date.now();
         // offsetMs is how deep into the song confirmation landed. A round
         // shorter than this cannot be delivered: armStop will clamp to 0.
-        log('player', 'advancing-ok', {
-          run,
-          polls,
-          confirmMs: Date.now() - startedAt,
-          offsetMs: this.offsetMs,
-          latencyMs: this.latencyMs,
-        });
         return true;
       }
       previous = progress;
       await new Promise((resolve) => setTimeout(resolve, 100));
     }
-    log('player', 'advancing-timeout', { run, polls, waitedMs: Date.now() - startedAt });
     return false;
   }
 
@@ -578,12 +512,10 @@ export class Player {
     if (run !== this.run || this.status() !== 'playing') return;
     // Only `is_playing` is checked here, never the position, so a device that
     // reports itself as playing but makes no sound passes this test.
-    log('player', 'verify', { run, playing: state?.playing ?? false, progressMs: state?.progressMs });
     if (!state?.playing) await this.recover(positionMs + 1500);
   }
 
   async pause(reason: 'user' | 'clip' = 'user'): Promise<void> {
-    log('player', 'pause', { reason, atSeconds: this.seconds() });
     this.stopTimers();
     this.status.set(reason === 'clip' ? 'finished' : 'paused');
     await this.silently(() => this.sendPause());
@@ -593,7 +525,6 @@ export class Player {
     const card = this.card();
     if (!card) return;
     const positionMs = this.seconds() * 1000;
-    log('player', 'resume', { positionMs });
     this.status.set('playing');
     if (!(await this.wake(positionMs))) return;
     if (!(await this.settled(positionMs, card.uri, RESUME_CONFIRM_MS))) return;
@@ -604,7 +535,6 @@ export class Player {
   async clear(): Promise<void> {
     // Sends a pause. If a scan has already started the next card, this pause
     // can overtake that play and silence the song that just began.
-    log('player', 'clear', { card: this.card()?.id ?? '-', status: this.status() });
     this.run++;
     this.error.set('');
     this.stopTimers();
@@ -643,20 +573,11 @@ export class Player {
 
     const stopAt = this.stopThreshold();
     if (stopAt === Infinity) {
-      log('player', 'armStop', { stopAt: 'never' });
       return;
     }
 
     const sinceSample = this.offsetAt ? Date.now() - this.offsetAt : 0;
     const delay = stopDelayMs(stopAt, this.offsetMs, sinceSample, this.latencyMs);
-    log('player', 'armStop', {
-      stopAt,
-      offsetMs: this.offsetMs,
-      sinceSample,
-      latencyMs: this.latencyMs,
-      delay,
-      immediate: delay === 0,
-    });
     this.clipTimer = setTimeout(() => void this.pause('clip'), delay);
   }
 
@@ -682,12 +603,8 @@ export class Player {
   private async silently(action: () => Promise<void>): Promise<void> {
     try {
       await action();
-    } catch (error) {
-      // Swallowed on purpose, but a pause or seek that never landed explains
-      // a lot of odd playback, so the log still gets it.
-      log('player', 'swallowed', {
-        why: error instanceof Error ? error.message : String(error),
-      });
+    } catch {
+      /* ignore */
     }
   }
 }

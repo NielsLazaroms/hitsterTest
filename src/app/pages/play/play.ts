@@ -16,15 +16,13 @@ import { Player, STEP_LENGTHS } from '../../core/player';
 import { SpotifyApi } from '../../core/spotify-api';
 import { SpotifySdk } from '../../core/spotify-sdk';
 import { isInAppBrowser } from '../../core/environment';
-import { DebugPanel } from '../../core/debug-panel';
-import { isDebugEnabled, log } from '../../core/debug';
 import { QrScanner, trackIdFromScan, explainCameraError } from '../../core/scanner';
 
 type Mode = 'idle' | 'scanning' | 'playing';
 
 @Component({
   selector: 'app-play',
-  imports: [RouterLink, FormsModule, Icon, DebugPanel],
+  imports: [RouterLink, FormsModule, Icon],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './play.html',
   styleUrl: './play.css',
@@ -81,14 +79,6 @@ export class Play implements OnDestroy {
     void this.sdk.load();
 
     const pending = this.route.snapshot.queryParamMap.get('t');
-    log('play', 'open', {
-      mode,
-      via: pending ? 'query' : 'screen',
-      device: this.player.deviceId() || 'last-active',
-      clip: this.player.clipLength(),
-      inApp: this.inApp,
-    });
-
     if (pending) {
       void this.router.navigate([], { replaceUrl: true, queryParams: {} });
       void this.launch(pending);
@@ -124,11 +114,6 @@ export class Play implements OnDestroy {
 
     this.mode.set('scanning');
 
-    // One device snapshot per scan screen, never just before a play: an extra
-    // request on the play path would delay it and hide the ordering being
-    // diagnosed. Fire and forget, and only when the log is on.
-    if (isDebugEnabled()) void this.api.devices().catch(() => undefined);
-
     const element = await this.videoElement();
     if (!element) {
       this.scanner.stop();
@@ -138,13 +123,7 @@ export class Play implements OnDestroy {
     }
 
     try {
-      await this.scanner.attach(element, (value) => {
-        // The raw read next to the parsed id: a card that encodes something
-        // other than a bare track id shows up here and nowhere else.
-        log('play', 'scanned', { raw: value, id: trackIdFromScan(value) });
-        void this.launch(trackIdFromScan(value));
-      });
-      log('play', 'attached', {});
+      await this.scanner.attach(element, (value) => void this.launch(trackIdFromScan(value)));
     } catch (error) {
       this.scanner.stop();
       this.mode.set('idle');
@@ -179,7 +158,6 @@ export class Play implements OnDestroy {
 
   private async launch(rawId: string): Promise<void> {
     const id = rawId.trim();
-    log('play', 'launch', { id, length: id.length });
     if (!id) return;
 
     // A scanned card is self-contained: the id is the track. Play it straight
@@ -189,7 +167,6 @@ export class Play implements OnDestroy {
     await this.player.start({ id, uri: `spotify:track:${id}`, title: '', artist: '', year: 0 });
 
     if (this.player.error()) {
-      log('play', 'launch-error', { why: this.player.error() });
       this.mode.set('idle');
       this.hint.set(this.player.error());
       return;
@@ -217,11 +194,7 @@ export class Play implements OnDestroy {
     // Open the camera straight away — no extra "Scan a card" tap. Acquire it
     // first so it stays inside this tap gesture, then stop the old song in the
     // background. If the camera can't open, startScan drops to the scan screen.
-    log('play', 'nextCard', { phase: 'before-scan' });
     await this.startScan();
-    // A card already in frame can be decoded and launched before startScan
-    // returns, which puts this clear() — and its pause — after the new play.
-    log('play', 'nextCard', { phase: 'before-clear' });
     void this.player.clear();
   }
 }

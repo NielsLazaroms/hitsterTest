@@ -1,6 +1,5 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { SpotifyAuth } from './spotify-auth';
-import { log } from './debug';
 
 /**
  * Playback inside the page, through Spotify's Web Playback SDK.
@@ -126,9 +125,7 @@ export class SpotifySdk {
   /** Idempotent: safe to call on every visit to Play. */
   load(): Promise<void> {
     this.starting ??= this.create().catch((error: unknown) => {
-      const why = error instanceof Error ? error.message : String(error);
-      log('sdk', 'load-failed', { why });
-      this.error.set(why);
+      this.error.set(error instanceof Error ? error.message : String(error));
       // Cleared so a later visit can retry rather than being stuck on one
       // bad network moment.
       this.starting = null;
@@ -145,11 +142,8 @@ export class SpotifySdk {
     if (!this.player?.activateElement) return;
     try {
       await this.player.activateElement();
-      log('sdk', 'activated', {});
-    } catch (error) {
-      log('sdk', 'activate-failed', {
-        why: error instanceof Error ? error.message : String(error),
-      });
+    } catch {
+      /* the play that follows will fail audibly enough */
     }
   }
 
@@ -168,7 +162,6 @@ export class SpotifySdk {
       if (this.deviceId()) return this.deviceId();
       if (this.error()) return '';
     }
-    log('sdk', 'wait-timeout', { timeoutMs });
     return '';
   }
 
@@ -224,13 +217,11 @@ export class SpotifySdk {
     });
 
     player.addListener('ready', ({ device_id }) => {
-      log('sdk', 'ready', { deviceId: device_id.slice(0, 8) });
       this.error.set('');
       this.deviceId.set(device_id);
     });
 
-    player.addListener('not_ready', ({ device_id }) => {
-      log('sdk', 'not-ready', { deviceId: device_id.slice(0, 8) });
+    player.addListener('not_ready', () => {
       this.deviceId.set('');
     });
 
@@ -238,34 +229,16 @@ export class SpotifySdk {
     // authentication_error is raised during the handshake even on a token
     // that then goes on to reach `ready` and play, so treating it as fatal
     // would break the app on a login that is actually fine.
-    player.addListener('initialization_error', ({ message }) => {
-      log('sdk', 'initialization-error', { message });
+    player.addListener('initialization_error', () => {
       this.error.set('Deze browser kan geen muziek afspelen. Kies een apparaat in Instellingen.');
     });
 
-    player.addListener('account_error', ({ message }) => {
-      log('sdk', 'account-error', { message });
+    player.addListener('account_error', () => {
       this.error.set('Afspelen in de app vraagt een gewoon Spotify Premium-account.');
     });
 
-    player.addListener('authentication_error', ({ message }) => {
-      log('sdk', 'authentication-error', { message });
-    });
-
-    player.addListener('playback_error', ({ message }) => {
-      log('sdk', 'playback-error', { message });
-    });
-
-    // Playback moving to another device is worth a line; the rest of the event
-    // stream fires many times a round and was only ever read while tracking
-    // down where a track's load window ends.
-    player.addListener('player_state_changed', (state) => {
-      if (!state) log('sdk', 'state-null', {});
-    });
-
     this.player = player;
-    const ok = await player.connect();
-    log('sdk', 'connect', { ok });
+    await player.connect();
   }
 
   private loadScript(): Promise<void> {
@@ -281,7 +254,6 @@ export class SpotifySdk {
       tag.async = true;
       tag.onerror = () => reject(new Error('De Spotify-speler kon niet worden geladen.'));
       document.head.appendChild(tag);
-      log('sdk', 'script-requested', {});
     });
   }
 }
