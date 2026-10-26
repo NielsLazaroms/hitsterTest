@@ -244,6 +244,29 @@ export class SpotifySdk {
       log('sdk', 'playback-error', { message });
     });
 
+    // Every state event, because `getCurrentState()` interpolates the position
+    // between them: while a track loads the SDK reports `paused=false` at a
+    // standing position, and a poll in between sees a position that appears to
+    // be moving although nothing is audible yet. Only the raw events show
+    // where that burst ends. The field names go out once, to find out whether
+    // the SDK offers something that distinguishes loading from playing.
+    let namedFields = false;
+    player.addListener('player_state_changed', (state) => {
+      if (!state) {
+        log('sdk', 'state-null', {});
+        return;
+      }
+      if (!namedFields) {
+        namedFields = true;
+        log('sdk', 'state-fields', { keys: Object.keys(state).join(',') });
+      }
+      log('sdk', 'state', {
+        paused: state.paused,
+        position: state.position,
+        uri: state.track_window?.current_track?.uri ?? '-',
+      });
+    });
+
     this.player = player;
     const ok = await player.connect();
     log('sdk', 'connect', { ok });

@@ -44,6 +44,10 @@ export const STEP_LENGTHS = [0.1, 0.5, 1, 2, 4, 8, 16, 30] as const;
 const START_CONFIRM_MS = 5000;
 const RESUME_CONFIRM_MS = 1500;
 
+/** How long to hold out for our own track before accepting that Spotify
+    relinked it to another uri for this market. */
+const MISMATCH_GRACE_MS = 1800;
+
 /**
  * Milliseconds to wait before stopping, given where the song was when it was
  * last sampled and how long ago that was.
@@ -449,16 +453,24 @@ export class Player {
       const state = await this.sdk.state();
       polls++;
 
-      const usable =
-        state !== null &&
-        state.playing &&
-        state.progressMs >= fromMs &&
-        state.progressMs <= highest;
+      // A track Spotify relinked for this market reports a different uri, so a
+      // mismatch cannot simply be refused. But accepting one straight away
+      // also accepts the *previous* card, which is still loaded and still
+      // briefly reported, so insist on our own uri first and take a mismatch
+      // only once it is clear no better reading is coming.
+      const ours = state?.uris.includes(uri) ?? false;
+      const relinkGrace = Date.now() - startedAt >= MISMATCH_GRACE_MS;
 
-      if (!usable) {
+      if (
+        state === null ||
+        !state.playing ||
+        !(ours || relinkGrace) ||
+        state.progressMs < fromMs ||
+        state.progressMs > highest
+      ) {
         previous = -1;
       } else {
-        if (!state.uris.includes(uri) && !mismatched) {
+        if (!ours && !mismatched) {
           mismatched = true;
           log('player', 'uri-mismatch', { want: uri, got: state.uris.join(',') });
         }
@@ -567,13 +579,44 @@ export class Player {
    * round length against when checking whether the ladder really works.
    */
   private async measureClip(): Promise<void> {
-    const state = await this.sdk.state();
-    if (!state) return;
+    const run = this.run;
     const target = this.stopThreshold();
+    const state = await this.sdk.state();
     log('player', 'clip-stopped', {
       targetMs: target === Infinity ? '-' : Math.round(target * 1000),
-      reachedMs: state.progressMs,
+      reachedMs: state?.progressMs ?? '-',
     });
+    await this.confirmPaused(run, 250);
+    await this.confirmPaused(run, 1000);
+  }
+
+  /**
+   * Makes sure the stop actually stopped it.
+   *
+   * A pause sent while the SDK is still loading a track can be lost: the load
+   * finishes, playback begins, and by then the round is over and nothing is
+   * armed to end it, so the card plays on to the end of the song. Checking
+   * twice and sending it again caps that at a fraction of a second.
+   *
+   * A `clip-repause` line in the log is the symptom, and the reason to fix the
+   * confirmation rather than lean on this.
+   */
+  private async confirmPaused(run: number, afterMs: number): Promise<void> {
+    await new Promise((resolve) => setTimeout(resolve, afterMs));
+    // A new round or card has taken over; its stop is its own business.
+    if (run !== this.run) return;
+
+    const state = await this.sdk.state();
+    if (!state) return;
+    log('player', 'clip-verify', {
+      afterMs,
+      playing: state.playing,
+      progressMs: state.progressMs,
+    });
+    if (!state.playing) return;
+
+    log('player', 'clip-repause', { afterMs, progressMs: state.progressMs });
+    await this.silently(() => this.sdk.pause());
   }
 
   async resume(): Promise<void> {
