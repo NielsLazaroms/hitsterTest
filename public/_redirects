@@ -1,4 +1,12 @@
-# Client-side routing: every path is served by index.html and resolved by the
-# Angular router. Without this, a QR scanned straight into /play would 404.
-# Cloudflare Pages and Netlify both read this file; it is ignored elsewhere.
-/*  /index.html  200
+# Netlify only; Azure reads staticwebapp.config.json instead and ignores this.
+#
+# The site moved to mixtape.niels-lazaroms.nl. Netlify stays alive purely to
+# forward the QR codes already printed against the old address, so it no longer
+# serves the app: it hands every request straight on, path and query intact, so
+# a card link like /?t=<id> still lands in the right round.
+#
+# The trailing ! forces the rule even though index.html exists in the output;
+# without it Netlify would serve the file and never redirect. 302 rather than
+# 301 while the move is young, so a browser that has seen it once is not stuck
+# with the answer if Netlify ever has to serve the app again.
+/*  https://mixtape.niels-lazaroms.nl/:splat  302!
