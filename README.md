@@ -82,16 +82,16 @@ pijl linksboven brengt je terug naar de plank.
 - **Klassiek** — het nummer speelt vanaf het begin tot de fragmentlengte
   (15/30/45 s, of tot je stopt) om is.
 - **Hitsnip** — zoals [Songless](https://songless.pro): het nummer speelt
-  eerst 0,1 s en stopt. **Volgende ronde** speelt opnieuw vanaf het begin, maar
-  langer: 0,5 s, 1 s, 2 s, 4 s, 8 s, 16 s, 30 s. **Opnieuw** herhaalt de
+  eerst 0,5 s en stopt. **Volgende ronde** speelt opnieuw vanaf het begin, maar
+  langer: 1 s, 2 s, 4 s, 8 s, 16 s, 30 s, 60 s. **Opnieuw** herhaalt de
   huidige ronde. De ladder staat in `STEP_LENGTHS` in `player.ts`.
 
-  Let op: het afspelen loopt via Spotify Connect, dus elke ronde is een
-  play/pause-opdracht naar het apparaat. Spotify meldt "speelt" al voordat
-  het apparaat geluid geeft, dus de app kijkt per ronde naar de positie in het
-  nummer en start de stoptimer pas zodra die echt oploopt; de gemeten positie
-  en netwerkvertraging gaan van de timer af. De kortste rondes komen daardoor
-  ongeveer, niet exact, op 0,1 s uit: zo kort als Spotify Connect toelaat.
+  Speelt de app in zichzelf af ("Hier, in de app"), dan zijn pauzeren en zoeken
+  lokale aanroepen en haalt een ronde zijn bedoelde lengte. Via een
+  Connect-apparaat is elke ronde een play/pause-opdracht over het netwerk, en
+  meldt Spotify "speelt" al voordat er geluid uit komt; de app kijkt dan per
+  ronde naar de positie in het nummer en start de stoptimer pas zodra die echt
+  oploopt. De korte rondes komen daardoor ongeveer, niet exact, uit.
 
 Doordat de QR de Spotify-id zelf bevat, is een kaart niet aan een domein
 gebonden en werkt hij ongeacht waar de app is gedeployed — niets om opnieuw te

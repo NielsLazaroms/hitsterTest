@@ -8,18 +8,18 @@ import { STEP_LENGTHS, stopDelayMs } from './player';
  * the arithmetic has to give the same deadline every time it is asked.
  */
 describe('stopDelayMs', () => {
-  const ROUND_ONE = STEP_LENGTHS[0]; // 0.1 s
+  const ROUND_ONE = STEP_LENGTHS[0]; // 0.5 s
 
   it('waits out the rest of the round when playback has just been confirmed', () => {
-    // Confirmed 50 ms into the song, so 50 ms of a 100 ms round is left.
-    expect(stopDelayMs(ROUND_ONE, 50, 0, 0)).toBe(50);
+    // Confirmed 50 ms into the song, so 450 ms of a 500 ms round is left.
+    expect(stopDelayMs(ROUND_ONE, 50, 0, 0)).toBe(450);
   });
 
   it('does not restart the round when it is armed again a moment later', () => {
     // The regression: the track-length lookup re-arms ~70 ms in. Measured from
-    // a whole-second clock this read as "0 s elapsed" and granted another full
-    // 100 ms, so a 0.1 s round played on past 150 ms.
-    expect(stopDelayMs(ROUND_ONE, 50, 70, 0)).toBe(0);
+    // a whole-second clock that read as "0 s elapsed", so the round was handed
+    // its full length a second time — 450 ms here instead of 380.
+    expect(stopDelayMs(ROUND_ONE, 50, 70, 0)).toBe(380);
   });
 
   it('lands on the same deadline however often it is armed', () => {
@@ -28,7 +28,7 @@ describe('stopDelayMs', () => {
     const deadlines = [0, 10, 20, 30, 40].map(
       (since) => since + stopDelayMs(ROUND_ONE, 20, since, 0),
     );
-    expect(new Set(deadlines)).toEqual(new Set([80]));
+    expect(new Set(deadlines)).toEqual(new Set([480]));
   });
 
   it('counts a resume from where the song is, not from zero', () => {
@@ -43,11 +43,18 @@ describe('stopDelayMs', () => {
   });
 
   it('sends the pause one leg early to allow for the trip', () => {
-    expect(stopDelayMs(ROUND_ONE, 0, 0, 40)).toBe(60);
+    expect(stopDelayMs(ROUND_ONE, 0, 0, 40)).toBe(460);
   });
 
   it('gives every rung of the ladder its own length from the top', () => {
     const lengths = STEP_LENGTHS.map((step) => stopDelayMs(step, 0, 0, 0));
-    expect(lengths).toEqual([100, 500, 1000, 2000, 4000, 8000, 16_000, 30_000]);
+    expect(lengths).toEqual([500, 1000, 2000, 4000, 8000, 16_000, 30_000, 60_000]);
+  });
+
+  it('keeps the ladder climbing, so no two rounds are the same length', () => {
+    const climbing = STEP_LENGTHS.every(
+      (step, index) => index === 0 || step > STEP_LENGTHS[index - 1],
+    );
+    expect(climbing).toBe(true);
   });
 });

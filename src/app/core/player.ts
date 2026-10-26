@@ -35,8 +35,15 @@ export type PlayerStatus = 'idle' | 'playing' | 'paused' | 'finished';
  */
 export type GameMode = 'classic' | 'steps';
 
-/** Seconds of the song revealed at each step, always counted from the top. */
-export const STEP_LENGTHS = [0.1, 0.5, 1, 2, 4, 8, 16, 30] as const;
+/**
+ * Seconds of the song revealed at each step, always counted from the top.
+ *
+ * Starts at half a second: a tenth gave almost nothing to go on, and sat below
+ * what the transport could reliably deliver anyway. Ends at a full minute, so
+ * the last rung is a real chance rather than another near-miss. Eight rungs,
+ * which is what the staircase on the Play screen draws.
+ */
+export const STEP_LENGTHS = [0.5, 1, 2, 4, 8, 16, 30, 60] as const;
 
 /** How long to wait for the in-app player to actually make a sound. Generous
     for a fresh card, whose track still has to be fetched; short for a resume
