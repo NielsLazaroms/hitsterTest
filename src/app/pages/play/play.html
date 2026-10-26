@@ -26,16 +26,29 @@
     <!-- ------------------------------------------------------ idle ---- -->
     @case ('idle') {
       <div class="body stage">
-        <button class="scanbtn" type="button" (click)="startScan()">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
-               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M3 8V5a2 2 0 0 1 2-2h3M16 3h3a2 2 0 0 1 2 2v3M21 16v3a2 2 0 0 1-2 2h-3M8 21H5a2 2 0 0 1-2-2v-3" />
-            <path d="M7 12h10" />
-          </svg>
-          <span>Scan een kaart</span>
-        </button>
+        @if (waiting()) {
+          <!-- A card opened from a link. The tap is what lets the page make a
+               sound at all, so it is the key rather than a formality. -->
+          <button class="scanbtn" type="button" (click)="playWaiting()">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M8 5v14l11-7z" />
+            </svg>
+            <span>Speel deze kaart</span>
+          </button>
 
-        <p class="hint">{{ hint() }}</p>
+          <p class="hint">Tik om te starten — je telefoon geeft pas geluid na een tik.</p>
+        } @else {
+          <button class="scanbtn" type="button" (click)="startScan()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M3 8V5a2 2 0 0 1 2-2h3M16 3h3a2 2 0 0 1 2 2v3M21 16v3a2 2 0 0 1-2 2h-3M8 21H5a2 2 0 0 1-2-2v-3" />
+              <path d="M7 12h10" />
+            </svg>
+            <span>Scan een kaart</span>
+          </button>
+
+          <p class="hint">{{ hint() }}</p>
+        }
       </div>
     }
 

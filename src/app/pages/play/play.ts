@@ -14,7 +14,7 @@ import { Icon } from '../../core/icon';
 import { Nav } from '../../core/nav';
 import { Player, STEP_LENGTHS } from '../../core/player';
 import { SpotifyApi } from '../../core/spotify-api';
-import { SpotifySdk } from '../../core/spotify-sdk';
+import { LOCAL_DEVICE, SpotifySdk } from '../../core/spotify-sdk';
 import { isInAppBrowser } from '../../core/environment';
 import { QrScanner, trackIdFromScan, explainCameraError } from '../../core/scanner';
 
@@ -41,6 +41,10 @@ export class Play implements OnDestroy {
 
   readonly mode = signal<Mode>('idle');
   readonly hint = signal('Richt op de code op de voorkant van een kaart.');
+
+  /** A card that arrived by link and is waiting for the tap that lets this
+      page make a sound. Null in every other case. */
+  readonly waiting = signal<string | null>(null);
 
   readonly inApp = isInAppBrowser();
 
@@ -81,8 +85,28 @@ export class Play implements OnDestroy {
     const pending = this.route.snapshot.queryParamMap.get('t');
     if (pending) {
       void this.router.navigate([], { replaceUrl: true, queryParams: {} });
-      void this.launch(pending);
+      // A link arrives with no tap behind it, and a mobile browser will not
+      // let the page make a sound until it has had one — so the in-app player
+      // cannot start here, however the play command is sent. Hold the card and
+      // let the player press a key. A Connect device has no such restriction:
+      // the sound comes out of the laptop or speaker, not this page, so there
+      // the link can still play on arrival as it always did.
+      if (this.player.deviceId() === LOCAL_DEVICE) this.waiting.set(pending);
+      else void this.launch(pending);
     }
+  }
+
+  /**
+   * Plays the card a link arrived with. The tap is the point: it is what
+   * unblocks audio, so `activate()` goes first and unawaited, exactly as on
+   * the scan key.
+   */
+  async playWaiting(): Promise<void> {
+    const id = this.waiting();
+    if (!id) return;
+    void this.sdk.activate();
+    this.waiting.set(null);
+    await this.launch(id);
   }
 
   ngOnDestroy(): void {
