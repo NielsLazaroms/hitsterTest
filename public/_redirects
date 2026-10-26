@@ -6,7 +6,9 @@
 # a card link like /?t=<id> still lands in the right round.
 #
 # The trailing ! forces the rule even though index.html exists in the output;
-# without it Netlify would serve the file and never redirect. 302 rather than
-# 301 while the move is young, so a browser that has seen it once is not stuck
-# with the answer if Netlify ever has to serve the app again.
-/*  https://mixtape.niels-lazaroms.nl/:splat  302!
+# without it Netlify would serve the file and never redirect. 301 because the
+# move is settled and the printed codes are permanent: a browser that has
+# scanned once then skips this hop entirely. The cost is that the destination
+# is now cached, so moving the app again means stale redirects for anyone who
+# has been here before.
+/*  https://mixtape.niels-lazaroms.nl/:splat  301!
