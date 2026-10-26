@@ -17,6 +17,12 @@ export const REQUIRED_SCOPES = [
   // Exposes `product` on /me, so "this needs Premium" can be said outright
   // instead of surfacing as an opaque playback failure.
   'user-read-private',
+  // Not needed by anything this app calls, but the SDK reads the profile
+  // during its handshake and raises `authentication_error: Invalid token
+  // scopes` without it — observed on the spike, which still reached `ready`
+  // and played, so the error is noise rather than a failure. Noise that fires
+  // on every init would mask a real one later.
+  'user-read-email',
 ];
 
 const SCOPES = REQUIRED_SCOPES.join(' ');
