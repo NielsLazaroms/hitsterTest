@@ -10,6 +10,13 @@ export const REQUIRED_SCOPES = [
   'user-modify-playback-state',
   'playlist-read-private',
   'playlist-read-collaborative',
+  // Required by the Web Playback SDK, which is the only thing that can use it,
+  // and only on Premium. Asked for ahead of the SDK itself so a reconnect made
+  // now already carries it; nothing breaks while it goes unused.
+  'streaming',
+  // Exposes `product` on /me, so "this needs Premium" can be said outright
+  // instead of surfacing as an opaque playback failure.
+  'user-read-private',
 ];
 
 const SCOPES = REQUIRED_SCOPES.join(' ');
