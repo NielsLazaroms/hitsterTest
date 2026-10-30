@@ -151,8 +151,6 @@ body {
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   overscroll-behavior: none;
-  padding-top: env(safe-area-inset-top);
-  padding-bottom: env(safe-area-inset-bottom);
 }
 
 button {
@@ -176,6 +174,11 @@ select {
 
 /* ------------------------------------------------------------ layout ---- */
 
+/* Exactly one viewport tall, never more: the body carries no padding of its
+   own, so the safe-area insets are paid inside the page -- by the bar at the
+   top, and by the scrolling body (or .camfoot on the camera view) at the
+   bottom. Padding the body instead pushes the page down without shrinking it,
+   which leaves the last inset-worth of every screen below the fold. */
 .page {
   display: flex;
   flex-direction: column;
@@ -195,7 +198,7 @@ select {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 14px 18px;
+  padding: calc(14px + env(safe-area-inset-top)) 18px 14px;
   background: color-mix(in srgb, var(--bg) 88%, transparent);
   backdrop-filter: saturate(1.4) blur(10px);
   border-bottom: 1px solid var(--line);
@@ -302,7 +305,7 @@ select {
 
 .body {
   flex: 1;
-  padding: 22px 18px 44px;
+  padding: 22px 18px calc(44px + env(safe-area-inset-bottom));
   overflow-y: auto;
 }
 
